@@ -1,0 +1,42 @@
+[
+  {
+    "id": "editor_unlock",
+    "title": "Editor unlocked",
+    "description": "You can now write simple Python calls with add_score() in your own program."
+  },
+  {
+    "id": "line_capacity_3",
+    "title": "+1 line",
+    "description": "Increase your program capacity to 3 executable lines so you can chain more add_score() calls."
+  },
+  {
+    "id": "for_loop",
+    "title": "for loop",
+    "description": "Unlock real Python repetition with for _ in range(n): so automation starts to feel like real code."
+  },
+  {
+    "id": "variables",
+    "title": "variables",
+    "description": "Store values in names like times = 3 and reuse them in your program."
+  },
+  {
+    "id": "if_statement",
+    "title": "if",
+    "description": "Add conditional branching so your program can make simple decisions."
+  },
+  {
+    "id": "while_loop",
+    "title": "while",
+    "description": "Unlock while loops once conditions are available and the player is ready for open-ended repetition."
+  },
+  {
+    "id": "functions",
+    "title": "functions",
+    "description": "Define small reusable helpers with def to structure your automation."
+  },
+  {
+    "id": "lists",
+    "title": "lists",
+    "description": "Work with small collections in real Python syntax and prepare for more advanced automation."
+  }
+]

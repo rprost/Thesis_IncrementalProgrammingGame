@@ -1,0 +1,42 @@
+[
+  {
+    "id": "editor_unlock",
+    "title": "Redaktor avatud",
+    "description": "Nüüd saad oma programmis kirjutada lihtsaid Pythoni väljakutseid käsuga add_score()."
+  },
+  {
+    "id": "line_capacity_3",
+    "title": "+1 rida",
+    "description": "Suurenda programmi mahtu 3 täidetava reani, et siduda rohkem add_score() käske."
+  },
+  {
+    "id": "for_loop",
+    "title": "for-tsükkel",
+    "description": "Ava päris Pythoni kordus kujul for _ in range(n):, et automatiseerimine muutuks päris koodiks."
+  },
+  {
+    "id": "variables",
+    "title": "muutujad",
+    "description": "Salvesta väärtused nimedesse nagu times = 3 ja kasuta neid oma programmis uuesti."
+  },
+  {
+    "id": "if_statement",
+    "title": "if",
+    "description": "Lisa tingimuslik hargnemine, et programm saaks teha lihtsaid otsuseid."
+  },
+  {
+    "id": "while_loop",
+    "title": "while-tsükkel",
+    "description": "Ava while-tsüklid siis, kui tingimused on olemas ja mängija on valmis avatuma korduse jaoks."
+  },
+  {
+    "id": "functions",
+    "title": "funktsioonid",
+    "description": "Määra väikesed taaskasutatavad abilised võtmesõnaga def, et oma automatiseerimist struktureerida."
+  },
+  {
+    "id": "lists",
+    "title": "listid",
+    "description": "Kasuta väikseid kogumeid päris Pythoni süntaksis ja valmista ette järgmisi automatiseerimise samme."
+  }
+]
