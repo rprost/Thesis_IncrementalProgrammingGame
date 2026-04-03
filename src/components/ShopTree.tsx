@@ -1,9 +1,17 @@
 import { formatText } from '../content'
 import { canPurchaseShopNode, getShopNodeStatus, SHOP_NODES } from '../game/shop'
-import type { GameState, ShopNodeCopy, ShopNodeDefinition, ShopNodeStatus, UiText } from '../types'
+import type {
+  GameState,
+  GameTask,
+  ShopNodeCopy,
+  ShopNodeDefinition,
+  ShopNodeStatus,
+  UiText,
+} from '../types'
 
 type ShopTreeProps = {
   gameState: GameState
+  tasks: GameTask[]
   shopNodes: ShopNodeCopy[]
   ui: UiText
   onPurchase: (nodeId: ShopNodeDefinition['id']) => void
@@ -28,6 +36,7 @@ function getStatusLabel(status: ShopNodeStatus, ui: UiText): string {
 
 export function ShopTree({
   gameState,
+  tasks,
   shopNodes,
   ui,
   onPurchase,
@@ -48,8 +57,8 @@ export function ShopTree({
       <div className="skill-tree">
         {SHOP_NODES.map((node) => {
           const copy = getNodeCopy(shopNodes, node.id)
-          const status = getShopNodeStatus(gameState, node)
-          const canPurchase = canPurchaseShopNode(gameState, node.id)
+          const status = getShopNodeStatus(gameState, node, tasks)
+          const canPurchase = canPurchaseShopNode(gameState, node.id, tasks)
           const isPurchased = gameState.purchasedUpgradeIds.includes(node.id)
           const purchaseLabel = formatText(ui.shopBuyButton, {
             cost: String(node.cost),

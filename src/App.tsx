@@ -2,6 +2,7 @@ import { startTransition, useEffect, useState } from 'react'
 import './App.css'
 import { ActivityFeed } from './components/ActivityFeed'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
+import { PachinkoBoard } from './components/PachinkoBoard'
 import { ProgramEditor } from './components/ProgramEditor'
 import { ShopTree } from './components/ShopTree'
 import { TaskModal } from './components/TaskModal'
@@ -21,9 +22,10 @@ import {
   purchaseShopNode,
   setCurrentView,
   startProgramRun,
+  updateHelperProgramSource,
   updateProgramSource,
 } from './game/engine'
-import { MAX_FOR_RANGE, MAX_STEPS_PER_RUN } from './game/program'
+import { MAX_FOR_RANGE, MAX_HELPER_LINES, MAX_STEPS_PER_RUN } from './game/program'
 import { canOpenShop } from './game/shop'
 import type {
   GameTask,
@@ -64,6 +66,14 @@ function getProgramValidationMessage(
 
   const prioritizedIssue =
     validation.issues.find((issue) => issue.code === 'step_limit_exceeded') ??
+    validation.issues.find((issue) => issue.code === 'helper_limit_exceeded') ??
+    validation.issues.find((issue) => issue.code === 'duplicate_function') ??
+    validation.issues.find((issue) => issue.code === 'helper_not_defined') ??
+    validation.issues.find((issue) => issue.code === 'invalid_function_definition') ??
+    validation.issues.find((issue) => issue.code === 'aim_range_limit') ??
+    validation.issues.find((issue) => issue.code === 'invalid_set_aim') ??
+    validation.issues.find((issue) => issue.code === 'invalid_condition') ??
+    validation.issues.find((issue) => issue.code === 'invalid_expression') ??
     validation.issues.find((issue) => issue.code === 'locked_construct') ??
     validation.issues.find((issue) => issue.code === 'for_range_limit') ??
     validation.issues.find((issue) => issue.code === 'unsupported_for_loop') ??
@@ -121,6 +131,44 @@ function getProgramValidationMessage(
     case 'step_limit_exceeded':
       return formatText(ui.programErrorStepLimitExceeded, {
         max: String(prioritizedIssue.maxSteps ?? MAX_STEPS_PER_RUN),
+      })
+    case 'invalid_expression':
+      return formatText(ui.programErrorInvalidExpression, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'invalid_condition':
+      return formatText(ui.programErrorInvalidCondition, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'invalid_set_aim':
+      return formatText(ui.programErrorInvalidSetAim, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'aim_range_limit':
+      return formatText(ui.programErrorAimRangeLimit, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'invalid_function_definition':
+      return formatText(ui.programErrorInvalidFunctionDefinition, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'duplicate_function':
+      return formatText(ui.programErrorDuplicateFunction, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+        name: prioritizedIssue.helperName ?? 'helper',
+      })
+    case 'helper_limit_exceeded':
+      return formatText(ui.programErrorHelperLimitExceeded, {
+        limit: String(prioritizedIssue.limit ?? 1),
+      })
+    case 'helper_line_limit_exceeded':
+      return formatText(ui.programErrorHelperLineLimitExceeded, {
+        limit: String(prioritizedIssue.limit ?? MAX_HELPER_LINES),
+      })
+    case 'helper_not_defined':
+      return formatText(ui.programErrorHelperNotDefined, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+        name: prioritizedIssue.helperName ?? 'helper',
       })
     default:
       return ui.runBlockedInvalidProgram
@@ -186,28 +234,10 @@ function getTutorialContent(
   }
 }
 
-function getNextUnlockText(
-  gameState: ReturnType<typeof createInitialGameState>,
-  ui: UiText,
-): string {
-  if (!gameState.unlocks.editorEditable) {
-    return ui.availableSyntaxNextEditor
-  }
-
-  if (!gameState.purchasedUpgradeIds.includes('line_capacity_3')) {
-    return ui.availableSyntaxNextLine
-  }
-
-  if (!gameState.unlocks.unlockedConstructs.includes('for')) {
-    return ui.availableSyntaxNextFor
-  }
-
-  return ui.availableSyntaxNextVariables
-}
-
 function App() {
   const [locale, setLocale] = useState<Locale>(() => getInitialLocale())
   const [gameState, setGameState] = useState(() => createInitialGameState())
+  const [animationNow, setAnimationNow] = useState(() => Date.now())
 
   const { ui, tasks, shopNodes } = getLocaleContent(locale)
   const activeTask =
@@ -221,24 +251,38 @@ function App() {
     activeTask !== null && gameState.isTaskOpen,
   )
   const tutorialContent = getTutorialContent(visibleTutorialStep, ui)
-
+  const functionsUnlocked =
+    gameState.unlocks.unlockedConstructs.includes('functions')
   const runsUntilChallenge = getRunsUntilChallenge(gameState, tasks)
   const validationMessage = getProgramValidationMessage(
     gameState.programValidation,
+    ui,
+  )
+  const helperValidationMessage = getProgramValidationMessage(
+    gameState.helperProgramValidation,
     ui,
   )
   const lineUsageText = formatText(ui.editorLineUsageValue, {
     used: String(gameState.programValidation.executableLineCount),
     limit: String(gameState.unlocks.lineCapacity),
   })
-  const actionsPerRunText = formatText(ui.actionsPerRunValue, {
+  const helperUsageText = formatText(ui.helperEditorLineUsageValue, {
+    used: String(gameState.helperProgramValidation.executableLineCount),
+    limit: String(MAX_HELPER_LINES),
+  })
+  const ballsPerRunText = formatText(ui.actionsPerRunValue, {
     count: String(gameState.programValidation.executionStepCount),
   })
+  const remainingTasksForEditorUnlock = Math.max(
+    0,
+    2 - gameState.correctAnswerCount,
+  )
   const programStatus = gameState.isRunning
     ? ui.programStatusRunning
     : !gameState.unlocks.editorEditable
       ? ui.programStatusLocked
-      : gameState.programValidation.isValid
+      : gameState.programValidation.isValid &&
+          (!functionsUnlocked || gameState.helperProgramValidation.isValid)
         ? ui.programStatusReady
         : ui.programStatusInvalid
   const editorHelperText = gameState.unlocks.editorEditable
@@ -247,27 +291,61 @@ function App() {
   const editorFeedbackMessage = validationMessage
     ? validationMessage
     : gameState.unlocks.editorEditable
-      ? formatText(ui.programReadyMessage, {
-          count: String(gameState.programValidation.executionStepCount),
-        })
+      ? gameState.programValidation.executionStepCount === 0
+        ? ui.programZeroStepMessage
+        : formatText(ui.programReadyMessage, {
+            count: String(gameState.programValidation.executionStepCount),
+          })
+      : null
+  const helperFeedbackMessage = helperValidationMessage
+    ? helperValidationMessage
+    : functionsUnlocked
+      ? ui.helperProgramReadyMessage
       : null
   const editorFeedbackTone = validationMessage
     ? 'error'
     : gameState.unlocks.editorEditable
-      ? 'success'
+      ? gameState.programValidation.executionStepCount === 0
+        ? 'warning'
+        : 'success'
       : 'neutral'
-  const controlsHint = gameState.unlocks.editorEditable
-    ? ui.controlsHintEditable
-    : ui.controlsHintLocked
+  const helperFeedbackTone = helperValidationMessage ? 'error' : 'success'
+  const statusMessage =
+    activeTask !== null
+      ? ui.challengeActiveMessage
+      : gameState.isRunning
+        ? ui.runPanelRunningMessage
+        : !gameState.unlocks.editorEditable
+          ? remainingTasksForEditorUnlock === 1
+            ? ui.editorUnlockOneTaskMessage
+            : formatText(ui.editorUnlockManyTasksMessage, {
+                count: String(remainingTasksForEditorUnlock),
+              })
+          : runsUntilChallenge === null
+            ? ui.allTasksCompletedMessage
+            : formatText(ui.taskAfterCommandsMessage, {
+                count: String(runsUntilChallenge),
+              })
   const runTutorial =
     visibleTutorialStep === 'run_program' ? tutorialContent : null
   const editorTutorial =
     visibleTutorialStep === 'editor_unlock' ? tutorialContent : null
   const taskTutorial =
     visibleTutorialStep === 'first_challenge' ? tutorialContent : null
-  const availableStructures = gameState.unlocks.unlockedConstructs.includes('for')
-    ? [`for _ in range(1..${MAX_FOR_RANGE}):`]
-    : []
+  const availableFunctions = ['drop_ball()']
+  if (gameState.unlocks.allowedCommands.includes('set_aim')) {
+    availableFunctions.push('set_aim(2)')
+  }
+  const readableValues = ['bonus_lane']
+  const availableStructures = [
+    ...(gameState.unlocks.unlockedConstructs.includes('if')
+      ? ['if bonus_lane == 1:']
+      : []),
+    ...(functionsUnlocked ? ['def follow_bonus():'] : []),
+    ...(gameState.unlocks.unlockedConstructs.includes('for')
+      ? [`for _ in range(1..${MAX_FOR_RANGE}):`]
+      : []),
+  ]
   const availableLimits = [
     formatText(ui.availableSyntaxStepLimit, {
       limit: String(MAX_STEPS_PER_RUN),
@@ -280,22 +358,47 @@ function App() {
         ]
       : []),
   ]
+  const taskProgress =
+    runsUntilChallenge === null || gameState.currentTaskTarget === 0
+      ? 1
+      : gameState.dropsTowardNextTask / gameState.currentTaskTarget
 
   useEffect(() => {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
   }, [locale])
 
   useEffect(() => {
-    if (!gameState.isRunning || gameState.queuedSteps.length === 0) {
+    if (
+      !gameState.isRunning &&
+      gameState.activeBalls.length === 0 &&
+      gameState.pendingTaskId === null
+    ) {
       return
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const intervalId = window.setInterval(() => {
       setGameState((currentState) => advanceProgramRun(currentState, tasks))
-    }, 120)
+    }, 50)
 
-    return () => window.clearTimeout(timeoutId)
-  }, [gameState.isRunning, gameState.queuedSteps, tasks])
+    return () => window.clearInterval(intervalId)
+  }, [
+    gameState.isRunning,
+    gameState.activeBalls.length,
+    gameState.pendingTaskId,
+    tasks,
+  ])
+
+  useEffect(() => {
+    if (gameState.activeBalls.length === 0) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      setAnimationNow(Date.now())
+    }, 16)
+
+    return () => window.clearInterval(intervalId)
+  }, [gameState.activeBalls.length])
 
   const handleRunProgram = () => {
     setGameState((currentState) => startProgramRun(currentState))
@@ -313,6 +416,14 @@ function App() {
     })
   }
 
+  const handleHelperProgramChange = (value: string) => {
+    startTransition(() => {
+      setGameState((currentState) =>
+        updateHelperProgramSource(currentState, value),
+      )
+    })
+  }
+
   const handleDismissTutorial = (tutorialStep: TutorialStep) => {
     setGameState((currentState) =>
       dismissTutorialStep(currentState, tutorialStep),
@@ -324,7 +435,9 @@ function App() {
   }
 
   const handlePurchaseNode = (nodeId: ShopNodeId) => {
-    setGameState((currentState) => purchaseShopNode(currentState, nodeId))
+    setGameState((currentState) =>
+      purchaseShopNode(currentState, nodeId, tasks),
+    )
   }
 
   return (
@@ -394,6 +507,8 @@ function App() {
           <div className="editor-column">
             <ProgramEditor
               code={gameState.programSource}
+              title={ui.editorTitle}
+              variant="main"
               ui={ui}
               isEditable={gameState.unlocks.editorEditable && !gameState.isRunning}
               isUnlocked={gameState.unlocks.editorEditable}
@@ -409,16 +524,37 @@ function App() {
               onChange={handleProgramChange}
             />
 
+            {functionsUnlocked ? (
+              <ProgramEditor
+                code={gameState.helperProgramSource}
+                title={ui.helperEditorTitle}
+                variant="helper"
+                ui={ui}
+                isEditable={!gameState.isRunning}
+                isUnlocked
+                isHighlighted={false}
+                activeLineNumber={null}
+                lineUsageText={helperUsageText}
+                helperText={ui.helperEditorUnlockedDescription}
+                feedbackMessage={helperFeedbackMessage}
+                feedbackTone={helperFeedbackTone}
+                tutorialTitle={null}
+                tutorialMessage={null}
+                onDismissTutorial={() => {}}
+                onChange={handleHelperProgramChange}
+              />
+            ) : null}
+
             <AvailableSyntaxCard
               ui={ui}
-              functions={['add_score()']}
+              functions={availableFunctions}
               structures={availableStructures}
+              readableValues={readableValues}
               limits={availableLimits}
-              nextUnlock={getNextUnlockText(gameState, ui)}
             />
           </div>
 
-          <div className="utility-grid">
+          <div className="utility-column">
             <aside
               className={`controls${
                 visibleTutorialStep === 'run_program' ? ' tutorial-target' : ''
@@ -440,26 +576,36 @@ function App() {
                 disabled={
                   activeTask !== null ||
                   !gameState.programValidation.isValid ||
+                  (functionsUnlocked && !gameState.helperProgramValidation.isValid) ||
                   gameState.isRunning
                 }
                 type="button"
               >
                 {gameState.isRunning ? ui.runButtonRunning : ui.runButton}
               </button>
-              <p className="status-copy">
-                {activeTask !== null
-                  ? ui.challengeActiveMessage
-                  : gameState.isRunning
-                    ? ui.runPanelRunningMessage
-                    : runsUntilChallenge === null
-                      ? ui.allTasksCompletedMessage
-                      : `${ui.nextChallengeLabel} ${runsUntilChallenge}`}
-              </p>
-              <p className="control-hint">{controlsHint}</p>
+              <p className="status-copy">{statusMessage}</p>
+              {runsUntilChallenge !== null ? (
+                <div className="task-progress">
+                  <div className="task-progress-header">
+                    <span>{ui.nextTaskLabel}</span>
+                    <strong>
+                      {formatText(ui.nextTaskProgressText, {
+                        count: String(runsUntilChallenge),
+                      })}
+                    </strong>
+                  </div>
+                  <div className="task-progress-track" aria-hidden="true">
+                    <span
+                      className="task-progress-bar"
+                      style={{ width: `${Math.max(6, taskProgress * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
               <dl className="control-stats">
                 <div>
                   <dt>{ui.actionsPerRunLabel}</dt>
-                  <dd>{actionsPerRunText}</dd>
+                  <dd>{ballsPerRunText}</dd>
                 </div>
                 <div>
                   <dt>{ui.programStatusLabel}</dt>
@@ -467,6 +613,13 @@ function App() {
                 </div>
               </dl>
             </aside>
+
+            <PachinkoBoard
+              ui={ui}
+              activeBalls={gameState.activeBalls}
+              bonusLane={gameState.bonusLane}
+              now={animationNow}
+            />
 
             <ActivityFeed
               entries={gameState.feedEntries}
@@ -479,6 +632,7 @@ function App() {
       ) : (
         <ShopTree
           gameState={gameState}
+          tasks={tasks}
           shopNodes={shopNodes}
           ui={ui}
           onPurchase={handlePurchaseNode}

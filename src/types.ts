@@ -2,7 +2,7 @@ export type Locale = 'et' | 'en'
 
 export type TaskTopicId = string
 
-export type AllowedCommand = 'add_score'
+export type AllowedCommand = 'drop_ball' | 'set_aim'
 
 export type GameView = 'play' | 'shop'
 
@@ -17,11 +17,11 @@ export type LockedConstruct =
 export type ShopNodeId =
   | 'editor_unlock'
   | 'line_capacity_3'
-  | 'for_loop'
   | 'variables'
   | 'if_statement'
-  | 'while_loop'
   | 'functions'
+  | 'for_loop'
+  | 'while_loop'
   | 'lists'
 
 export type ShopNodeKind = 'milestone' | 'upgrade' | 'syntax'
@@ -33,6 +33,9 @@ export type ShopNodeDefinition = {
   implemented: boolean
   lineCapacity?: number
   unlockConstruct?: LockedConstruct
+  unlockCommand?: AllowedCommand
+  requiredNodeIds?: ShopNodeId[]
+  requiredTopicIds?: TaskTopicId[]
 }
 
 export type ShopNodeCopy = {
@@ -43,24 +46,46 @@ export type ShopNodeCopy = {
 
 export type ShopNodeStatus = 'completed' | 'available' | 'locked' | 'preview'
 
-export type ProgramCallNode = {
-  type: 'call'
-  command: AllowedCommand
-  lineNumber: number
-}
+export type AimLevel = 1 | 2 | 3
 
-export type ProgramForRangeNode = {
-  type: 'for_range'
-  lineNumber: number
-  iterations: number
-  body: ProgramCallNode[]
-}
+export type BonusLane = 1 | 2 | 3
 
-export type ProgramNode = ProgramCallNode | ProgramForRangeNode
+export type BoardBucket =
+  | 'outer_left'
+  | 'inner_left'
+  | 'center'
+  | 'inner_right'
+  | 'outer_right'
+
+export type BoardOutcome = {
+  bucket: BoardBucket
+  bucketIndex: number
+  points: number
+}
 
 export type ExecutionStep = {
-  type: AllowedCommand
+  type: 'drop_ball'
   lineNumber: number
+  aim: AimLevel
+}
+
+export type ActiveBallState = 'falling' | 'settled' | 'canceled'
+
+export type ActiveBall = {
+  id: number
+  lineNumber: number
+  aim: AimLevel
+  bucket: BoardBucket
+  bucketIndex: number
+  laneBonus: number
+  points: number
+  pathXs: number[]
+  spawnedAt: number
+  settleAt: number
+  removeAt: number
+  state: ActiveBallState
+  cancelX?: number
+  cancelY?: number
 }
 
 export type ProgramValidationIssueCode =
@@ -75,6 +100,15 @@ export type ProgramValidationIssueCode =
   | 'nested_block_not_supported'
   | 'unexpected_indentation'
   | 'step_limit_exceeded'
+  | 'invalid_expression'
+  | 'invalid_condition'
+  | 'invalid_set_aim'
+  | 'aim_range_limit'
+  | 'invalid_function_definition'
+  | 'duplicate_function'
+  | 'helper_limit_exceeded'
+  | 'helper_line_limit_exceeded'
+  | 'helper_not_defined'
 
 export type ValidationIssue = {
   code: ProgramValidationIssueCode
@@ -83,6 +117,7 @@ export type ValidationIssue = {
   construct?: LockedConstruct
   maxRange?: number
   maxSteps?: number
+  helperName?: string
 }
 
 export type ProgramValidation = {
@@ -90,12 +125,13 @@ export type ProgramValidation = {
   issues: ValidationIssue[]
   executableLineCount: number
   executionStepCount: number
+  helperCount: number
 }
 
 export type ParsedProgram = {
-  nodes: ProgramNode[]
   steps: ExecutionStep[]
-  validation: ProgramValidation
+  mainValidation: ProgramValidation
+  helperValidation: ProgramValidation
 }
 
 export type FeedEntryType =
@@ -147,9 +183,7 @@ export type UiText = {
   runButton: string
   runButtonRunning: string
   runPanelTitle: string
-  controlsHintLocked: string
-  controlsHintEditable: string
-  nextChallengeLabel: string
+  taskAfterCommandsMessage: string
   challengeActiveMessage: string
   allTasksCompletedMessage: string
   runPanelRunningMessage: string
@@ -171,8 +205,14 @@ export type UiText = {
   editorUnlockedTitle: string
   editorLockedDescription: string
   editorUnlockedDescription: string
+  helperEditorTitle: string
+  helperEditorLockedDescription: string
+  helperEditorUnlockedDescription: string
+  helperEditorSlotsLabel: string
   starterProgram: string
+  helperProgramStarter: string
   editorLineUsageValue: string
+  helperEditorLineUsageValue: string
   actionsPerRunLabel: string
   actionsPerRunValue: string
   lineCapacityLabel: string
@@ -182,6 +222,7 @@ export type UiText = {
   programStatusInvalid: string
   programStatusRunning: string
   programReadyMessage: string
+  helperProgramReadyMessage: string
   programErrorEmpty: string
   programErrorTooManyLines: string
   programErrorInvalidLine: string
@@ -193,6 +234,16 @@ export type UiText = {
   programErrorNestedBlocks: string
   programErrorUnexpectedIndentation: string
   programErrorStepLimitExceeded: string
+  programErrorInvalidExpression: string
+  programErrorInvalidCondition: string
+  programErrorInvalidSetAim: string
+  programErrorAimRangeLimit: string
+  programErrorInvalidFunctionDefinition: string
+  programErrorDuplicateFunction: string
+  programErrorHelperLimitExceeded: string
+  programErrorHelperLineLimitExceeded: string
+  programErrorHelperNotDefined: string
+  programZeroStepMessage: string
   runBlockedInvalidProgram: string
   constructForLabel: string
   constructVariablesLabel: string
@@ -223,6 +274,8 @@ export type UiText = {
   tutorialChallengeMessage: string
   tutorialEditorTitle: string
   tutorialEditorMessage: string
+  editorUnlockOneTaskMessage: string
+  editorUnlockManyTasksMessage: string
   shopTitle: string
   shopSubtitle: string
   shopScoreLabel: string
@@ -238,15 +291,25 @@ export type UiText = {
   availableSyntaxTitle: string
   availableFunctionsLabel: string
   availableStructuresLabel: string
+  availableReadableValuesLabel: string
   availableLimitsLabel: string
   availableStructuresEmpty: string
-  availableSyntaxNextUnlockLabel: string
-  availableSyntaxNextEditor: string
-  availableSyntaxNextLine: string
-  availableSyntaxNextFor: string
-  availableSyntaxNextVariables: string
   availableSyntaxStepLimit: string
   availableSyntaxRangeLimit: string
+  nextTaskLabel: string
+  nextTaskProgressText: string
+  boardTitle: string
+  boardSubtitle: string
+  boardLastPointsLabel: string
+  boardLastBucketLabel: string
+  boardStreakLabel: string
+  boardBonusLaneLabel: string
+  boardLaneOneLabel: string
+  boardLaneTwoLabel: string
+  boardLaneThreeLabel: string
+  boardBucketOuterLabel: string
+  boardBucketInnerLabel: string
+  boardBucketCenterLabel: string
 }
 
 export type UnlockState = {
@@ -265,13 +328,25 @@ export type GameState = {
   correctAnswerCount: number
   solvedTaskIds: string[]
   activeTaskId: string | null
+  pendingTaskId: string | null
   isTaskOpen: boolean
   isRunning: boolean
   unlocks: UnlockState
   programSource: string
+  helperProgramSource: string
   programValidation: ProgramValidation
+  helperProgramValidation: ProgramValidation
   queuedSteps: ExecutionStep[]
   activeLineNumber: number | null
+  activeBalls: ActiveBall[]
+  nextBallId: number
+  nextSpawnAt: number | null
+  lastPoints: number
+  lastBucket: number
+  streak: number
+  bonusLane: BonusLane
+  dropsTowardNextTask: number
+  currentTaskTarget: number
   feedEntries: FeedEntry[]
   nextFeedEntryId: number
   tutorialStep: TutorialStep

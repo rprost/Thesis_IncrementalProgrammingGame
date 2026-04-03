@@ -75,7 +75,7 @@ export function TaskModal({
         className="modal-card"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="mini-task-title"
+        aria-labelledby="task-title"
       >
         <p className="modal-kicker">{ui.challengeLabel}</p>
         {tutorialTitle !== null && tutorialMessage !== null ? (
@@ -87,7 +87,7 @@ export function TaskModal({
             onDismiss={onDismissTutorial}
           />
         ) : null}
-        <h2 id="mini-task-title">{task.title}</h2>
+        <h2 id="task-title">{task.title}</h2>
         <p className="modal-question">{task.question}</p>
 
         <pre className="modal-code">

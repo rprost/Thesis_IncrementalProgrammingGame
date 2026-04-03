@@ -9,6 +9,8 @@ import { TutorialSpotlight } from './TutorialSpotlight'
 type ProgramEditorProps = {
   code: string
   ui: UiText
+  title: string
+  variant?: 'main' | 'helper'
   isEditable: boolean
   isUnlocked: boolean
   isHighlighted: boolean
@@ -16,7 +18,7 @@ type ProgramEditorProps = {
   lineUsageText: string
   helperText: string
   feedbackMessage: string | null
-  feedbackTone: 'neutral' | 'success' | 'error'
+  feedbackTone: 'neutral' | 'success' | 'warning' | 'error'
   tutorialTitle: string | null
   tutorialMessage: string | null
   onDismissTutorial: () => void
@@ -77,6 +79,8 @@ const editableExtensions = [python(), EditorView.lineWrapping]
 export function ProgramEditor({
   code,
   ui,
+  title,
+  variant = 'main',
   isEditable,
   isUnlocked,
   isHighlighted,
@@ -97,8 +101,10 @@ export function ProgramEditor({
 
   return (
     <section
-      className={`editor-shell${isHighlighted ? ' tutorial-target' : ''}`}
-      aria-label={ui.editorTitle}
+      className={`editor-shell ${variant}-editor${
+        isHighlighted ? ' tutorial-target' : ''
+      }`}
+      aria-label={title}
     >
       <div className="terminal-bar">
         <span />
@@ -107,7 +113,7 @@ export function ProgramEditor({
       </div>
       <div className="editor-header">
         <div className="editor-title-group">
-          <h2>{ui.editorTitle}</h2>
+          <h2>{title}</h2>
           <p className="editor-help">{helperText}</p>
         </div>
         <div className="editor-badges">

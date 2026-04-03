@@ -2,41 +2,41 @@
   {
     "id": "editor_unlock",
     "title": "Editor unlocked",
-    "description": "You can now write simple Python calls with add_score() in your own program."
+    "description": "You can now write your own ball-drop program with drop_ball()."
   },
   {
     "id": "line_capacity_3",
     "title": "+1 line",
-    "description": "Increase your program capacity to 3 executable lines so you can chain more add_score() calls."
-  },
-  {
-    "id": "for_loop",
-    "title": "for loop",
-    "description": "Unlock real Python repetition with for _ in range(n): so automation starts to feel like real code."
+    "description": "Increase the main program capacity to 3 lines so one run can release more balls."
   },
   {
     "id": "variables",
-    "title": "variables",
-    "description": "Store values in names like times = 3 and reuse them in your program."
+    "title": "Aim control",
+    "description": "Unlock assignment, simple expressions, bonus_lane, and set_aim(value) so your code can steer drops left, center, or right."
   },
   {
     "id": "if_statement",
-    "title": "if",
-    "description": "Add conditional branching so your program can make simple decisions."
-  },
-  {
-    "id": "while_loop",
-    "title": "while",
-    "description": "Unlock while loops once conditions are available and the player is ready for open-ended repetition."
+    "title": "Bonus-lane logic",
+    "description": "Unlock if/else so your program can choose an aim from the visible bonus_lane."
   },
   {
     "id": "functions",
-    "title": "functions",
-    "description": "Define small reusable helpers with def to structure your automation."
+    "title": "Helper function",
+    "description": "Unlock one reusable parameterless def function in a dedicated helper editor."
+  },
+  {
+    "id": "for_loop",
+    "title": "for loops",
+    "description": "Unlock real Python repetition with for _ in range(n): in both editors."
+  },
+  {
+    "id": "while_loop",
+    "title": "while loops",
+    "description": "A later unlock for open-ended repetition once more board logic is ready."
   },
   {
     "id": "lists",
     "title": "lists",
-    "description": "Work with small collections in real Python syntax and prepare for more advanced automation."
+    "description": "A later unlock for storing and processing small collections in strategies."
   }
 ]

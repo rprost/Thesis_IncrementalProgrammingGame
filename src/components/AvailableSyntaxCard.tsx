@@ -4,16 +4,16 @@ type AvailableSyntaxCardProps = {
   ui: UiText
   functions: string[]
   structures: string[]
+  readableValues: string[]
   limits: string[]
-  nextUnlock: string
 }
 
 export function AvailableSyntaxCard({
   ui,
   functions,
   structures,
+  readableValues,
   limits,
-  nextUnlock,
 }: AvailableSyntaxCardProps) {
   return (
     <section className="syntax-card" aria-label={ui.availableSyntaxTitle}>
@@ -46,6 +46,17 @@ export function AvailableSyntaxCard({
       </div>
 
       <div className="syntax-group">
+        <span className="syntax-group-label">{ui.availableReadableValuesLabel}</span>
+        <div className="syntax-chip-list">
+          {readableValues.map((entry) => (
+            <code className="syntax-chip" key={entry}>
+              {entry}
+            </code>
+          ))}
+        </div>
+      </div>
+
+      <div className="syntax-group">
         <span className="syntax-group-label">{ui.availableLimitsLabel}</span>
         <ul className="syntax-limit-list">
           {limits.map((entry) => (
@@ -53,10 +64,6 @@ export function AvailableSyntaxCard({
           ))}
         </ul>
       </div>
-
-      <p className="syntax-next-unlock">
-        <strong>{ui.availableSyntaxNextUnlockLabel}</strong> {nextUnlock}
-      </p>
     </section>
   )
 }

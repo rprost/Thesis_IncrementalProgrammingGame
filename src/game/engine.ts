@@ -1,4 +1,5 @@
 import type {
+  ActiveBall,
   FeedEntry,
   FeedEntryType,
   GameView,
@@ -7,10 +8,23 @@ import type {
   ShopNodeId,
   TutorialStep,
 } from '../types'
-import { INITIAL_PROGRAM_SOURCE, parseProgram } from './program'
-import { canOpenShop, SHOP_NODES } from './shop'
+import {
+  BALL_CANCEL_DURATION_MS,
+  BALL_FALL_DURATION_MS,
+  BALL_SETTLE_HOLD_MS,
+  BALL_SPAWN_INTERVAL_MS,
+  createBallOutcome,
+  getBallRenderState,
+  getTaskTarget,
+  rollBonusLane,
+} from './pachinko'
+import {
+  INITIAL_HELPER_SOURCE,
+  INITIAL_PROGRAM_SOURCE,
+  parseProgram,
+} from './program'
+import { canOpenShop, canPurchaseShopNode, SHOP_NODES } from './shop'
 
-export const CHALLENGE_INTERVAL = 5
 const FEED_LIMIT = 8
 
 type FeedEntryInput = {
@@ -75,44 +89,208 @@ function getNextTaskId(
   return topicTasks[randomIndex]?.id ?? null
 }
 
-function revalidateProgram(state: GameState): GameState {
+function revalidatePrograms(state: GameState): GameState {
+  const parsed = parseProgram(
+    state.programSource,
+    state.helperProgramSource,
+    state.unlocks.lineCapacity,
+    state.unlocks.allowedCommands,
+    state.unlocks.unlockedConstructs,
+    {
+      bonus_lane: state.bonusLane,
+    },
+  )
+
   return {
     ...state,
-    programValidation: parseProgram(
-      state.programSource,
-      state.unlocks.lineCapacity,
-      state.unlocks.allowedCommands,
-      state.unlocks.unlockedConstructs,
-    ).validation,
+    programValidation: parsed.mainValidation,
+    helperProgramValidation: parsed.helperValidation,
   }
 }
 
-function maybeOpenChallenge(state: GameState, tasks: GameTask[]): GameState {
-  if (
-    !hasRemainingTasks(tasks, state.solvedTaskIds) ||
-    state.runCount % CHALLENGE_INTERVAL !== 0
-  ) {
+function markBallSettled(ball: ActiveBall, now: number): ActiveBall {
+  return {
+    ...ball,
+    state: 'settled',
+    removeAt: now + BALL_SETTLE_HOLD_MS,
+  }
+}
+
+function markBallCanceled(ball: ActiveBall, now: number): ActiveBall {
+  const { x, y } = getBallRenderState(ball, now)
+
+  return {
+    ...ball,
+    state: 'canceled',
+    removeAt: now + BALL_CANCEL_DURATION_MS,
+    cancelX: x,
+    cancelY: y,
+  }
+}
+
+function spawnDueBalls(state: GameState, now: number): GameState {
+  if (!state.isRunning || state.pendingTaskId !== null || state.nextSpawnAt === null) {
     return state
   }
 
-  const nextTaskId =
-    state.activeTaskId ?? getNextTaskId(tasks, state.solvedTaskIds)
+  let nextSpawnAt = state.nextSpawnAt
+  let activeBalls = state.activeBalls
+  let queuedSteps = state.queuedSteps
+  let nextBallId = state.nextBallId
+  let activeLineNumber = state.activeLineNumber
 
-  if (nextTaskId === null) {
+  while (
+    queuedSteps.length > 0 &&
+    nextSpawnAt !== null &&
+    nextSpawnAt <= now
+  ) {
+    const [step, ...remainingSteps] = queuedSteps
+
+    if (step === undefined) {
+      break
+    }
+
+    const outcome = createBallOutcome(step.aim, state.bonusLane)
+    const activeBall: ActiveBall = {
+      id: nextBallId,
+      lineNumber: step.lineNumber,
+      aim: step.aim,
+      bucket: outcome.bucket,
+      bucketIndex: outcome.bucketIndex,
+      laneBonus: outcome.laneBonus,
+      points: outcome.points,
+      pathXs: outcome.pathXs,
+      spawnedAt: nextSpawnAt,
+      settleAt: nextSpawnAt + BALL_FALL_DURATION_MS,
+      removeAt: nextSpawnAt + BALL_FALL_DURATION_MS + BALL_SETTLE_HOLD_MS,
+      state: 'falling',
+    }
+
+    activeBalls = [...activeBalls, activeBall]
+    queuedSteps = remainingSteps
+    activeLineNumber = step.lineNumber
+    nextBallId += 1
+    nextSpawnAt += BALL_SPAWN_INTERVAL_MS
+  }
+
+  return {
+    ...state,
+    queuedSteps,
+    activeBalls,
+    nextBallId,
+    nextSpawnAt: queuedSteps.length === 0 ? null : nextSpawnAt,
+    activeLineNumber,
+  }
+}
+
+function settleDueBalls(
+  state: GameState,
+  tasks: GameTask[],
+  now: number,
+): GameState {
+  const dueBallIds = state.activeBalls
+    .filter((ball) => ball.state === 'falling' && ball.settleAt <= now)
+    .sort((left, right) => left.settleAt - right.settleAt)
+    .map((ball) => ball.id)
+
+  if (dueBallIds.length === 0) {
+    return state
+  }
+
+  let nextState = state
+
+  for (const ballId of dueBallIds) {
+    const ball = nextState.activeBalls.find((entry) => entry.id === ballId)
+
+    if (ball === undefined || ball.state !== 'falling') {
+      continue
+    }
+
+    nextState = {
+      ...nextState,
+      activeBalls: nextState.activeBalls.map((entry) =>
+        entry.id === ball.id ? markBallSettled(entry, now) : entry,
+      ),
+      score: nextState.score + ball.points * nextState.multiplier,
+      runCount: nextState.runCount + 1,
+      lastPoints: ball.points,
+      lastBucket: ball.bucketIndex + 1,
+      streak: ball.points >= 4 ? nextState.streak + 1 : 0,
+      dropsTowardNextTask: nextState.dropsTowardNextTask + 1,
+    }
+
+    if (
+      hasRemainingTasks(tasks, nextState.solvedTaskIds) &&
+      nextState.dropsTowardNextTask >= nextState.currentTaskTarget
+    ) {
+      const pendingTaskId =
+        nextState.activeTaskId ?? getNextTaskId(tasks, nextState.solvedTaskIds)
+
+      if (pendingTaskId !== null) {
+        nextState = {
+          ...nextState,
+          pendingTaskId,
+          isRunning: false,
+          queuedSteps: [],
+          nextSpawnAt: null,
+          activeLineNumber: null,
+          dropsTowardNextTask: 0,
+          bonusLane: rollBonusLane(),
+          activeBalls: nextState.activeBalls.map((entry) =>
+            entry.id === ball.id || entry.state !== 'falling'
+              ? entry
+              : markBallCanceled(entry, now),
+          ),
+        }
+      }
+
+      break
+    }
+  }
+
+  return nextState
+}
+
+function cleanupBalls(state: GameState, now: number): GameState {
+  const activeBalls = state.activeBalls.filter((ball) => ball.removeAt > now)
+
+  if (activeBalls.length === state.activeBalls.length) {
     return state
   }
 
   return {
     ...state,
-    activeTaskId: nextTaskId,
-    isTaskOpen: true,
-    isRunning: false,
-    queuedSteps: [],
+    activeBalls,
+  }
+}
+
+function finalizeRun(state: GameState, now: number): GameState {
+  const hasVisibleBalls = state.activeBalls.some((ball) => ball.removeAt > now)
+
+  if (state.pendingTaskId !== null) {
+    if (hasVisibleBalls) {
+      return state
+    }
+
+    return {
+      ...state,
+      activeTaskId: state.pendingTaskId,
+      pendingTaskId: null,
+      isTaskOpen: true,
+      tutorialStep:
+        state.tutorialStep === 'run_program'
+          ? 'first_challenge'
+          : state.tutorialStep,
+    }
+  }
+
+  if (state.isRunning || state.queuedSteps.length > 0 || hasVisibleBalls) {
+    return state
+  }
+
+  return {
+    ...state,
     activeLineNumber: null,
-    tutorialStep:
-      state.tutorialStep === 'run_program'
-        ? 'first_challenge'
-        : state.tutorialStep,
   }
 }
 
@@ -121,7 +299,7 @@ export function createInitialGameState(): GameState {
     editorVisible: true,
     editorEditable: false,
     lineCapacity: 1,
-    allowedCommands: ['add_score'],
+    allowedCommands: ['drop_ball'],
     unlockedConstructs: [],
   }
 
@@ -133,18 +311,37 @@ export function createInitialGameState(): GameState {
     correctAnswerCount: 0,
     solvedTaskIds: [],
     activeTaskId: null,
+    pendingTaskId: null,
     isTaskOpen: false,
     isRunning: false,
     unlocks,
     programSource: INITIAL_PROGRAM_SOURCE,
-    programValidation: parseProgram(
-      INITIAL_PROGRAM_SOURCE,
-      unlocks.lineCapacity,
-      unlocks.allowedCommands,
-      unlocks.unlockedConstructs,
-    ).validation,
+    helperProgramSource: '',
+    programValidation: {
+      isValid: true,
+      issues: [],
+      executableLineCount: 1,
+      executionStepCount: 1,
+      helperCount: 0,
+    },
+    helperProgramValidation: {
+      isValid: true,
+      issues: [],
+      executableLineCount: 0,
+      executionStepCount: 0,
+      helperCount: 0,
+    },
     queuedSteps: [],
     activeLineNumber: null,
+    activeBalls: [],
+    nextBallId: 1,
+    nextSpawnAt: null,
+    lastPoints: 0,
+    lastBucket: 3,
+    streak: 0,
+    bonusLane: 2,
+    dropsTowardNextTask: 0,
+    currentTaskTarget: 5,
     feedEntries: [],
     nextFeedEntryId: 1,
     tutorialStep: 'run_program',
@@ -153,10 +350,7 @@ export function createInitialGameState(): GameState {
     hasOpenedShop: false,
   }
 
-  return prependFeedEntries(initialState, [
-    { type: 'game_opened' },
-    { type: 'run_hint' },
-  ])
+  return revalidatePrograms(initialState)
 }
 
 export function dismissTutorialStep(
@@ -173,10 +367,7 @@ export function dismissTutorialStep(
   }
 }
 
-export function setCurrentView(
-  state: GameState,
-  view: GameView,
-): GameState {
+export function setCurrentView(state: GameState, view: GameView): GameState {
   if (view === state.currentView || state.isRunning) {
     return state
   }
@@ -196,11 +387,7 @@ export function setCurrentView(
         ...nextState,
         hasOpenedShop: true,
       },
-      [
-        {
-          type: 'shop_opened',
-        },
-      ],
+      [{ type: 'shop_opened' }],
     )
   }
 
@@ -215,100 +402,113 @@ export function updateProgramSource(
     return state
   }
 
-  return {
+  return revalidatePrograms({
     ...state,
     programSource,
-    programValidation: parseProgram(
-      programSource,
-      state.unlocks.lineCapacity,
-      state.unlocks.allowedCommands,
-      state.unlocks.unlockedConstructs,
-    ).validation,
-  }
+  })
 }
 
-export function startProgramRun(
+export function updateHelperProgramSource(
   state: GameState,
+  helperProgramSource: string,
 ): GameState {
+  if (state.isRunning) {
+    return state
+  }
+
+  return revalidatePrograms({
+    ...state,
+    helperProgramSource,
+  })
+}
+
+export function startProgramRun(state: GameState): GameState {
   if (state.isTaskOpen || state.isRunning) {
     return state
   }
 
-  const parsedProgram = parseProgram(
+  const parsed = parseProgram(
     state.programSource,
+    state.helperProgramSource,
     state.unlocks.lineCapacity,
     state.unlocks.allowedCommands,
     state.unlocks.unlockedConstructs,
+    {
+      bonus_lane: state.bonusLane,
+    },
   )
 
-  if (!parsedProgram.validation.isValid || parsedProgram.steps.length === 0) {
+  if (!parsed.mainValidation.isValid || !parsed.helperValidation.isValid) {
     return {
       ...state,
-      programValidation: parsedProgram.validation,
+      programValidation: parsed.mainValidation,
+      helperProgramValidation: parsed.helperValidation,
       queuedSteps: [],
       activeLineNumber: null,
       isRunning: false,
+    }
+  }
+
+  if (parsed.steps.length === 0) {
+    return {
+      ...state,
+      programValidation: parsed.mainValidation,
+      helperProgramValidation: parsed.helperValidation,
+      queuedSteps: [],
+      activeLineNumber: null,
+      isRunning: false,
+      bonusLane: rollBonusLane(),
     }
   }
 
   return {
     ...state,
-    programValidation: parsedProgram.validation,
-    queuedSteps: parsedProgram.steps,
-    activeLineNumber: parsedProgram.steps[0]?.lineNumber ?? null,
+    programValidation: parsed.mainValidation,
+    helperProgramValidation: parsed.helperValidation,
+    queuedSteps: parsed.steps,
     isRunning: true,
+    nextSpawnAt: Date.now(),
+    activeLineNumber: parsed.steps[0]?.lineNumber ?? null,
     currentView: state.currentView === 'shop' ? 'play' : state.currentView,
   }
 }
 
-export function advanceProgramRun(
-  state: GameState,
-  tasks: GameTask[],
-): GameState {
-  if (!state.isRunning || state.queuedSteps.length === 0) {
-    return state.isRunning
-      ? {
-          ...state,
-          isRunning: false,
-          activeLineNumber: null,
-          queuedSteps: [],
-        }
-      : state
-  }
+export function advanceProgramRun(state: GameState, tasks: GameTask[]): GameState {
+  const now = Date.now()
 
-  const [currentStep, ...remainingSteps] = state.queuedSteps
+  let nextState = cleanupBalls(state, now)
+  nextState = settleDueBalls(nextState, tasks, now)
+  nextState = spawnDueBalls(nextState, now)
+  nextState = cleanupBalls(nextState, now)
 
-  if (currentStep === undefined) {
-    return {
-      ...state,
-      isRunning: false,
-      activeLineNumber: null,
-      queuedSteps: [],
-    }
-  }
-
-  let nextState: GameState = {
-    ...state,
-    queuedSteps: remainingSteps,
-    activeLineNumber: remainingSteps[0]?.lineNumber ?? null,
-    isRunning: remainingSteps.length > 0,
-  }
-
-  if (currentStep.type === 'add_score') {
+  if (
+    nextState.isRunning &&
+    nextState.queuedSteps.length === 0 &&
+    nextState.activeBalls.length === 0 &&
+    nextState.pendingTaskId === null
+  ) {
     nextState = {
       ...nextState,
-      score: nextState.score + nextState.multiplier,
-      runCount: nextState.runCount + 1,
+      isRunning: false,
+      activeLineNumber: null,
+      nextSpawnAt: null,
+      bonusLane: rollBonusLane(),
     }
   }
 
-  const interruptedState = maybeOpenChallenge(nextState, tasks)
-
-  if (interruptedState !== nextState) {
-    return interruptedState
+  if (
+    !nextState.isRunning &&
+    nextState.pendingTaskId === null &&
+    nextState.queuedSteps.length === 0 &&
+    nextState.activeBalls.length === 0
+  ) {
+    nextState = {
+      ...nextState,
+      activeLineNumber: null,
+    }
   }
 
-  return nextState
+  return finalizeRun(nextState, now)
 }
 
 export function applyTaskResult(
@@ -376,7 +576,10 @@ export function applyTaskResult(
     )
   }
 
-  nextState = revalidateProgram(nextState)
+  nextState = revalidatePrograms({
+    ...nextState,
+    currentTaskTarget: getTaskTarget(nextState),
+  })
 
   return prependFeedEntries(nextState, newEntries)
 }
@@ -384,6 +587,7 @@ export function applyTaskResult(
 export function purchaseShopNode(
   state: GameState,
   nodeId: ShopNodeId,
+  tasks: GameTask[],
 ): GameState {
   if (!canOpenShop(state) || state.isRunning) {
     return state
@@ -394,11 +598,18 @@ export function purchaseShopNode(
   if (
     node === undefined ||
     !node.implemented ||
+    !canPurchaseShopNode(state, nodeId, tasks) ||
     state.purchasedUpgradeIds.includes(node.id) ||
     state.score < node.cost
   ) {
     return state
   }
+
+  const nextAllowedCommands = node.unlockCommand
+    ? state.unlocks.allowedCommands.includes(node.unlockCommand)
+      ? state.unlocks.allowedCommands
+      : [...state.unlocks.allowedCommands, node.unlockCommand]
+    : state.unlocks.allowedCommands
 
   const nextUnlockedConstructs = node.unlockConstruct
     ? state.unlocks.unlockedConstructs.includes(node.unlockConstruct)
@@ -413,11 +624,19 @@ export function purchaseShopNode(
     unlocks: {
       ...state.unlocks,
       lineCapacity: node.lineCapacity ?? state.unlocks.lineCapacity,
+      allowedCommands: nextAllowedCommands,
       unlockedConstructs: nextUnlockedConstructs,
     },
+    helperProgramSource:
+      node.id === 'functions' && state.helperProgramSource.trim() === ''
+        ? INITIAL_HELPER_SOURCE
+        : state.helperProgramSource,
   }
 
-  const revalidatedState = revalidateProgram(nextState)
+  const revalidatedState = revalidatePrograms({
+    ...nextState,
+    currentTaskTarget: getTaskTarget(nextState),
+  })
 
   return prependFeedEntries(revalidatedState, [
     {
@@ -439,6 +658,5 @@ export function getRunsUntilChallenge(
     return null
   }
 
-  const remainder = state.runCount % CHALLENGE_INTERVAL
-  return remainder === 0 ? CHALLENGE_INTERVAL : CHALLENGE_INTERVAL - remainder
+  return Math.max(0, state.currentTaskTarget - state.dropsTowardNextTask)
 }

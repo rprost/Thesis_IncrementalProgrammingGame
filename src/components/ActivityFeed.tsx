@@ -10,9 +10,6 @@ type ActivityFeedProps = {
 
 function getEntryCategory(entry: FeedEntry, ui: UiText): string {
   switch (entry.type) {
-    case 'game_opened':
-    case 'run_hint':
-      return ui.feedCategoryTutorial
     case 'mini_task_solved':
     case 'mini_task_failed':
       return ui.feedCategoryTask
@@ -41,10 +38,6 @@ function getEntryMessage(
     ''
 
   switch (entry.type) {
-    case 'game_opened':
-      return ui.feedGameOpened
-    case 'run_hint':
-      return ui.feedRunHint
     case 'mini_task_solved':
       return formatText(ui.feedMiniTaskSolved, { task: taskTitle })
     case 'mini_task_failed':
@@ -62,12 +55,17 @@ function getEntryMessage(
         upgrade: upgradeTitle,
       })
     default:
-      return ui.feedGameOpened
+      return ''
   }
 }
 
 export function ActivityFeed({ entries, tasks, shopNodes, ui }: ActivityFeedProps) {
-  const visibleEntries = entries.filter((entry) => entry.type !== 'mini_task_appeared')
+  const visibleEntries = entries.filter(
+    (entry) =>
+      entry.type !== 'mini_task_appeared' &&
+      entry.type !== 'game_opened' &&
+      entry.type !== 'run_hint',
+  )
 
   return (
     <aside className="activity-feed">
