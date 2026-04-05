@@ -4,7 +4,6 @@ import { Decoration, EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
 import type { UiText } from '../types'
-import { TutorialSpotlight } from './TutorialSpotlight'
 
 type ProgramEditorProps = {
   code: string
@@ -19,9 +18,6 @@ type ProgramEditorProps = {
   helperText: string
   feedbackMessage: string | null
   feedbackTone: 'neutral' | 'success' | 'warning' | 'error'
-  tutorialTitle: string | null
-  tutorialMessage: string | null
-  onDismissTutorial: () => void
   onChange: (value: string) => void
 }
 
@@ -89,9 +85,6 @@ export function ProgramEditor({
   helperText,
   feedbackMessage,
   feedbackTone,
-  tutorialTitle,
-  tutorialMessage,
-  onDismissTutorial,
   onChange,
 }: ProgramEditorProps) {
   const executionHighlightExtension = createExecutionHighlightExtension(
@@ -125,17 +118,6 @@ export function ProgramEditor({
           </span>
         </div>
       </div>
-      {tutorialTitle !== null && tutorialMessage !== null ? (
-        <div className="editor-tutorial">
-          <TutorialSpotlight
-            label={ui.tutorialLabel}
-            title={tutorialTitle}
-            message={tutorialMessage}
-            dismissLabel={ui.tutorialDismissButton}
-            onDismiss={onDismissTutorial}
-          />
-        </div>
-      ) : null}
       <CodeMirror
         value={code}
         editable={isEditable}

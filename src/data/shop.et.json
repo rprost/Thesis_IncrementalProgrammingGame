@@ -1,42 +1,37 @@
 [
   {
-    "id": "editor_unlock",
-    "title": "Redaktor avatud",
-    "description": "Nüüd saad kirjutada oma pallilangetamise programmi käsuga drop_ball()."
+    "id": "extra_line",
+    "title": "Lisarida",
+    "description": "Lisa põhiprogrammi üks rida juurde, et strateegia mugavamalt ära mahuks."
   },
   {
-    "id": "line_capacity_3",
-    "title": "+1 rida",
-    "description": "Suurenda põhiprogrammi mahtu 3 reani, et ühes käivituses saaks rohkem palle lahti lasta."
+    "id": "gate_preview",
+    "title": "Heledamad külgrailid",
+    "description": "Muuda jackpot- ja return-railid laual selgemalt hõõguvaks."
   },
   {
-    "id": "variables",
-    "title": "Sihi juhtimine",
-    "description": "Ava omistamine, lihtsad avaldised, bonus_lane ja set_aim(value), et kood saaks suunata langetusi vasakule, keskele või paremale."
+    "id": "return_gate_hold",
+    "title": "Värava hoidmine",
+    "description": "Hoia tagasiväravat kauem avatuna, et hea tingimuslause saaks selle lihtsamini ära kasutada."
   },
   {
-    "id": "if_statement",
-    "title": "Boonusraja loogika",
-    "description": "Ava if/else, et programm saaks valida sihi nähtava bonus_lane väärtuse järgi."
+    "id": "helper_line_capacity",
+    "title": "Abipuhver",
+    "description": "Anna abiredaktorile kaks lisarida, et pikem taaskasutatav taktika ära mahuks."
   },
   {
-    "id": "functions",
-    "title": "Abifunktsioon",
-    "description": "Ava üks taaskasutatav parameetriteta def funktsioon eraldi abiredaktoris."
+    "id": "relay_bonus",
+    "title": "Kajavõimendus",
+    "description": "Suurenda nähtava kajasihi tasu, kui märgitud rada saab tabamuse."
   },
   {
-    "id": "for_loop",
-    "title": "for-tsüklid",
-    "description": "Ava päris Pythoni kordus kujul for _ in range(n): mõlemas redaktoris."
+    "id": "feeder_persistence",
+    "title": "Sööturi püsivus",
+    "description": "Lase kombotuledel nõrgemate jooksude vahel laengut hoida, mitte kohe tühjeneda."
   },
   {
-    "id": "while_loop",
-    "title": "while-tsüklid",
-    "description": "Hiljem avanev täiendus avatuma korduse jaoks, kui rohkem mängulogiikat on valmis."
-  },
-  {
-    "id": "lists",
-    "title": "listid",
-    "description": "Hiljem avanev täiendus väikeste kogumite salvestamiseks ja töötlemiseks strateegiates."
+    "id": "lightning_bonus",
+    "title": "Välguboonus",
+    "description": "Muuda välgupallid väärtuslikumaks pärast seda, kui kombosöötur saab täis."
   }
 ]

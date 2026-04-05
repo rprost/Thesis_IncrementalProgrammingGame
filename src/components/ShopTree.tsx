@@ -2,45 +2,37 @@ import { formatText } from '../content'
 import { canPurchaseShopNode, getShopNodeStatus, SHOP_NODES } from '../game/shop'
 import type {
   GameState,
-  GameTask,
-  ShopNodeCopy,
-  ShopNodeDefinition,
-  ShopNodeStatus,
+  SupportUpgradeCopy,
+  SupportUpgradeDefinition,
   UiText,
 } from '../types'
 
 type ShopTreeProps = {
   gameState: GameState
-  tasks: GameTask[]
-  shopNodes: ShopNodeCopy[]
+  shopNodes: SupportUpgradeCopy[]
   ui: UiText
-  onPurchase: (nodeId: ShopNodeDefinition['id']) => void
+  onPurchase: (nodeId: SupportUpgradeDefinition['id']) => void
 }
 
-function getNodeCopy(shopNodes: ShopNodeCopy[], nodeId: ShopNodeDefinition['id']) {
+function getNodeCopy(
+  shopNodes: SupportUpgradeCopy[],
+  nodeId: SupportUpgradeDefinition['id'],
+) {
   return shopNodes.find((entry) => entry.id === nodeId)
-}
-
-function getStatusLabel(status: ShopNodeStatus, ui: UiText): string {
-  switch (status) {
-    case 'completed':
-      return ui.shopNodeCompleted
-    case 'available':
-      return ui.shopNodeAvailable
-    case 'preview':
-      return ui.shopNodePreview
-    default:
-      return ui.shopNodeLocked
-  }
 }
 
 export function ShopTree({
   gameState,
-  tasks,
   shopNodes,
   ui,
   onPurchase,
 }: ShopTreeProps) {
+  const visibleNodes = SHOP_NODES.filter(
+    (node) =>
+      gameState.learnedTopicIds.includes(node.requiredTopicId) ||
+      gameState.supportUpgradeIds.includes(node.id),
+  )
+
   return (
     <section className="shop-shell" aria-label={ui.shopTitle}>
       <div className="shop-header">
@@ -55,32 +47,33 @@ export function ShopTree({
       </div>
 
       <div className="skill-tree">
-        {SHOP_NODES.map((node) => {
+        {visibleNodes.map((node) => {
           const copy = getNodeCopy(shopNodes, node.id)
-          const status = getShopNodeStatus(gameState, node, tasks)
-          const canPurchase = canPurchaseShopNode(gameState, node.id, tasks)
-          const isPurchased = gameState.purchasedUpgradeIds.includes(node.id)
+          const status = getShopNodeStatus(gameState, node)
+          const canPurchase = canPurchaseShopNode(gameState, node.id)
+          const isPurchased = gameState.supportUpgradeIds.includes(node.id)
           const purchaseLabel = formatText(ui.shopBuyButton, {
             cost: String(node.cost),
           })
 
           return (
-            <article
-              className={`skill-node ${status}`}
-              key={node.id}
-            >
+            <article className={`skill-node ${status}`} key={node.id}>
               <div className="skill-node-top">
                 <span className="skill-node-status">
-                  {getStatusLabel(status, ui)}
+                  {status === 'completed'
+                    ? ui.shopNodeCompleted
+                    : status === 'available'
+                      ? ui.shopNodeAvailable
+                      : ui.shopNodeLocked}
                 </span>
-                {node.cost > 0 ? (
-                  <span className="skill-node-cost">
-                    {formatText(ui.shopCostValue, { cost: String(node.cost) })}
-                  </span>
-                ) : null}
+                <span className="skill-node-cost">
+                  {formatText(ui.shopCostValue, { cost: String(node.cost) })}
+                </span>
               </div>
+
               <h3>{copy?.title ?? node.id}</h3>
               <p>{copy?.description ?? ''}</p>
+
               {status === 'available' ? (
                 <div className="skill-node-footer">
                   <button
@@ -95,8 +88,8 @@ export function ShopTree({
                     <span className="skill-node-hint">{ui.shopAvailableHint}</span>
                   ) : null}
                 </div>
-              ) : status === 'preview' ? (
-                <p className="skill-node-hint">{ui.shopPreviewMessage}</p>
+              ) : status === 'locked' ? (
+                <p className="skill-node-hint">{ui.shopLockedHint}</p>
               ) : null}
             </article>
           )

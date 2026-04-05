@@ -2,11 +2,12 @@ import { startTransition, useEffect, useState } from 'react'
 import './App.css'
 import { ActivityFeed } from './components/ActivityFeed'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
+import { HelpCenter, type HelpEntry } from './components/HelpCenter'
+import { NextStepCard } from './components/NextStepCard'
 import { PachinkoBoard } from './components/PachinkoBoard'
 import { ProgramEditor } from './components/ProgramEditor'
 import { ShopTree } from './components/ShopTree'
 import { TaskModal } from './components/TaskModal'
-import { TutorialSpotlight } from './components/TutorialSpotlight'
 import {
   formatText,
   getInitialLocale,
@@ -17,25 +18,56 @@ import {
   advanceProgramRun,
   applyTaskResult,
   createInitialGameState,
-  dismissTutorialStep,
-  getRunsUntilChallenge,
+  dismissUnlockSpotlight,
   purchaseShopNode,
   setCurrentView,
+  startCheckpoint,
   startProgramRun,
   updateHelperProgramSource,
   updateProgramSource,
 } from './game/engine'
-import { MAX_FOR_RANGE, MAX_HELPER_LINES, MAX_STEPS_PER_RUN } from './game/program'
+import { MAX_FOR_RANGE, MAX_STEPS_PER_RUN } from './game/program'
 import { canOpenShop } from './game/shop'
 import type {
   GameTask,
+  GameState,
   Locale,
   LockedConstruct,
   ProgramValidation,
-  ShopNodeId,
-  TutorialStep,
+  ReferenceExampleItem,
+  ReferenceValueItem,
+  SupportUpgradeId,
+  TaskTopicId,
+  TopicDefinition,
   UiText,
 } from './types'
+
+type NextStepModel = {
+  title: string
+  body: string
+  stageLabel: string
+  progressText: string | null
+  progressValue: number | null
+  actionLabel: string | null
+}
+
+type HelpEntryId =
+  | 'welcome'
+  | 'unlock-variables'
+  | 'unlock-conditions'
+  | 'unlock-functions'
+  | 'unlock-loops'
+
+function getCurrentTopic(
+  gameState: GameState,
+  topics: TopicDefinition[],
+): TopicDefinition | null {
+  if (gameState.currentTopicId === null) {
+    return null
+  }
+
+  return topics.find((topic) => topic.id === gameState.currentTopicId) ?? null
+}
 
 function getConstructLabel(construct: LockedConstruct, ui: UiText): string {
   switch (construct) {
@@ -45,12 +77,8 @@ function getConstructLabel(construct: LockedConstruct, ui: UiText): string {
       return ui.constructVariablesLabel
     case 'if':
       return ui.constructIfLabel
-    case 'while':
-      return ui.constructWhileLabel
     case 'functions':
       return ui.constructFunctionsLabel
-    case 'lists':
-      return ui.constructListsLabel
     default:
       return ui.constructFunctionsLabel
   }
@@ -78,7 +106,6 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'for_range_limit') ??
     validation.issues.find((issue) => issue.code === 'unsupported_for_loop') ??
     validation.issues.find((issue) => issue.code === 'for_body_required') ??
-    validation.issues.find((issue) => issue.code === 'nested_block_not_supported') ??
     validation.issues.find((issue) => issue.code === 'invalid_for_body') ??
     validation.issues.find((issue) => issue.code === 'unexpected_indentation') ??
     validation.issues.find((issue) => issue.code === 'invalid_command') ??
@@ -120,10 +147,6 @@ function getProgramValidationMessage(
       return formatText(ui.programErrorInvalidForBody, {
         line: String(prioritizedIssue.lineNumber ?? 1),
       })
-    case 'nested_block_not_supported':
-      return formatText(ui.programErrorNestedBlocks, {
-        line: String(prioritizedIssue.lineNumber ?? 1),
-      })
     case 'unexpected_indentation':
       return formatText(ui.programErrorUnexpectedIndentation, {
         line: String(prioritizedIssue.lineNumber ?? 1),
@@ -163,7 +186,7 @@ function getProgramValidationMessage(
       })
     case 'helper_line_limit_exceeded':
       return formatText(ui.programErrorHelperLineLimitExceeded, {
-        limit: String(prioritizedIssue.limit ?? MAX_HELPER_LINES),
+        limit: String(prioritizedIssue.limit ?? 6),
       })
     case 'helper_not_defined':
       return formatText(ui.programErrorHelperNotDefined, {
@@ -175,85 +198,299 @@ function getProgramValidationMessage(
   }
 }
 
-function getVisibleTutorialStep(
-  tutorialStep: TutorialStep,
-  dismissedTutorialSteps: TutorialStep[],
-  isTaskOpen: boolean,
-): TutorialStep | null {
-  if (
-    tutorialStep === 'editor_unlock' &&
-    !dismissedTutorialSteps.includes('editor_unlock')
-  ) {
-    return 'editor_unlock'
+function getUnlockHelpEntryId(topicId: TaskTopicId): HelpEntryId {
+  switch (topicId) {
+    case 'variables':
+      return 'unlock-variables'
+    case 'conditions':
+      return 'unlock-conditions'
+    case 'functions':
+      return 'unlock-functions'
+    case 'loops':
+      return 'unlock-loops'
+    default:
+      return 'unlock-variables'
   }
-
-  if (
-    tutorialStep === 'first_challenge' &&
-    isTaskOpen &&
-    !dismissedTutorialSteps.includes('first_challenge')
-  ) {
-    return 'first_challenge'
-  }
-
-  if (
-    tutorialStep === 'run_program' &&
-    !dismissedTutorialSteps.includes('run_program')
-  ) {
-    return 'run_program'
-  }
-
-  return null
 }
 
-function getTutorialContent(
-  tutorialStep: TutorialStep | null,
+function buildNextStepModel(
+  gameState: GameState,
+  topics: TopicDefinition[],
   ui: UiText,
-): { title: string; message: string } | null {
-  if (tutorialStep === null) {
-    return null
-  }
+): NextStepModel {
+  const currentTopic = getCurrentTopic(gameState, topics)
+  const progressText =
+    currentTopic !== null && gameState.topicMeterGoal > 0
+      ? formatText(ui.nextStepProgressValue, {
+          current: String(gameState.topicMeter),
+          total: String(gameState.topicMeterGoal),
+        })
+      : null
+  const progressValue =
+    currentTopic !== null && gameState.topicMeterGoal > 0
+      ? gameState.topicMeter / gameState.topicMeterGoal
+      : null
 
-  switch (tutorialStep) {
-    case 'run_program':
+  switch (gameState.topicStage) {
+    case 'onboarding':
       return {
-        title: ui.tutorialRunTitle,
-        message: ui.tutorialRunMessage,
+        title: ui.nextStepOnboardingTitle,
+        body: ui.nextStepOnboardingBody,
+        stageLabel: ui.nextStepStageOnboarding,
+        progressText: null,
+        progressValue: null,
+        actionLabel: null,
       }
-    case 'first_challenge':
+    case 'checkpoint_ready':
       return {
-        title: ui.tutorialChallengeTitle,
-        message: ui.tutorialChallengeMessage,
+        title: currentTopic?.title ?? ui.nextStepCheckpointTitle,
+        body: formatText(ui.nextStepCheckpointReadyBody, {
+          topic: currentTopic?.title ?? ui.nextStepCheckpointTitle,
+        }),
+        stageLabel: ui.nextStepStageCheckpointReady,
+        progressText,
+        progressValue: 1,
+        actionLabel: ui.currentGoalStartCheckpointButton,
       }
-    case 'editor_unlock':
+    case 'checkpoint_active':
       return {
-        title: ui.tutorialEditorTitle,
-        message: ui.tutorialEditorMessage,
+        title: currentTopic?.title ?? ui.nextStepCheckpointTitle,
+        body: formatText(ui.nextStepCheckpointActiveBody, {
+          topic: currentTopic?.title ?? ui.nextStepCheckpointTitle,
+        }),
+        stageLabel: ui.nextStepStageCheckpointActive,
+        progressText,
+        progressValue: 1,
+        actionLabel: null,
       }
+    case 'completed':
+      return {
+        title: ui.nextStepCompletedTitle,
+        body: ui.nextStepCompletedBody,
+        stageLabel: ui.nextStepStageCompleted,
+        progressText: null,
+        progressValue: null,
+        actionLabel: null,
+      }
+    case 'new_unlock_spotlight':
+      return {
+        title: currentTopic?.title ?? ui.nextStepLearningTitle,
+        body: currentTopic?.nextActionText ?? ui.nextStepOnboardingBody,
+        stageLabel: ui.nextStepStageUnlocked,
+        progressText,
+        progressValue,
+        actionLabel: null,
+      }
+    case 'topic_active':
     default:
-      return null
+      return {
+        title: currentTopic?.title ?? ui.nextStepLearningTitle,
+        body: currentTopic?.nextActionText ?? ui.nextStepOnboardingBody,
+        stageLabel: ui.nextStepStageLearning,
+        progressText,
+        progressValue,
+        actionLabel: null,
+      }
   }
+}
+
+function buildHelpCatalog(
+  ui: UiText,
+  topics: TopicDefinition[],
+): Record<HelpEntryId, HelpEntry> {
+  const topicById = new Map(topics.map((topic) => [topic.id, topic]))
+
+  return {
+    welcome: {
+      id: 'welcome',
+      title: ui.guideWelcomeTitle,
+      body: ui.guideWelcomeBody,
+      snippet: 'drop_ball()',
+    },
+    'unlock-variables': {
+      id: 'unlock-variables',
+      title: ui.guideVariablesUnlockTitle,
+      body: ui.guideVariablesUnlockBody,
+      snippet: topicById.get('variables')?.suggestedSnippet,
+    },
+    'unlock-conditions': {
+      id: 'unlock-conditions',
+      title: ui.guideConditionsUnlockTitle,
+      body: ui.guideConditionsUnlockBody,
+      snippet: topicById.get('conditions')?.suggestedSnippet,
+    },
+    'unlock-functions': {
+      id: 'unlock-functions',
+      title: ui.guideFunctionsUnlockTitle,
+      body: ui.guideFunctionsUnlockBody,
+      snippet: topicById.get('functions')?.suggestedSnippet,
+    },
+    'unlock-loops': {
+      id: 'unlock-loops',
+      title: ui.guideLoopsUnlockTitle,
+      body: ui.guideLoopsUnlockBody,
+      snippet: topicById.get('loops')?.suggestedSnippet,
+    },
+  }
+}
+
+function buildReferenceValues(
+  gameState: GameState,
+  ui: UiText,
+): ReferenceValueItem[] {
+  return [
+    {
+      id: 'lane_numbers',
+      label: ui.referenceLaneNumbersLabel,
+      description: ui.referenceLaneNumbersDescription,
+    },
+    ...(gameState.learnedTopicIds.includes('variables')
+      ? [
+          {
+            id: 'bonus_lane',
+            label: 'bonus_lane',
+            description: ui.referenceBonusLaneDescription,
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('conditions')
+      ? [
+          {
+            id: 'jackpot_side',
+            label: 'jackpot_side',
+            description: ui.referenceJackpotSideDescription,
+          },
+          {
+            id: 'return_side',
+            label: 'return_side',
+            description: ui.referenceReturnSideDescription,
+          },
+          {
+            id: 'return_gate_open',
+            label: 'return_gate_open',
+            description: ui.referenceReturnGateDescription,
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('loops')
+      ? [
+          {
+            id: 'feeder_charge',
+            label: 'feeder_charge',
+            description: ui.referenceFeederChargeDescription,
+          },
+          {
+            id: 'combo_target',
+            label: 'combo_target',
+            description: ui.referenceComboTargetDescription,
+          },
+          {
+            id: 'burst_ready',
+            label: 'burst_ready',
+            description: ui.referenceBurstReadyDescription,
+          },
+        ]
+      : []),
+  ]
+}
+
+function buildReferenceExamples(
+  gameState: GameState,
+  ui: UiText,
+): ReferenceExampleItem[] {
+  return [
+    ...(gameState.learnedTopicIds.includes('variables')
+      ? [
+          {
+            id: 'variables-example',
+            label: ui.referenceExampleVariablesLabel,
+            code: 'target = bonus_lane\nset_aim(target)\ndrop_ball()',
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('conditions')
+      ? [
+          {
+            id: 'conditions-example',
+            label: ui.referenceExampleConditionsLabel,
+            code: 'if jackpot_side == 1:\n    set_aim(1)\nelse:\n    set_aim(3)\ndrop_ball()',
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('functions')
+      ? [
+          {
+            id: 'functions-example',
+            label: ui.referenceExampleFunctionsLabel,
+            code: 'follow_bonus()',
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('loops')
+      ? [
+          {
+            id: 'loops-example',
+            label: ui.referenceExampleLoopsLabel,
+            code: 'for _ in range(3):\n    follow_bonus()',
+          },
+        ]
+      : []),
+  ]
 }
 
 function App() {
   const [locale, setLocale] = useState<Locale>(() => getInitialLocale())
   const [gameState, setGameState] = useState(() => createInitialGameState())
   const [animationNow, setAnimationNow] = useState(() => Date.now())
+  const [selectedHelpEntryId, setSelectedHelpEntryId] =
+    useState<HelpEntryId | null>(null)
+  const [isHelpManuallyOpen, setIsHelpManuallyOpen] = useState(false)
+  const [dismissedAutoHelpIds, setDismissedAutoHelpIds] = useState<HelpEntryId[]>(
+    [],
+  )
 
-  const { ui, tasks, shopNodes } = getLocaleContent(locale)
+  const { ui, tasks, shopNodes, topics } = getLocaleContent(locale)
+  const helpCatalog = buildHelpCatalog(ui, topics)
+  const helpEntryIds: HelpEntryId[] = [
+    'welcome',
+    ...(gameState.learnedTopicIds.includes('variables')
+      ? (['unlock-variables'] as const)
+      : []),
+    ...(gameState.learnedTopicIds.includes('conditions')
+      ? (['unlock-conditions'] as const)
+      : []),
+    ...(gameState.learnedTopicIds.includes('functions')
+      ? (['unlock-functions'] as const)
+      : []),
+    ...(gameState.learnedTopicIds.includes('loops')
+      ? (['unlock-loops'] as const)
+      : []),
+  ]
+  const forcedHelpEntryId: HelpEntryId | null =
+    gameState.topicStage === 'onboarding'
+      ? 'welcome'
+      : gameState.currentTopicId !== null &&
+          gameState.topicStage === 'new_unlock_spotlight'
+        ? getUnlockHelpEntryId(gameState.currentTopicId)
+        : null
+  const showForcedHelp =
+    forcedHelpEntryId !== null &&
+    !dismissedAutoHelpIds.includes(forcedHelpEntryId)
+  const activeHelpEntryId =
+    showForcedHelp
+      ? forcedHelpEntryId
+      : selectedHelpEntryId ?? helpEntryIds[helpEntryIds.length - 1] ?? null
+  const helpEntries = helpEntryIds
+    .map((entryId) => helpCatalog[entryId])
+    .filter((entry): entry is HelpEntry => entry !== undefined)
+  const isHelpOpen = isHelpManuallyOpen || showForcedHelp
   const activeTask =
     gameState.activeTaskId === null
       ? null
       : tasks.find((task) => task.id === gameState.activeTaskId) ?? null
   const shopIsAvailable = canOpenShop(gameState)
-  const visibleTutorialStep = getVisibleTutorialStep(
-    gameState.tutorialStep,
-    gameState.dismissedTutorialSteps,
-    activeTask !== null && gameState.isTaskOpen,
-  )
-  const tutorialContent = getTutorialContent(visibleTutorialStep, ui)
   const functionsUnlocked =
     gameState.unlocks.unlockedConstructs.includes('functions')
-  const runsUntilChallenge = getRunsUntilChallenge(gameState, tasks)
   const validationMessage = getProgramValidationMessage(
     gameState.programValidation,
     ui,
@@ -268,35 +505,21 @@ function App() {
   })
   const helperUsageText = formatText(ui.helperEditorLineUsageValue, {
     used: String(gameState.helperProgramValidation.executableLineCount),
-    limit: String(MAX_HELPER_LINES),
+    limit: String(gameState.unlocks.helperLineCapacity),
   })
-  const ballsPerRunText = formatText(ui.actionsPerRunValue, {
-    count: String(gameState.programValidation.executionStepCount),
-  })
-  const remainingTasksForEditorUnlock = Math.max(
-    0,
-    2 - gameState.correctAnswerCount,
-  )
-  const programStatus = gameState.isRunning
-    ? ui.programStatusRunning
-    : !gameState.unlocks.editorEditable
-      ? ui.programStatusLocked
-      : gameState.programValidation.isValid &&
-          (!functionsUnlocked || gameState.helperProgramValidation.isValid)
-        ? ui.programStatusReady
-        : ui.programStatusInvalid
+  const isProgramReady =
+    gameState.programValidation.isValid &&
+    (!functionsUnlocked || gameState.helperProgramValidation.isValid)
   const editorHelperText = gameState.unlocks.editorEditable
     ? ui.editorUnlockedDescription
     : ui.editorLockedDescription
   const editorFeedbackMessage = validationMessage
     ? validationMessage
-    : gameState.unlocks.editorEditable
-      ? gameState.programValidation.executionStepCount === 0
-        ? ui.programZeroStepMessage
-        : formatText(ui.programReadyMessage, {
-            count: String(gameState.programValidation.executionStepCount),
-          })
-      : null
+    : gameState.programValidation.executionStepCount === 0
+      ? ui.programZeroStepMessage
+      : formatText(ui.programReadyMessage, {
+          count: String(gameState.programValidation.executionStepCount),
+        })
   const helperFeedbackMessage = helperValidationMessage
     ? helperValidationMessage
     : functionsUnlocked
@@ -304,89 +527,67 @@ function App() {
       : null
   const editorFeedbackTone = validationMessage
     ? 'error'
-    : gameState.unlocks.editorEditable
-      ? gameState.programValidation.executionStepCount === 0
-        ? 'warning'
-        : 'success'
-      : 'neutral'
+    : gameState.programValidation.executionStepCount === 0
+      ? 'warning'
+      : 'success'
   const helperFeedbackTone = helperValidationMessage ? 'error' : 'success'
-  const statusMessage =
-    activeTask !== null
-      ? ui.challengeActiveMessage
-      : gameState.isRunning
-        ? ui.runPanelRunningMessage
-        : !gameState.unlocks.editorEditable
-          ? remainingTasksForEditorUnlock === 1
-            ? ui.editorUnlockOneTaskMessage
-            : formatText(ui.editorUnlockManyTasksMessage, {
-                count: String(remainingTasksForEditorUnlock),
-              })
-          : runsUntilChallenge === null
-            ? ui.allTasksCompletedMessage
-            : formatText(ui.taskAfterCommandsMessage, {
-                count: String(runsUntilChallenge),
-              })
-  const runTutorial =
-    visibleTutorialStep === 'run_program' ? tutorialContent : null
-  const editorTutorial =
-    visibleTutorialStep === 'editor_unlock' ? tutorialContent : null
-  const taskTutorial =
-    visibleTutorialStep === 'first_challenge' ? tutorialContent : null
-  const availableFunctions = ['drop_ball()']
-  if (gameState.unlocks.allowedCommands.includes('set_aim')) {
-    availableFunctions.push('set_aim(2)')
-  }
-  const readableValues = ['bonus_lane']
+  const availableFunctions = [
+    'drop_ball()',
+    ...(gameState.unlocks.allowedCommands.includes('set_aim') ? ['set_aim(2)'] : []),
+    ...(functionsUnlocked ? ['follow_bonus()'] : []),
+  ]
   const availableStructures = [
+    ...(gameState.unlocks.unlockedConstructs.includes('variables')
+      ? ['target = bonus_lane']
+      : []),
     ...(gameState.unlocks.unlockedConstructs.includes('if')
-      ? ['if bonus_lane == 1:']
+      ? ['if jackpot_side == 1:']
       : []),
     ...(functionsUnlocked ? ['def follow_bonus():'] : []),
     ...(gameState.unlocks.unlockedConstructs.includes('for')
-      ? [`for _ in range(1..${MAX_FOR_RANGE}):`]
+      ? ['for _ in range(3):']
       : []),
   ]
-  const availableLimits = [
-    formatText(ui.availableSyntaxStepLimit, {
-      limit: String(MAX_STEPS_PER_RUN),
-    }),
-    ...(gameState.unlocks.unlockedConstructs.includes('for')
-      ? [
-          formatText(ui.availableSyntaxRangeLimit, {
-            limit: String(MAX_FOR_RANGE),
-          }),
-        ]
-      : []),
-  ]
-  const taskProgress =
-    runsUntilChallenge === null || gameState.currentTaskTarget === 0
-      ? 1
-      : gameState.dropsTowardNextTask / gameState.currentTaskTarget
+  const referenceValues = buildReferenceValues(gameState, ui)
+  const referenceExamples = buildReferenceExamples(gameState, ui)
+  const nextStep = buildNextStepModel(gameState, topics, ui)
+  const checkpointTasks = tasks.filter(
+    (task) =>
+      activeTask !== null &&
+      task.kind === activeTask.kind &&
+      task.topicId === activeTask.topicId,
+  )
+  const currentTaskIndex =
+    activeTask === null ? null : gameState.checkpointIndex + 1
+  const currentTaskTotal =
+    activeTask === null
+      ? null
+      : gameState.activeCheckpointTaskIds.length || checkpointTasks.length
+  const taskProgressText =
+    currentTaskIndex !== null && currentTaskTotal !== null
+      ? formatText(ui.challengeProgressValue, {
+          current: String(currentTaskIndex),
+          total: String(currentTaskTotal),
+        })
+      : null
 
   useEffect(() => {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
   }, [locale])
 
   useEffect(() => {
-    if (
-      !gameState.isRunning &&
-      gameState.activeBalls.length === 0 &&
-      gameState.pendingTaskId === null
-    ) {
+    if (!gameState.isRunning && gameState.activeBalls.length === 0) {
       return
     }
 
     const intervalId = window.setInterval(() => {
-      setGameState((currentState) => advanceProgramRun(currentState, tasks))
+      setGameState((currentState) =>
+        advanceProgramRun(currentState, tasks, topics),
+      )
     }, 50)
 
     return () => window.clearInterval(intervalId)
-  }, [
-    gameState.isRunning,
-    gameState.activeBalls.length,
-    gameState.pendingTaskId,
-    tasks,
-  ])
+  }, [gameState.isRunning, gameState.activeBalls.length, tasks, topics])
 
   useEffect(() => {
     if (gameState.activeBalls.length === 0) {
@@ -406,7 +607,7 @@ function App() {
 
   const handleTaskResolved = (wasCorrect: boolean, task: GameTask) => {
     setGameState((currentState) =>
-      applyTaskResult(currentState, task, wasCorrect),
+      applyTaskResult(currentState, task, wasCorrect, tasks, topics),
     )
   }
 
@@ -424,20 +625,50 @@ function App() {
     })
   }
 
-  const handleDismissTutorial = (tutorialStep: TutorialStep) => {
-    setGameState((currentState) =>
-      dismissTutorialStep(currentState, tutorialStep),
-    )
-  }
-
   const handleChangeView = (view: 'play' | 'shop') => {
     setGameState((currentState) => setCurrentView(currentState, view))
   }
 
-  const handlePurchaseNode = (nodeId: ShopNodeId) => {
-    setGameState((currentState) =>
-      purchaseShopNode(currentState, nodeId, tasks),
-    )
+  const handlePurchaseNode = (nodeId: SupportUpgradeId) => {
+    setGameState((currentState) => purchaseShopNode(currentState, nodeId))
+  }
+
+  const handleStartCheckpoint = () => {
+    setGameState((currentState) => startCheckpoint(currentState))
+  }
+
+  const handleCloseHelp = () => {
+    if (forcedHelpEntryId !== null) {
+      setDismissedAutoHelpIds((currentIds) =>
+        currentIds.includes(forcedHelpEntryId)
+          ? currentIds
+          : [...currentIds, forcedHelpEntryId],
+      )
+    }
+
+    if (
+      forcedHelpEntryId !== null &&
+      gameState.currentTopicId !== null &&
+      gameState.topicStage === 'new_unlock_spotlight'
+    ) {
+      setGameState((currentState) => dismissUnlockSpotlight(currentState))
+    }
+
+    setIsHelpManuallyOpen(false)
+  }
+
+  const handleToggleHelp = () => {
+    if (isHelpOpen) {
+      handleCloseHelp()
+      return
+    }
+
+    setSelectedHelpEntryId(helpEntryIds[helpEntryIds.length - 1] ?? null)
+    setIsHelpManuallyOpen(true)
+  }
+
+  const handleSelectHelpEntry = (entryId: string) => {
+    setSelectedHelpEntryId(entryId as HelpEntryId)
   }
 
   return (
@@ -445,27 +676,31 @@ function App() {
       <section className="app-topbar">
         <div className="topbar-left">
           <p className="eyebrow">{ui.eyebrow}</p>
-          {shopIsAvailable ? (
-            <nav className="view-tabs" aria-label="Primary">
-              <button
-                className={`view-tab${gameState.currentView === 'play' ? ' active' : ''}`}
-                onClick={() => handleChangeView('play')}
-                type="button"
-                disabled={gameState.isRunning}
-              >
-                {ui.playTabLabel}
-              </button>
-              <button
-                className={`view-tab${gameState.currentView === 'shop' ? ' active' : ''}`}
-                onClick={() => handleChangeView('shop')}
-                type="button"
-                disabled={gameState.isRunning}
-              >
-                {ui.shopTabLabel}
-              </button>
-            </nav>
-          ) : null}
+          <nav className="view-tabs" aria-label="Primary">
+            <button
+              className={`view-tab${gameState.currentView === 'play' ? ' active' : ''}`}
+              onClick={() => handleChangeView('play')}
+              type="button"
+              disabled={gameState.isRunning}
+            >
+              {ui.playTabLabel}
+            </button>
+            <button
+              className={`view-tab${gameState.currentView === 'shop' ? ' active' : ''}`}
+              onClick={() => handleChangeView('shop')}
+              type="button"
+              disabled={gameState.isRunning || !shopIsAvailable}
+            >
+              {ui.shopTabLabel}
+            </button>
+          </nav>
+          <div className="points-chip" aria-label={ui.pointsChipLabel}>
+            <span className="points-chip-icon" aria-hidden="true" />
+            <span>{ui.pointsChipLabel}</span>
+            <strong>{gameState.score}</strong>
+          </div>
         </div>
+
         <div className="language-switcher" aria-label={ui.languageLabel}>
           <span className="language-label">{ui.languageLabel}</span>
           <button
@@ -487,21 +722,6 @@ function App() {
         </div>
       </section>
 
-      <section className="dashboard">
-        <article className="stat-card">
-          <span className="stat-label">{ui.scoreLabel}</span>
-          <strong className="stat-value">{gameState.score}</strong>
-        </article>
-        <article className="stat-card">
-          <span className="stat-label">{ui.runCountLabel}</span>
-          <strong className="stat-value">{gameState.runCount}</strong>
-        </article>
-        <article className="stat-card">
-          <span className="stat-label">{ui.multiplierLabel}</span>
-          <strong className="stat-value">{gameState.multiplier}x</strong>
-        </article>
-      </section>
-
       {gameState.currentView === 'play' ? (
         <section className="play-panel">
           <div className="editor-column">
@@ -512,15 +732,12 @@ function App() {
               ui={ui}
               isEditable={gameState.unlocks.editorEditable && !gameState.isRunning}
               isUnlocked={gameState.unlocks.editorEditable}
-              isHighlighted={visibleTutorialStep === 'editor_unlock'}
+              isHighlighted={false}
               activeLineNumber={gameState.activeLineNumber}
               lineUsageText={lineUsageText}
               helperText={editorHelperText}
               feedbackMessage={editorFeedbackMessage}
               feedbackTone={editorFeedbackTone}
-              tutorialTitle={editorTutorial?.title ?? null}
-              tutorialMessage={editorTutorial?.message ?? null}
-              onDismissTutorial={() => handleDismissTutorial('editor_unlock')}
               onChange={handleProgramChange}
             />
 
@@ -538,9 +755,6 @@ function App() {
                 helperText={ui.helperEditorUnlockedDescription}
                 feedbackMessage={helperFeedbackMessage}
                 feedbackTone={helperFeedbackTone}
-                tutorialTitle={null}
-                tutorialMessage={null}
-                onDismissTutorial={() => {}}
                 onChange={handleHelperProgramChange}
               />
             ) : null}
@@ -549,75 +763,49 @@ function App() {
               ui={ui}
               functions={availableFunctions}
               structures={availableStructures}
-              readableValues={readableValues}
-              limits={availableLimits}
+              referenceValues={referenceValues}
+              examples={referenceExamples}
             />
           </div>
 
           <div className="utility-column">
-            <aside
-              className={`controls${
-                visibleTutorialStep === 'run_program' ? ' tutorial-target' : ''
-              }`}
-            >
+            <NextStepCard
+              ui={ui}
+              title={nextStep.title}
+              body={nextStep.body}
+              stageLabel={nextStep.stageLabel}
+              progressText={nextStep.progressText}
+              progressValue={nextStep.progressValue}
+              actionLabel={nextStep.actionLabel}
+              onAction={
+                nextStep.actionLabel === null ? null : handleStartCheckpoint
+              }
+            />
+
+            <aside className="controls">
               <p className="panel-kicker">{ui.runPanelTitle}</p>
-              {runTutorial !== null ? (
-                <TutorialSpotlight
-                  label={ui.tutorialLabel}
-                  title={runTutorial.title}
-                  message={runTutorial.message}
-                  dismissLabel={ui.tutorialDismissButton}
-                  onDismiss={() => handleDismissTutorial('run_program')}
-                />
-              ) : null}
               <button
                 className="run-button"
                 onClick={handleRunProgram}
                 disabled={
                   activeTask !== null ||
-                  !gameState.programValidation.isValid ||
-                  (functionsUnlocked && !gameState.helperProgramValidation.isValid) ||
-                  gameState.isRunning
+                  gameState.isRunning ||
+                  !isProgramReady ||
+                  gameState.topicStage === 'checkpoint_ready'
                 }
                 type="button"
               >
                 {gameState.isRunning ? ui.runButtonRunning : ui.runButton}
               </button>
-              <p className="status-copy">{statusMessage}</p>
-              {runsUntilChallenge !== null ? (
-                <div className="task-progress">
-                  <div className="task-progress-header">
-                    <span>{ui.nextTaskLabel}</span>
-                    <strong>
-                      {formatText(ui.nextTaskProgressText, {
-                        count: String(runsUntilChallenge),
-                      })}
-                    </strong>
-                  </div>
-                  <div className="task-progress-track" aria-hidden="true">
-                    <span
-                      className="task-progress-bar"
-                      style={{ width: `${Math.max(6, taskProgress * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              <dl className="control-stats">
-                <div>
-                  <dt>{ui.actionsPerRunLabel}</dt>
-                  <dd>{ballsPerRunText}</dd>
-                </div>
-                <div>
-                  <dt>{ui.programStatusLabel}</dt>
-                  <dd>{programStatus}</dd>
-                </div>
-              </dl>
             </aside>
 
             <PachinkoBoard
               ui={ui}
               activeBalls={gameState.activeBalls}
               bonusLane={gameState.bonusLane}
+              moduleStates={gameState.moduleStates}
+              supportUpgradeIds={gameState.supportUpgradeIds}
+              learnedTopicIds={gameState.learnedTopicIds}
               now={animationNow}
             />
 
@@ -625,6 +813,7 @@ function App() {
               entries={gameState.feedEntries}
               tasks={tasks}
               shopNodes={shopNodes}
+              topics={topics}
               ui={ui}
             />
           </div>
@@ -632,7 +821,6 @@ function App() {
       ) : (
         <ShopTree
           gameState={gameState}
-          tasks={tasks}
           shopNodes={shopNodes}
           ui={ui}
           onPurchase={handlePurchaseNode}
@@ -643,10 +831,19 @@ function App() {
         key={activeTask?.id ?? 'no-task'}
         task={activeTask}
         ui={ui}
-        tutorialTitle={taskTutorial?.title ?? null}
-        tutorialMessage={taskTutorial?.message ?? null}
-        onDismissTutorial={() => handleDismissTutorial('first_challenge')}
+        progressText={taskProgressText}
         onResolved={handleTaskResolved}
+      />
+
+      <HelpCenter
+        ui={ui}
+        entries={helpEntries}
+        activeEntryId={activeHelpEntryId}
+        isOpen={isHelpOpen}
+        hasUnread={false}
+        onToggle={handleToggleHelp}
+        onClose={handleCloseHelp}
+        onSelect={handleSelectHelpEntry}
       />
     </main>
   )

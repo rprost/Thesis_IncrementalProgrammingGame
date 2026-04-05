@@ -1,54 +1,58 @@
 export type Locale = 'et' | 'en'
 
-export type TaskTopicId = string
+export type TaskTopicId = 'variables' | 'conditions' | 'functions' | 'loops'
+
+export type TopicStage =
+  | 'onboarding'
+  | 'topic_active'
+  | 'checkpoint_ready'
+  | 'checkpoint_active'
+  | 'new_unlock_spotlight'
+  | 'completed'
 
 export type AllowedCommand = 'drop_ball' | 'set_aim'
 
 export type GameView = 'play' | 'shop'
 
-export type LockedConstruct =
-  | 'for'
-  | 'variables'
-  | 'if'
-  | 'while'
-  | 'functions'
-  | 'lists'
+export type LockedConstruct = 'for' | 'variables' | 'if' | 'functions'
 
-export type ShopNodeId =
-  | 'editor_unlock'
-  | 'line_capacity_3'
-  | 'variables'
-  | 'if_statement'
-  | 'functions'
-  | 'for_loop'
-  | 'while_loop'
-  | 'lists'
+export type SupportUpgradeId =
+  | 'extra_line'
+  | 'gate_preview'
+  | 'return_gate_hold'
+  | 'helper_line_capacity'
+  | 'relay_bonus'
+  | 'feeder_persistence'
+  | 'lightning_bonus'
 
-export type ShopNodeKind = 'milestone' | 'upgrade' | 'syntax'
+export type SupportUpgradeKind =
+  | 'capacity'
+  | 'visibility'
+  | 'reliability'
+  | 'conversion'
 
-export type ShopNodeDefinition = {
-  id: ShopNodeId
-  kind: ShopNodeKind
+export type SupportUpgradeDefinition = {
+  id: SupportUpgradeId
+  kind: SupportUpgradeKind
   cost: number
-  implemented: boolean
-  lineCapacity?: number
-  unlockConstruct?: LockedConstruct
-  unlockCommand?: AllowedCommand
-  requiredNodeIds?: ShopNodeId[]
-  requiredTopicIds?: TaskTopicId[]
+  requiredTopicId: TaskTopicId
+  mainLineCapacityBonus?: number
+  helperLineCapacityBonus?: number
 }
 
-export type ShopNodeCopy = {
-  id: ShopNodeId
+export type SupportUpgradeCopy = {
+  id: SupportUpgradeId
   title: string
   description: string
 }
 
-export type ShopNodeStatus = 'completed' | 'available' | 'locked' | 'preview'
+export type ShopNodeStatus = 'completed' | 'available' | 'locked'
 
 export type AimLevel = 1 | 2 | 3
 
 export type BonusLane = 1 | 2 | 3
+
+export type SideLane = 1 | 3
 
 export type BoardBucket =
   | 'outer_left'
@@ -56,6 +60,14 @@ export type BoardBucket =
   | 'center'
   | 'inner_right'
   | 'outer_right'
+
+export type ActiveBallVariant =
+  | 'normal'
+  | 'lucky'
+  | 'relay'
+  | 'lightning'
+  | 'return'
+  | 'jackpot'
 
 export type BoardOutcome = {
   bucket: BoardBucket
@@ -69,6 +81,14 @@ export type ExecutionStep = {
   aim: AimLevel
 }
 
+export type ProgramFeatureUsage = {
+  usedVariables: boolean
+  usedSetAim: boolean
+  usedIf: boolean
+  usedHelperCall: boolean
+  usedFor: boolean
+}
+
 export type ActiveBallState = 'falling' | 'settled' | 'canceled'
 
 export type ActiveBall = {
@@ -79,6 +99,7 @@ export type ActiveBall = {
   bucketIndex: number
   laneBonus: number
   points: number
+  variant: ActiveBallVariant
   pathXs: number[]
   spawnedAt: number
   settleAt: number
@@ -130,73 +151,84 @@ export type ProgramValidation = {
 
 export type ParsedProgram = {
   steps: ExecutionStep[]
+  featureUsage: ProgramFeatureUsage
   mainValidation: ProgramValidation
   helperValidation: ProgramValidation
 }
 
 export type FeedEntryType =
-  | 'game_opened'
-  | 'run_hint'
-  | 'mini_task_appeared'
-  | 'mini_task_solved'
-  | 'mini_task_failed'
-  | 'editor_unlocked'
-  | 'line_unlocked'
+  | 'module_installed'
+  | 'checkpoint_ready'
+  | 'task_solved'
+  | 'topic_mastered'
+  | 'support_upgrade_bought'
   | 'shop_opened'
-  | 'upgrade_bought'
 
 export type FeedEntry = {
   id: number
   type: FeedEntryType
   taskId?: string
-  lineCapacity?: number
-  upgradeId?: ShopNodeId
+  topicId?: TaskTopicId
+  upgradeId?: SupportUpgradeId
 }
 
-export type TutorialStep = 'run_program' | 'first_challenge' | 'editor_unlock'
+export type TaskKind = 'onboarding' | 'mastery'
+
+export type TaskArchetype = 'read' | 'choose' | 'repair'
 
 export type GameTask = {
   id: string
-  topicId: TaskTopicId
+  kind: TaskKind
+  archetype: TaskArchetype
+  topicId: TaskTopicId | 'onboarding'
   topicOrder: number
+  taskOrder: number
   title: string
   question: string
   code: string
+  boardHint: string
+  unlockConnection: string
   options: string[]
   correctOption: number
   successMessage: string
   failureMessage: string
-  rewardPoints: number
-  rewardMultiplier: number
-  penaltyPoints: number
+}
+
+export type TopicDefinition = {
+  id: TaskTopicId
+  courseOrderLabel: string
+  title: string
+  moduleName: string
+  meterGoal: number
+  masteryTaskIds: string[]
+  visibleStateLabels: string[]
+  supportUpgradeIds: SupportUpgradeId[]
+  goalText: string
+  machineObjectiveText: string
+  boardMeaningText: string
+  nextActionText: string
+  unlockSpotlightText: string
+  suggestedSnippet: string
+}
+
+export type ReferenceValueItem = {
+  id: string
+  label: string
+  description: string
+  example?: string
+}
+
+export type ReferenceExampleItem = {
+  id: string
+  label: string
+  code: string
 }
 
 export type UiText = {
   eyebrow: string
-  title: string
-  subtitle: string
   playTabLabel: string
   shopTabLabel: string
-  scoreLabel: string
-  runCountLabel: string
-  multiplierLabel: string
-  runButton: string
-  runButtonRunning: string
-  runPanelTitle: string
-  taskAfterCommandsMessage: string
-  challengeActiveMessage: string
-  allTasksCompletedMessage: string
-  runPanelRunningMessage: string
-  challengeLabel: string
-  submitButton: string
-  continueButton: string
-  retryButton: string
-  correctTitle: string
-  incorrectTitle: string
-  rewardLabel: string
-  penaltyLabel: string
-  pointsSuffix: string
-  multiplierResetMessage: string
+  pointsChipLabel: string
   languageLabel: string
   estonianLabel: string
   englishLabel: string
@@ -208,21 +240,24 @@ export type UiText = {
   helperEditorTitle: string
   helperEditorLockedDescription: string
   helperEditorUnlockedDescription: string
-  helperEditorSlotsLabel: string
-  starterProgram: string
-  helperProgramStarter: string
   editorLineUsageValue: string
   helperEditorLineUsageValue: string
-  actionsPerRunLabel: string
-  actionsPerRunValue: string
-  lineCapacityLabel: string
-  programStatusLabel: string
-  programStatusLocked: string
-  programStatusReady: string
-  programStatusInvalid: string
-  programStatusRunning: string
   programReadyMessage: string
   helperProgramReadyMessage: string
+  programZeroStepMessage: string
+  runBlockedInvalidProgram: string
+  runButton: string
+  runButtonRunning: string
+  runPanelTitle: string
+  runPanelReadyMessage: string
+  runPanelRunningMessage: string
+  runPanelLockedMessage: string
+  runPanelInvalidMessage: string
+  runPanelCheckpointReadyMessage: string
+  runPanelCheckpointActiveMessage: string
+  executionStatusLabel: string
+  actionsPerRunLabel: string
+  actionsPerRunValue: string
   programErrorEmpty: string
   programErrorTooManyLines: string
   programErrorInvalidLine: string
@@ -243,51 +278,10 @@ export type UiText = {
   programErrorHelperLimitExceeded: string
   programErrorHelperLineLimitExceeded: string
   programErrorHelperNotDefined: string
-  programZeroStepMessage: string
-  runBlockedInvalidProgram: string
   constructForLabel: string
   constructVariablesLabel: string
   constructIfLabel: string
-  constructWhileLabel: string
   constructFunctionsLabel: string
-  constructListsLabel: string
-  activityFeedTitle: string
-  activityFeedEmpty: string
-  feedCategoryTutorial: string
-  feedCategoryTask: string
-  feedCategoryUnlock: string
-  feedCategoryShop: string
-  feedGameOpened: string
-  feedRunHint: string
-  feedMiniTaskAppeared: string
-  feedMiniTaskSolved: string
-  feedMiniTaskFailed: string
-  feedEditorUnlocked: string
-  feedLineUnlocked: string
-  feedShopOpened: string
-  feedUpgradeBought: string
-  tutorialLabel: string
-  tutorialDismissButton: string
-  tutorialRunTitle: string
-  tutorialRunMessage: string
-  tutorialChallengeTitle: string
-  tutorialChallengeMessage: string
-  tutorialEditorTitle: string
-  tutorialEditorMessage: string
-  editorUnlockOneTaskMessage: string
-  editorUnlockManyTasksMessage: string
-  shopTitle: string
-  shopSubtitle: string
-  shopScoreLabel: string
-  shopNodeCompleted: string
-  shopNodeAvailable: string
-  shopNodeLocked: string
-  shopNodePreview: string
-  shopBuyButton: string
-  shopBoughtButton: string
-  shopCostValue: string
-  shopPreviewMessage: string
-  shopAvailableHint: string
   availableSyntaxTitle: string
   availableFunctionsLabel: string
   availableStructuresLabel: string
@@ -296,40 +290,230 @@ export type UiText = {
   availableStructuresEmpty: string
   availableSyntaxStepLimit: string
   availableSyntaxRangeLimit: string
-  nextTaskLabel: string
-  nextTaskProgressText: string
+  referenceTitle: string
+  referenceSectionAvailableLabel: string
+  referenceSectionBoardLabel: string
+  referenceSectionExamplesLabel: string
+  referenceLaneNumbersLabel: string
+  referenceLaneNumbersDescription: string
+  referenceNoExamples: string
+  referenceBonusLaneDescription: string
+  referenceJackpotSideDescription: string
+  referenceReturnSideDescription: string
+  referenceReturnGateDescription: string
+  referenceFeederChargeDescription: string
+  referenceComboTargetDescription: string
+  referenceBurstReadyDescription: string
+  referenceExampleVariablesLabel: string
+  referenceExampleConditionsLabel: string
+  referenceExampleFunctionsLabel: string
+  referenceExampleLoopsLabel: string
+  nextStepLabel: string
+  nextStepProgressLabel: string
+  nextStepProgressValue: string
+  nextStepOnboardingTitle: string
+  nextStepOnboardingBody: string
+  nextStepLearningTitle: string
+  nextStepCheckpointTitle: string
+  nextStepCheckpointReadyBody: string
+  nextStepCheckpointActiveBody: string
+  nextStepCompletedTitle: string
+  nextStepCompletedBody: string
+  nextStepStageOnboarding: string
+  nextStepStageLearning: string
+  nextStepStageUnlocked: string
+  nextStepStageCheckpointReady: string
+  nextStepStageCheckpointActive: string
+  nextStepStageCompleted: string
+  helpCenterButtonLabel: string
+  helpCenterTitle: string
+  helpCenterCloseButton: string
+  helpCenterArchiveLabel: string
+  helpCenterLatestLabel: string
+  helpCenterArchiveItemLabel: string
+  helpCenterEmpty: string
+  guideWelcomeTitle: string
+  guideWelcomeBody: string
+  guideVariablesUnlockTitle: string
+  guideVariablesUnlockBody: string
+  guideConditionsUnlockTitle: string
+  guideConditionsUnlockBody: string
+  guideFunctionsUnlockTitle: string
+  guideFunctionsUnlockBody: string
+  guideLoopsUnlockTitle: string
+  guideLoopsUnlockBody: string
+  currentGoalTitle: string
+  currentGoalModuleLabel: string
+  currentGoalStageLabel: string
+  currentGoalSummaryLabel: string
+  currentGoalMeterLabel: string
+  currentGoalNextUnlockLabel: string
+  currentGoalGoalLabel: string
+  currentGoalActionLabel: string
+  currentGoalBoardMeaningLabel: string
+  currentGoalVisibleStateLabel: string
+  currentGoalSuggestedSnippetLabel: string
+  currentGoalStageOnboarding: string
+  currentGoalStageActive: string
+  currentGoalStageCheckpointReady: string
+  currentGoalStageCheckpointActive: string
+  currentGoalStageSpotlight: string
+  currentGoalStageCompleted: string
+  currentGoalNoNextUnlock: string
+  currentGoalOnboardingTitle: string
+  currentGoalOnboardingSummary: string
+  currentGoalOnboardingGoal: string
+  currentGoalOnboardingAction: string
+  currentGoalCompletedGoal: string
+  currentGoalCompletedAction: string
+  currentGoalCompletedBoardMeaning: string
+  currentGoalStartCheckpointButton: string
+  currentGoalDismissSpotlightButton: string
+  currentGoalCheckpointSummary: string
+  currentGoalSpotlightSummary: string
+  currentGoalCheckpointAction: string
+  currentGoalCheckpointActiveAction: string
+  currentGoalSpotlightAction: string
   boardTitle: string
   boardSubtitle: string
+  boardBonusLaneLabel: string
   boardLastPointsLabel: string
   boardLastBucketLabel: string
   boardStreakLabel: string
-  boardBonusLaneLabel: string
   boardLaneOneLabel: string
   boardLaneTwoLabel: string
   boardLaneThreeLabel: string
-  boardBucketOuterLabel: string
-  boardBucketInnerLabel: string
-  boardBucketCenterLabel: string
+  boardCalibrationTitle: string
+  boardFocusChargeLabel: string
+  boardLuckyBallReadyLabel: string
+  boardBestLaneLabel: string
+  boardDiverterTitle: string
+  boardJackpotSideLabel: string
+  boardReturnSideLabel: string
+  boardReturnGateLabel: string
+  boardGateOpen: string
+  boardGateClosed: string
+  boardRelayTitle: string
+  boardRelayStatusLabel: string
+  boardRelayArmed: string
+  boardRelayIdle: string
+  boardRelayTargetLabel: string
+  boardRelayBonusLabel: string
+  boardBurstTitle: string
+  boardFeederChargeLabel: string
+  boardComboTargetLabel: string
+  boardBurstReadyLabel: string
+  boardBurstWaiting: string
+  boardBurstReady: string
+  boardLightningBonusLabel: string
+  boardEchoTargetLabel: string
+  boardLaneLeft: string
+  boardLaneCenter: string
+  boardLaneRight: string
+  boardLegendTitle: string
+  boardLegendLaneHelp: string
+  boardLegendBonusHelp: string
+  challengeLabel: string
+  challengeProgressValue: string
+  taskReadLabel: string
+  taskChooseLabel: string
+  taskRepairLabel: string
+  submitButton: string
+  continueButton: string
+  retryButton: string
+  correctTitle: string
+  incorrectTitle: string
+  taskBoardHintLabel: string
+  taskUnlockConnectionLabel: string
+  taskShowHintButton: string
+  taskHideHintButton: string
+  activityFeedTitle: string
+  activityFeedEmpty: string
+  feedCategoryModule: string
+  feedCategoryTask: string
+  feedCategoryShop: string
+  feedModuleInstalled: string
+  feedCheckpointReady: string
+  feedTaskSolved: string
+  feedTopicMastered: string
+  feedSupportUpgradeBought: string
+  feedShopOpened: string
+  shopTitle: string
+  shopSubtitle: string
+  shopScoreLabel: string
+  shopNodeCompleted: string
+  shopNodeAvailable: string
+  shopNodeLocked: string
+  shopBuyButton: string
+  shopBoughtButton: string
+  shopCostValue: string
+  shopAvailableHint: string
+  shopLockedHint: string
 }
 
 export type UnlockState = {
-  editorVisible: boolean
   editorEditable: boolean
   lineCapacity: number
+  helperLineCapacity: number
   allowedCommands: AllowedCommand[]
   unlockedConstructs: LockedConstruct[]
+}
+
+export type CalibrationModuleState = {
+  leftValue: number
+  centerValue: number
+  rightValue: number
+  focusCharge: number
+  focusThreshold: number
+  luckyBallReady: boolean
+}
+
+export type DiverterModuleState = {
+  jackpotSide: SideLane
+  returnSide: SideLane
+  returnGateOpen: boolean
+}
+
+export type RelayModuleState = {
+  helperName: string
+  relayArmed: boolean
+  relayTargetLane: BonusLane | null
+}
+
+export type BurstModuleState = {
+  feederCharge: number
+  feederTarget: number
+  comboTarget: BonusLane
+  burstReady: boolean
+  lightningShotsRemaining: number
+}
+
+export type MachineModuleState = {
+  calibration: CalibrationModuleState
+  diverter: DiverterModuleState
+  relay: RelayModuleState
+  burst: BurstModuleState
+}
+
+export type RunStats = {
+  featureUsage: ProgramFeatureUsage
+  resolvedBalls: number
+  hitBonusLaneCount: number
+  hitBestLaneCount: number
+  hitJackpotLaneCount: number
+  hitReturnLaneCount: number
+  openedReturnGate: boolean
+  usedReturnGateCount: number
+  relayArmedThisRun: boolean
+  relayTriggeredCount: number
+  feederHitCount: number
+  lightningBallsResolved: number
 }
 
 export type GameState = {
   currentView: GameView
   score: number
-  runCount: number
-  multiplier: number
-  correctAnswerCount: number
-  solvedTaskIds: string[]
-  activeTaskId: string | null
-  pendingTaskId: string | null
-  isTaskOpen: boolean
+  resolvedDropCount: number
   isRunning: boolean
   unlocks: UnlockState
   programSource: string
@@ -345,12 +529,21 @@ export type GameState = {
   lastBucket: number
   streak: number
   bonusLane: BonusLane
-  dropsTowardNextTask: number
-  currentTaskTarget: number
+  currentTopicId: TaskTopicId | null
+  learnedTopicIds: TaskTopicId[]
+  masteredTopicIds: TaskTopicId[]
+  topicStage: TopicStage
+  topicMeter: number
+  topicMeterGoal: number
+  activeCheckpointTaskIds: string[]
+  checkpointIndex: number
+  activeTaskId: string | null
+  solvedTaskIds: string[]
+  moduleStates: MachineModuleState
+  supportUpgradeIds: SupportUpgradeId[]
   feedEntries: FeedEntry[]
   nextFeedEntryId: number
-  tutorialStep: TutorialStep
-  dismissedTutorialSteps: TutorialStep[]
-  purchasedUpgradeIds: ShopNodeId[]
+  currentRunFeatureUsage: ProgramFeatureUsage | null
+  currentRunStats: RunStats | null
   hasOpenedShop: boolean
 }

@@ -1,42 +1,37 @@
 [
   {
-    "id": "editor_unlock",
-    "title": "Editor unlocked",
-    "description": "You can now write your own ball-drop program with drop_ball()."
+    "id": "extra_line",
+    "title": "Extra line",
+    "description": "Add one more main-program line so your strategy fits more comfortably."
   },
   {
-    "id": "line_capacity_3",
-    "title": "+1 line",
-    "description": "Increase the main program capacity to 3 lines so one run can release more balls."
+    "id": "gate_preview",
+    "title": "Brighter side rails",
+    "description": "Make the jackpot and return rails glow more clearly on the board."
   },
   {
-    "id": "variables",
-    "title": "Aim control",
-    "description": "Unlock assignment, simple expressions, bonus_lane, and set_aim(value) so your code can steer drops left, center, or right."
+    "id": "return_gate_hold",
+    "title": "Gate hold",
+    "description": "Keep the return gate open longer so a good conditional can cash it in more easily."
   },
   {
-    "id": "if_statement",
-    "title": "Bonus-lane logic",
-    "description": "Unlock if/else so your program can choose an aim from the visible bonus_lane."
+    "id": "helper_line_capacity",
+    "title": "Helper buffer",
+    "description": "Give the helper editor two extra lines for a longer reusable tactic."
   },
   {
-    "id": "functions",
-    "title": "Helper function",
-    "description": "Unlock one reusable parameterless def function in a dedicated helper editor."
+    "id": "relay_bonus",
+    "title": "Echo boost",
+    "description": "Make the visible echo target pay out more when the marked lane is hit."
   },
   {
-    "id": "for_loop",
-    "title": "for loops",
-    "description": "Unlock real Python repetition with for _ in range(n): in both editors."
+    "id": "feeder_persistence",
+    "title": "Feeder persistence",
+    "description": "Keep combo lights charged between weaker runs instead of emptying immediately."
   },
   {
-    "id": "while_loop",
-    "title": "while loops",
-    "description": "A later unlock for open-ended repetition once more board logic is ready."
-  },
-  {
-    "id": "lists",
-    "title": "lists",
-    "description": "A later unlock for storing and processing small collections in strategies."
+    "id": "lightning_bonus",
+    "title": "Lightning bonus",
+    "description": "Make lightning shots worth more after the combo feeder fully charges."
   }
 ]

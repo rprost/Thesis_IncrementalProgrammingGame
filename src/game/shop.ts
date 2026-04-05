@@ -1,170 +1,114 @@
 import type {
   GameState,
-  GameTask,
-  ShopNodeDefinition,
-  ShopNodeId,
   ShopNodeStatus,
-  TaskTopicId,
+  SupportUpgradeDefinition,
+  SupportUpgradeId,
 } from '../types'
 
-export const SHOP_NODES: ShopNodeDefinition[] = [
+export const SHOP_NODES: SupportUpgradeDefinition[] = [
   {
-    id: 'editor_unlock',
-    kind: 'milestone',
-    cost: 0,
-    implemented: true,
-    lineCapacity: 2,
+    id: 'extra_line',
+    kind: 'capacity',
+    cost: 40,
+    requiredTopicId: 'variables',
+    mainLineCapacityBonus: 1,
   },
   {
-    id: 'line_capacity_3',
-    kind: 'upgrade',
-    cost: 60,
-    implemented: true,
-    lineCapacity: 3,
+    id: 'gate_preview',
+    kind: 'visibility',
+    cost: 70,
+    requiredTopicId: 'conditions',
   },
   {
-    id: 'variables',
-    kind: 'syntax',
+    id: 'return_gate_hold',
+    kind: 'reliability',
+    cost: 90,
+    requiredTopicId: 'conditions',
+  },
+  {
+    id: 'helper_line_capacity',
+    kind: 'capacity',
+    cost: 95,
+    requiredTopicId: 'functions',
+    helperLineCapacityBonus: 2,
+  },
+  {
+    id: 'relay_bonus',
+    kind: 'conversion',
+    cost: 110,
+    requiredTopicId: 'functions',
+  },
+  {
+    id: 'feeder_persistence',
+    kind: 'reliability',
     cost: 120,
-    implemented: true,
-    unlockConstruct: 'variables',
-    unlockCommand: 'set_aim',
-    requiredTopicIds: ['variables'],
-    requiredNodeIds: ['line_capacity_3'],
+    requiredTopicId: 'loops',
   },
   {
-    id: 'if_statement',
-    kind: 'syntax',
-    cost: 180,
-    implemented: true,
-    unlockConstruct: 'if',
-    requiredTopicIds: ['conditions'],
-    requiredNodeIds: ['variables'],
-  },
-  {
-    id: 'functions',
-    kind: 'syntax',
-    cost: 260,
-    implemented: true,
-    unlockConstruct: 'functions',
-    requiredTopicIds: ['functions'],
-    requiredNodeIds: ['if_statement'],
-  },
-  {
-    id: 'for_loop',
-    kind: 'syntax',
-    cost: 360,
-    implemented: true,
-    unlockConstruct: 'for',
-    requiredTopicIds: ['loops'],
-    requiredNodeIds: ['functions'],
-  },
-  {
-    id: 'while_loop',
-    kind: 'syntax',
-    cost: 300,
-    implemented: false,
-  },
-  {
-    id: 'lists',
-    kind: 'syntax',
-    cost: 360,
-    implemented: false,
+    id: 'lightning_bonus',
+    kind: 'conversion',
+    cost: 140,
+    requiredTopicId: 'loops',
   },
 ]
-
-function isTopicMastered(
-  state: GameState,
-  tasks: GameTask[],
-  topicId: TaskTopicId,
-): boolean {
-  const topicTasks = tasks.filter((task) => task.topicId === topicId)
-
-  if (topicTasks.length === 0) {
-    return false
-  }
-
-  const solvedTaskIds = new Set(state.solvedTaskIds)
-  return topicTasks.every((task) => solvedTaskIds.has(task.id))
-}
-
-function areTopicRequirementsMet(
-  state: GameState,
-  tasks: GameTask[],
-  topicIds: TaskTopicId[] | undefined,
-): boolean {
-  if (topicIds === undefined || topicIds.length === 0) {
-    return true
-  }
-
-  return topicIds.every((topicId) => isTopicMastered(state, tasks, topicId))
-}
-
-function areNodeRequirementsMet(
-  state: GameState,
-  nodeIds: ShopNodeId[] | undefined,
-): boolean {
-  if (nodeIds === undefined || nodeIds.length === 0) {
-    return true
-  }
-
-  return nodeIds.every((nodeId) => state.purchasedUpgradeIds.includes(nodeId))
-}
-
-function isNodeCompletedByMilestone(state: GameState, node: ShopNodeDefinition): boolean {
-  if (node.id === 'editor_unlock') {
-    return state.unlocks.editorEditable
-  }
-
-  return false
-}
 
 export function canOpenShop(state: GameState): boolean {
   return state.unlocks.editorEditable
 }
 
+function hasLearnedTopic(
+  state: GameState,
+  topicId: SupportUpgradeDefinition['requiredTopicId'],
+): boolean {
+  return state.learnedTopicIds.includes(topicId)
+}
+
 export function getShopNodeStatus(
   state: GameState,
-  node: ShopNodeDefinition,
-  tasks: GameTask[],
+  node: SupportUpgradeDefinition,
 ): ShopNodeStatus {
-  if (isNodeCompletedByMilestone(state, node)) {
+  if (state.supportUpgradeIds.includes(node.id)) {
     return 'completed'
   }
 
-  if (state.purchasedUpgradeIds.includes(node.id)) {
-    return 'completed'
-  }
-
-  if (!node.implemented) {
-    return 'preview'
-  }
-
-  if (
-    !canOpenShop(state) ||
-    !areNodeRequirementsMet(state, node.requiredNodeIds) ||
-    !areTopicRequirementsMet(state, tasks, node.requiredTopicIds)
-  ) {
+  if (!canOpenShop(state) || !hasLearnedTopic(state, node.requiredTopicId)) {
     return 'locked'
   }
 
-  return node.cost > 0 ? 'available' : 'locked'
+  return 'available'
 }
 
 export function canPurchaseShopNode(
   state: GameState,
-  nodeId: ShopNodeId,
-  tasks: GameTask[],
+  nodeId: SupportUpgradeId,
 ): boolean {
   const node = SHOP_NODES.find((entry) => entry.id === nodeId)
 
-  if (node === undefined || !node.implemented || node.cost <= 0) {
+  if (node === undefined) {
     return false
   }
 
-  if (getShopNodeStatus(state, node, tasks) !== 'available') {
+  if (getShopNodeStatus(state, node) !== 'available') {
     return false
   }
 
   return state.score >= node.cost
+}
+
+export function getMainLineCapacityBonus(
+  upgradeIds: SupportUpgradeId[],
+): number {
+  return upgradeIds.reduce((total, upgradeId) => {
+    const node = SHOP_NODES.find((entry) => entry.id === upgradeId)
+    return total + (node?.mainLineCapacityBonus ?? 0)
+  }, 0)
+}
+
+export function getHelperLineCapacityBonus(
+  upgradeIds: SupportUpgradeId[],
+): number {
+  return upgradeIds.reduce((total, upgradeId) => {
+    const node = SHOP_NODES.find((entry) => entry.id === upgradeId)
+    return total + (node?.helperLineCapacityBonus ?? 0)
+  }, 0)
 }

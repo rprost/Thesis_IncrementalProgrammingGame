@@ -1,13 +1,10 @@
 import { useState } from 'react'
-import type { GameTask, UiText } from '../types'
-import { TutorialSpotlight } from './TutorialSpotlight'
+import type { GameTask, TaskArchetype, UiText } from '../types'
 
 type TaskModalProps = {
   task: GameTask | null
   ui: UiText
-  tutorialTitle: string | null
-  tutorialMessage: string | null
-  onDismissTutorial: () => void
+  progressText: string | null
   onResolved: (wasCorrect: boolean, task: GameTask) => void
 }
 
@@ -17,16 +14,28 @@ type TaskFeedback = {
   wasCorrect: boolean
 }
 
+function getArchetypeLabel(archetype: TaskArchetype, ui: UiText): string {
+  switch (archetype) {
+    case 'read':
+      return ui.taskReadLabel
+    case 'choose':
+      return ui.taskChooseLabel
+    case 'repair':
+      return ui.taskRepairLabel
+    default:
+      return ui.taskReadLabel
+  }
+}
+
 export function TaskModal({
   task,
   ui,
-  tutorialTitle,
-  tutorialMessage,
-  onDismissTutorial,
+  progressText,
   onResolved,
 }: TaskModalProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [feedback, setFeedback] = useState<TaskFeedback | null>(null)
+  const [showHints, setShowHints] = useState(false)
 
   if (task === null) {
     return null
@@ -39,20 +48,15 @@ export function TaskModal({
 
     const wasCorrect = selectedOption === task.correctOption
 
-    if (wasCorrect) {
-      setFeedback({
-        title: ui.correctTitle,
-        description: `${task.successMessage} ${ui.rewardLabel} +${task.rewardPoints} ${ui.pointsSuffix}, +${task.rewardMultiplier}x.`,
-        wasCorrect: true,
-      })
-      return
-    }
-
     setFeedback({
-      title: ui.incorrectTitle,
-      description: `${task.failureMessage} ${ui.penaltyLabel} -${task.penaltyPoints} ${ui.pointsSuffix}, ${ui.multiplierResetMessage}.`,
-      wasCorrect: false,
+      title: wasCorrect ? ui.correctTitle : ui.incorrectTitle,
+      description: wasCorrect ? task.successMessage : task.failureMessage,
+      wasCorrect,
     })
+
+    if (!wasCorrect) {
+      setShowHints(true)
+    }
   }
 
   const handleContinue = () => {
@@ -60,10 +64,9 @@ export function TaskModal({
       return
     }
 
-    const wasCorrect = feedback.wasCorrect
-    onResolved(wasCorrect, task)
+    onResolved(feedback.wasCorrect, task)
 
-    if (!wasCorrect) {
+    if (!feedback.wasCorrect) {
       setSelectedOption(null)
       setFeedback(null)
     }
@@ -77,30 +80,58 @@ export function TaskModal({
         aria-modal="true"
         aria-labelledby="task-title"
       >
-        <p className="modal-kicker">{ui.challengeLabel}</p>
-        {tutorialTitle !== null && tutorialMessage !== null ? (
-          <TutorialSpotlight
-            label={ui.tutorialLabel}
-            title={tutorialTitle}
-            message={tutorialMessage}
-            dismissLabel={ui.tutorialDismissButton}
-            onDismiss={onDismissTutorial}
-          />
-        ) : null}
-        <h2 id="task-title">{task.title}</h2>
+        <div className="task-modal-header">
+          <div>
+            <p className="modal-kicker">{ui.challengeLabel}</p>
+            <h2 id="task-title">{task.title}</h2>
+          </div>
+          <div className="task-modal-badges">
+            <span className="task-modal-badge">
+              {getArchetypeLabel(task.archetype, ui)}
+            </span>
+            {progressText !== null ? (
+              <span className="task-modal-badge subdued">{progressText}</span>
+            ) : null}
+          </div>
+        </div>
+
         <p className="modal-question">{task.question}</p>
 
         <pre className="modal-code">
           <code>{task.code}</code>
         </pre>
 
+        <div className="task-hint-toggle-row">
+          <button
+            className="ghost-button task-hint-toggle"
+            onClick={() => setShowHints((current) => !current)}
+            type="button"
+          >
+            {showHints ? ui.taskHideHintButton : ui.taskShowHintButton}
+          </button>
+        </div>
+
+        {showHints ? (
+          <div className="task-guidance">
+            <article className="task-guidance-card">
+              <span>{ui.taskBoardHintLabel}</span>
+              <p>{task.boardHint}</p>
+            </article>
+            <article className="task-guidance-card">
+              <span>{ui.taskUnlockConnectionLabel}</span>
+              <p>{task.unlockConnection}</p>
+            </article>
+          </div>
+        ) : null}
+
         <div className="options-list">
           {task.options.map((option, index) => {
             const isSelected = selectedOption === index
+
             return (
               <label
                 className={`option-card${isSelected ? ' selected' : ''}`}
-                key={option}
+                key={`${task.id}-${index}`}
               >
                 <input
                   type="radio"
@@ -120,7 +151,7 @@ export function TaskModal({
           >
             <strong>{feedback.title}</strong>
             <p>{feedback.description}</p>
-            <button className="secondary-button" onClick={handleContinue}>
+            <button className="secondary-button" onClick={handleContinue} type="button">
               {feedback.wasCorrect ? ui.continueButton : ui.retryButton}
             </button>
           </div>
@@ -129,6 +160,7 @@ export function TaskModal({
             className="secondary-button"
             onClick={handleSubmit}
             disabled={selectedOption === null}
+            type="button"
           >
             {ui.submitButton}
           </button>

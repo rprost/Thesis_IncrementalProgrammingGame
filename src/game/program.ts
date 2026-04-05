@@ -4,6 +4,7 @@ import type {
   ExecutionStep,
   LockedConstruct,
   ParsedProgram,
+  ProgramFeatureUsage,
   ProgramValidation,
   ValidationIssue,
 } from '../types'
@@ -17,7 +18,7 @@ export const INITIAL_HELPER_SOURCE = [
 export const MAX_FOR_RANGE = 8
 export const MAX_STEPS_PER_RUN = 20
 export const MAX_HELPER_FUNCTIONS = 1
-export const MAX_HELPER_LINES = 6
+export const BASE_HELPER_LINE_LIMIT = 6
 
 type ParsedLine = {
   raw: string
@@ -76,8 +77,16 @@ type Token =
   | { type: 'identifier'; value: string }
   | { type: 'operator'; value: '+' | '-' | '*' | '(' | ')' }
 
-type EvaluationContext = {
-  bonus_lane: number
+type EvaluationContext = Record<string, number>
+
+function createFeatureUsage(): ProgramFeatureUsage {
+  return {
+    usedVariables: false,
+    usedSetAim: false,
+    usedIf: false,
+    usedHelperCall: false,
+    usedFor: false,
+  }
 }
 
 function createValidation(
@@ -403,16 +412,8 @@ function detectLockedConstruct(line: string): LockedConstruct | null {
     return 'if'
   }
 
-  if (line.startsWith('while ')) {
-    return 'while'
-  }
-
   if (line.startsWith('def ')) {
     return 'functions'
-  }
-
-  if (line.includes('[') || line.includes('append(')) {
-    return 'lists'
   }
 
   return null
@@ -681,12 +682,7 @@ function parseStatements(
       const args = callMatch[2]?.trim() ?? ''
 
       if (name === 'drop_ball') {
-        if (args !== '') {
-          issues.push({
-            code: 'invalid_command',
-            lineNumber: line.lineNumber,
-          })
-        } else if (!context.allowedCommands.includes('drop_ball')) {
+        if (args !== '' || !context.allowedCommands.includes('drop_ball')) {
           issues.push({
             code: 'invalid_command',
             lineNumber: line.lineNumber,
@@ -790,6 +786,7 @@ function parseStatements(
 
 function parseHelperProgram(
   source: string,
+  helperLineLimit: number,
   allowedCommands: AllowedCommand[],
   unlockedConstructs: LockedConstruct[],
 ): {
@@ -826,11 +823,11 @@ function parseHelperProgram(
     }
   }
 
-  if (nonEmptyLineCount > MAX_HELPER_LINES) {
+  if (nonEmptyLineCount > helperLineLimit) {
     issues.push({
       code: 'helper_line_limit_exceeded',
       lineNumber: 1,
-      limit: MAX_HELPER_LINES,
+      limit: helperLineLimit,
     })
   }
 
@@ -940,10 +937,11 @@ function executeStatements(
   helperDefinitions: Map<string, HelperDefinition>,
   steps: ExecutionStep[],
   issues: ValidationIssue[],
+  featureUsage: ProgramFeatureUsage,
   callStack: string[] = [],
 ): void {
   for (const statement of statements) {
-    if (steps.length > MAX_STEPS_PER_RUN) {
+    if (steps.length >= MAX_STEPS_PER_RUN) {
       issues.push({
         code: 'step_limit_exceeded',
         maxSteps: MAX_STEPS_PER_RUN,
@@ -961,6 +959,7 @@ function executeStatements(
           })
           break
         case 'set_aim': {
+          featureUsage.usedSetAim = true
           const value = evaluateExpression(statement.value, environment)
 
           if (value < 1 || value > 3) {
@@ -975,12 +974,14 @@ function executeStatements(
           break
         }
         case 'assign':
+          featureUsage.usedVariables = true
           environment[statement.name] = evaluateExpression(
             statement.value,
             environment,
           )
           break
         case 'if':
+          featureUsage.usedIf = true
           executeStatements(
             evaluateCondition(statement.condition, environment)
               ? statement.thenBody
@@ -989,10 +990,12 @@ function executeStatements(
             helperDefinitions,
             steps,
             issues,
+            featureUsage,
             callStack,
           )
           break
         case 'for_range':
+          featureUsage.usedFor = true
           for (let iteration = 0; iteration < statement.iterations; iteration += 1) {
             executeStatements(
               statement.body,
@@ -1000,6 +1003,7 @@ function executeStatements(
               helperDefinitions,
               steps,
               issues,
+              featureUsage,
               callStack,
             )
 
@@ -1009,6 +1013,7 @@ function executeStatements(
           }
           break
         case 'helper_call': {
+          featureUsage.usedHelperCall = true
           const helper = helperDefinitions.get(statement.name)
 
           if (helper === undefined) {
@@ -1034,6 +1039,7 @@ function executeStatements(
             helperDefinitions,
             steps,
             issues,
+            featureUsage,
             [...callStack, statement.name],
           )
           break
@@ -1060,6 +1066,7 @@ export function parseProgram(
   source: string,
   helperSource: string,
   lineCapacity: number,
+  helperLineLimit: number,
   allowedCommands: AllowedCommand[],
   unlockedConstructs: LockedConstruct[],
   evaluationContext: EvaluationContext,
@@ -1081,6 +1088,7 @@ export function parseProgram(
 
   const helperResult = parseHelperProgram(
     helperSource,
+    helperLineLimit,
     allowedCommands,
     unlockedConstructs,
   )
@@ -1098,14 +1106,16 @@ export function parseProgram(
       allowFunctionDefinitions: false,
     },
   )
+
   mainIssues.push(...mainStatements.issues)
 
   const environment: Record<string, number> = {
     __aim: 2,
-    bonus_lane: evaluationContext.bonus_lane,
+    ...evaluationContext,
   }
   const steps: ExecutionStep[] = []
   const evaluationIssues: ValidationIssue[] = []
+  const featureUsage = createFeatureUsage()
 
   if (mainIssues.length === 0 && helperResult.validation.isValid) {
     executeStatements(
@@ -1114,6 +1124,7 @@ export function parseProgram(
       helperResult.definitions,
       steps,
       evaluationIssues,
+      featureUsage,
     )
   }
 
@@ -1128,6 +1139,7 @@ export function parseProgram(
 
   return {
     steps: combinedMainIssues.length === 0 ? steps : [],
+    featureUsage,
     mainValidation: createValidation(
       combinedMainIssues,
       nonEmptyLineCount,

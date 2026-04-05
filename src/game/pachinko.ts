@@ -4,7 +4,7 @@ import type {
   BonusLane,
   BoardBucket,
   BoardOutcome,
-  GameState,
+  SideLane,
 } from '../types'
 
 export const BALL_SPAWN_INTERVAL_MS = 100
@@ -98,7 +98,14 @@ function buildBallPath(decisions: Array<-1 | 1>): number[] {
   return pathXs
 }
 
-function interpolatePath(pathXs: number[], progress: number): { x: number; y: number } {
+function easeInOutSine(progress: number): number {
+  return -(Math.cos(Math.PI * progress) - 1) / 2
+}
+
+function interpolatePath(
+  pathXs: number[],
+  progress: number,
+): { x: number; y: number; scale: number } {
   const clamped = clamp(progress, 0, 1)
   const segmentCount = BOARD_PATH_Y.length - 1
   const scaled = clamped * segmentCount
@@ -108,44 +115,95 @@ function interpolatePath(pathXs: number[], progress: number): { x: number; y: nu
   const endX = pathXs[segmentIndex + 1] ?? startX
   const startY = BOARD_PATH_Y[segmentIndex] ?? BOARD_PATH_Y[0]
   const endY = BOARD_PATH_Y[segmentIndex + 1] ?? startY
+  const easedProgress = easeInOutSine(localProgress)
+  const horizontalDirection =
+    endX === startX ? 0 : Math.sign(endX - startX)
+  const controlX = (startX + endX) / 2 + horizontalDirection * 8
+  const controlY = (startY + endY) / 2 - 10
+  const inverse = 1 - easedProgress
+  const x =
+    inverse * inverse * startX +
+    2 * inverse * easedProgress * controlX +
+    easedProgress * easedProgress * endX
+  const y =
+    inverse * inverse * startY +
+    2 * inverse * easedProgress * controlY +
+    easedProgress * easedProgress * endY
+  const contactPulse =
+    localProgress >= 0.72
+      ? Math.sin(((localProgress - 0.72) / 0.28) * Math.PI)
+      : 0
 
   return {
-    x: startX + (endX - startX) * localProgress,
-    y: startY + (endY - startY) * localProgress,
+    x,
+    y,
+    scale: 1 + contactPulse * 0.12,
   }
 }
 
 export function rollBonusLane(): BonusLane {
-  const value = Math.floor(Math.random() * 3) + 1
-  return value as BonusLane
+  return (Math.floor(Math.random() * 3) + 1) as BonusLane
 }
 
-export function getTaskTarget(state: GameState): number {
-  if (state.purchasedUpgradeIds.includes('for_loop')) {
-    return 18
+export function rollLaneValues(): {
+  leftValue: number
+  centerValue: number
+  rightValue: number
+} {
+  const values = [2, 3, 4]
+
+  for (let index = values.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    const current = values[index]
+    values[index] = values[swapIndex] ?? current
+    values[swapIndex] = current
   }
 
-  if (state.purchasedUpgradeIds.includes('functions')) {
-    return 16
+  return {
+    leftValue: values[0] ?? 2,
+    centerValue: values[1] ?? 3,
+    rightValue: values[2] ?? 4,
+  }
+}
+
+export function getBestLane(values: {
+  leftValue: number
+  centerValue: number
+  rightValue: number
+}): BonusLane {
+  if (values.leftValue >= values.centerValue && values.leftValue >= values.rightValue) {
+    return 1
   }
 
-  if (state.purchasedUpgradeIds.includes('if_statement')) {
-    return 14
+  if (values.centerValue >= values.rightValue) {
+    return 2
   }
 
-  if (state.purchasedUpgradeIds.includes('variables')) {
-    return 12
+  return 3
+}
+
+export function rollGateState(): { jackpotSide: SideLane; returnSide: SideLane } {
+  const jackpotSide = Math.random() < 0.5 ? 1 : 3
+  return {
+    jackpotSide,
+    returnSide: jackpotSide === 1 ? 3 : 1,
+  }
+}
+
+export function rollComboTarget(): BonusLane {
+  return rollBonusLane()
+}
+
+export function bucketIndexToLane(bucketIndex: number): BonusLane {
+  if (bucketIndex <= 1) {
+    return 1
   }
 
-  if (state.purchasedUpgradeIds.includes('line_capacity_3')) {
-    return 10
+  if (bucketIndex === 2) {
+    return 2
   }
 
-  if (state.unlocks.editorEditable) {
-    return 7
-  }
-
-  return 5
+  return 3
 }
 
 export function createBallOutcome(
@@ -228,6 +286,6 @@ export function getBallRenderState(
     x: position.x,
     y: position.y,
     opacity: 1,
-    scale: 1,
+    scale: position.scale,
   }
 }
