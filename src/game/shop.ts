@@ -14,14 +14,20 @@ export const SHOP_NODES: SupportUpgradeDefinition[] = [
     mainLineCapacityBonus: 1,
   },
   {
-    id: 'gate_preview',
-    kind: 'visibility',
+    id: 'portal_overcharge',
+    kind: 'conversion',
     cost: 70,
+    requiredTopicId: 'variables',
+  },
+  {
+    id: 'queue_peek',
+    kind: 'visibility',
+    cost: 85,
     requiredTopicId: 'conditions',
   },
   {
-    id: 'return_gate_hold',
-    kind: 'reliability',
+    id: 'lucky_bonus',
+    kind: 'conversion',
     cost: 90,
     requiredTopicId: 'conditions',
   },
@@ -31,24 +37,6 @@ export const SHOP_NODES: SupportUpgradeDefinition[] = [
     cost: 95,
     requiredTopicId: 'functions',
     helperLineCapacityBonus: 2,
-  },
-  {
-    id: 'relay_bonus',
-    kind: 'conversion',
-    cost: 110,
-    requiredTopicId: 'functions',
-  },
-  {
-    id: 'feeder_persistence',
-    kind: 'reliability',
-    cost: 120,
-    requiredTopicId: 'loops',
-  },
-  {
-    id: 'lightning_bonus',
-    kind: 'conversion',
-    cost: 140,
-    requiredTopicId: 'loops',
   },
 ]
 

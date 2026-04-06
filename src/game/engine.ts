@@ -1,6 +1,4 @@
 import type {
-  ActiveBall,
-  ActiveBallVariant,
   FeedEntry,
   FeedEntryType,
   GameState,
@@ -8,20 +6,23 @@ import type {
   GameView,
   ProgramFeatureUsage,
   RunStats,
+  ScoreBreakdownLine,
   SupportUpgradeId,
   TaskTopicId,
   TopicDefinition,
 } from '../types'
 import {
+  BALL_CANCEL_DURATION_MS,
   BALL_FALL_DURATION_MS,
   BALL_SETTLE_HOLD_MS,
   BALL_SPAWN_INTERVAL_MS,
-  bucketIndexToLane,
+  DEFAULT_EVIL_PENALTY,
+  DEFAULT_LUCKY_BONUS,
+  DEFAULT_PORTAL_CHILD_COUNT,
+  createBallQueue,
   createBallOutcome,
-  rollBonusLane,
-  rollComboTarget,
-  rollGateState,
-  rollLaneValues,
+  refillBallQueue,
+  rollPortalSide,
 } from './pachinko'
 import {
   BASE_HELPER_LINE_LIMIT,
@@ -32,12 +33,6 @@ import {
 import { canOpenShop, canPurchaseShopNode, SHOP_NODES } from './shop'
 
 const FEED_LIMIT = 8
-const JACKPOT_BONUS = 2
-const RETURN_GATE_BONUS = 2
-const BASE_RELAY_BONUS = 3
-const BOOSTED_RELAY_BONUS = 5
-const BASE_LIGHTNING_BONUS = 3
-const BOOSTED_LIGHTNING_BONUS = 5
 
 type FeedEntryInput = {
   type: FeedEntryType
@@ -94,25 +89,30 @@ function getNextTopic(
 }
 
 function getEvaluationContext(state: GameState) {
+  const nextBall = state.ballQueue[state.ballQueueCursor] ?? 'normal'
+
   return {
-    bonus_lane: state.bonusLane,
-    left_value: state.moduleStates.calibration.leftValue,
-    center_value: state.moduleStates.calibration.centerValue,
-    right_value: state.moduleStates.calibration.rightValue,
-    jackpot_side: state.moduleStates.diverter.jackpotSide,
-    return_side: state.moduleStates.diverter.returnSide,
-    shield_side: state.moduleStates.diverter.returnSide,
-    return_gate_open: state.moduleStates.diverter.returnGateOpen ? 1 : 0,
-    feeder_charge: state.moduleStates.burst.feederCharge,
-    combo_target: state.moduleStates.burst.comboTarget,
-    burst_ready: state.moduleStates.burst.burstReady ? 1 : 0,
+    ...(state.learnedTopicIds.includes('variables')
+      ? {
+          portal_side: state.moduleStates.board.portalSide,
+        }
+      : {}),
+    ...(state.learnedTopicIds.includes('conditions')
+      ? {
+          next_ball:
+            nextBall === 'lucky' ? 2 : nextBall === 'evil' ? 3 : 1,
+          normal_ball: 1,
+          lucky_ball: 2,
+          evil_ball: 3,
+        }
+      : {}),
   }
 }
 
 function createFeatureUsage(): ProgramFeatureUsage {
   return {
     usedVariables: false,
-    usedSetAim: false,
+    usedChooseChute: false,
     usedIf: false,
     usedHelperCall: false,
     usedFor: false,
@@ -122,61 +122,37 @@ function createFeatureUsage(): ProgramFeatureUsage {
 function createRunStats(featureUsage: ProgramFeatureUsage): RunStats {
   return {
     featureUsage,
+    spawnedBalls: 0,
+    programStepSpawnedCount: 0,
     resolvedBalls: 0,
-    hitBonusLaneCount: 0,
-    hitBestLaneCount: 0,
-    hitJackpotLaneCount: 0,
-    hitReturnLaneCount: 0,
-    openedReturnGate: false,
-    usedReturnGateCount: 0,
-    relayArmedThisRun: false,
-    relayTriggeredCount: 0,
-    feederHitCount: 0,
-    lightningBallsResolved: 0,
+    portalSplitCount: 0,
+    skippedEvilBallCount: 0,
+    luckyBallHitCount: 0,
+    helperPositiveOutcomeCount: 0,
+    positiveOutcomeCount: 0,
   }
-}
-
-function getRelayBonus(state: GameState): number {
-  return state.supportUpgradeIds.includes('relay_bonus')
-    ? BOOSTED_RELAY_BONUS
-    : BASE_RELAY_BONUS
-}
-
-function getLightningBonus(state: GameState): number {
-  return state.supportUpgradeIds.includes('lightning_bonus')
-    ? BOOSTED_LIGHTNING_BONUS
-    : BASE_LIGHTNING_BONUS
 }
 
 function createInitialModuleState(): GameState['moduleStates'] {
-  const laneValues = rollLaneValues()
-  const gateState = rollGateState()
-
   return {
-    calibration: {
-      ...laneValues,
-      focusCharge: 0,
-      focusThreshold: 3,
-      luckyBallReady: false,
-    },
-    diverter: {
-      jackpotSide: gateState.jackpotSide,
-      returnSide: gateState.returnSide,
-      returnGateOpen: false,
-    },
-    relay: {
-      helperName: 'follow_bonus',
-      relayArmed: false,
-      relayTargetLane: null,
-    },
-    burst: {
-      feederCharge: 0,
-      feederTarget: 3,
-      comboTarget: rollComboTarget(),
-      burstReady: false,
-      lightningShotsRemaining: 0,
+    board: {
+      portalSide: rollPortalSide(),
     },
   }
+}
+
+function getLuckyBonusValue(state: GameState): number {
+  return DEFAULT_LUCKY_BONUS + (state.supportUpgradeIds.includes('lucky_bonus') ? 2 : 0)
+}
+
+function getPortalChildCount(state: GameState): number {
+  return DEFAULT_PORTAL_CHILD_COUNT + (state.supportUpgradeIds.includes('portal_overcharge') ? 1 : 0)
+}
+
+function getRefilledQueue(state: GameState): GameState['ballQueue'] {
+  return refillBallQueue(state.ballQueue, state.ballQueueCursor, {
+    conditionsUnlocked: state.learnedTopicIds.includes('conditions'),
+  })
 }
 
 function revalidatePrograms(state: GameState): GameState {
@@ -188,6 +164,7 @@ function revalidatePrograms(state: GameState): GameState {
     state.unlocks.allowedCommands,
     state.unlocks.unlockedConstructs,
     getEvaluationContext(state),
+    state.ballQueue.slice(state.ballQueueCursor),
   )
 
   return {
@@ -197,12 +174,64 @@ function revalidatePrograms(state: GameState): GameState {
   }
 }
 
-function markBallSettled(ball: ActiveBall, now: number): ActiveBall {
+function markBallSettled(ball: GameState['activeBalls'][number], now: number) {
   return {
     ...ball,
-    state: 'settled',
+    state: 'settled' as const,
     removeAt: now + BALL_SETTLE_HOLD_MS,
   }
+}
+
+function markBallCanceled(
+  ball: GameState['activeBalls'][number],
+  now: number,
+  x: number,
+  y: number,
+) {
+  return {
+    ...ball,
+    state: 'canceled' as const,
+    cancelX: x,
+    cancelY: y,
+    removeAt: now + BALL_CANCEL_DURATION_MS,
+  }
+}
+
+function createScoreBreakdown(
+  ball: GameState['activeBalls'][number],
+  total: number,
+): ScoreBreakdownLine[] {
+  const lines: ScoreBreakdownLine[] = [
+    {
+      kind: 'bucket',
+      value: ball.basePoints,
+    },
+  ]
+
+  if (ball.usedLuckyBonus) {
+    lines.push({
+      kind: 'lucky_bonus',
+      value: getLuckyBonusValueFromBall(ball),
+    })
+  }
+
+  if (ball.usedEvilPenalty) {
+    lines.push({
+      kind: 'evil_penalty',
+      value: DEFAULT_EVIL_PENALTY,
+    })
+  }
+
+  lines.push({
+    kind: 'total',
+    value: total,
+  })
+
+  return lines
+}
+
+function getLuckyBonusValueFromBall(ball: GameState['activeBalls'][number]): number {
+  return ball.points - ball.basePoints
 }
 
 function spawnDueBalls(state: GameState, now: number): GameState {
@@ -215,6 +244,8 @@ function spawnDueBalls(state: GameState, now: number): GameState {
   let queuedSteps = state.queuedSteps
   let nextBallId = state.nextBallId
   let activeLineNumber = state.activeLineNumber
+  let ballQueueCursor = state.ballQueueCursor
+  let runStats = state.currentRunStats ?? createRunStats(createFeatureUsage())
 
   while (
     queuedSteps.length > 0 &&
@@ -227,28 +258,61 @@ function spawnDueBalls(state: GameState, now: number): GameState {
       break
     }
 
-    const outcome = createBallOutcome(step.aim, state.bonusLane)
-    const activeBall: ActiveBall = {
+    queuedSteps = remainingSteps
+    activeLineNumber = step.lineNumber
+    ballQueueCursor += 1
+
+    if (step.type === 'skip_ball') {
+      runStats = {
+        ...runStats,
+        skippedEvilBallCount:
+          runStats.skippedEvilBallCount + (step.ballType === 'evil' ? 1 : 0),
+      }
+      nextSpawnAt += BALL_SPAWN_INTERVAL_MS
+      continue
+    }
+
+    const outcome = createBallOutcome(
+      step.aim,
+      state.moduleStates.board.portalSide,
+      step.ballType,
+      {
+        launchIndex: runStats.spawnedBalls,
+        portalEnabled: state.learnedTopicIds.includes('variables'),
+        portalDepth: 0,
+        luckyBonusValue: getLuckyBonusValue(state),
+      },
+    )
+    const activeBall = {
       id: nextBallId,
       lineNumber: step.lineNumber,
       aim: step.aim,
-      bucket: outcome.bucket,
+      source: step.source,
+      ballType: step.ballType,
+      spawnKind: 'direct' as const,
+      portalDepth: 0,
       bucketIndex: outcome.bucketIndex,
-      laneBonus: outcome.laneBonus,
+      basePoints: outcome.basePoints,
+      usedLuckyBonus: outcome.usedLuckyBonus,
+      usedEvilPenalty: outcome.usedEvilPenalty,
+      triggeredPortal: outcome.triggeredPortal,
       points: outcome.points,
-      variant: 'normal',
-      pathXs: outcome.pathXs,
+      scoreBreakdown: [],
+      path: outcome.path,
       spawnedAt: nextSpawnAt,
       settleAt: nextSpawnAt + BALL_FALL_DURATION_MS,
       removeAt: nextSpawnAt + BALL_FALL_DURATION_MS + BALL_SETTLE_HOLD_MS,
-      state: 'falling',
+      state: 'falling' as const,
     }
 
     activeBalls = [...activeBalls, activeBall]
-    queuedSteps = remainingSteps
-    activeLineNumber = step.lineNumber
     nextBallId += 1
     nextSpawnAt += BALL_SPAWN_INTERVAL_MS
+    runStats = {
+      ...runStats,
+      spawnedBalls: runStats.spawnedBalls + 1,
+      programStepSpawnedCount: runStats.programStepSpawnedCount + 1,
+    }
   }
 
   return {
@@ -256,114 +320,127 @@ function spawnDueBalls(state: GameState, now: number): GameState {
     queuedSteps,
     activeBalls,
     nextBallId,
+    ballQueueCursor,
     nextSpawnAt: queuedSteps.length === 0 ? null : nextSpawnAt,
     activeLineNumber,
+    currentRunStats: runStats,
   }
 }
 
-function settleBall(state: GameState, ball: ActiveBall, now: number): GameState {
+function createPortalChildBall(
+  state: GameState,
+  parentBall: GameState['activeBalls'][number],
+  ballId: number,
+  spawnAt: number,
+  launchIndex: number,
+) {
+  const outcome = createBallOutcome(
+    parentBall.aim,
+    state.moduleStates.board.portalSide,
+    parentBall.ballType,
+    {
+      launchIndex,
+      portalEnabled: state.learnedTopicIds.includes('variables'),
+      portalDepth: 1,
+      luckyBonusValue: getLuckyBonusValue(state),
+    },
+  )
+
+  return {
+    id: ballId,
+    lineNumber: parentBall.lineNumber,
+    aim: parentBall.aim,
+    source: parentBall.source,
+    ballType: parentBall.ballType,
+    spawnKind: 'portal' as const,
+    portalDepth: 1,
+    bucketIndex: outcome.bucketIndex,
+    basePoints: outcome.basePoints,
+    usedLuckyBonus: outcome.usedLuckyBonus,
+    usedEvilPenalty: outcome.usedEvilPenalty,
+    triggeredPortal: outcome.triggeredPortal,
+    points: outcome.points,
+    scoreBreakdown: [],
+    path: outcome.path,
+    spawnedAt: spawnAt,
+    settleAt: spawnAt + BALL_FALL_DURATION_MS,
+    removeAt: spawnAt + BALL_FALL_DURATION_MS + BALL_SETTLE_HOLD_MS,
+    state: 'falling' as const,
+  }
+}
+
+function settleBall(
+  state: GameState,
+  ball: GameState['activeBalls'][number],
+  now: number,
+): GameState {
   const runStats = state.currentRunStats ?? createRunStats(createFeatureUsage())
-  const lane = bucketIndexToLane(ball.bucketIndex)
+  const didEarnPositiveOutcome = ball.usedLuckyBonus || ball.triggeredPortal
 
-  let points = ball.points
-  let variant: ActiveBallVariant = ball.variant
-  const nextModuleStates = {
-    calibration: { ...state.moduleStates.calibration },
-    diverter: { ...state.moduleStates.diverter },
-    relay: { ...state.moduleStates.relay },
-    burst: { ...state.moduleStates.burst },
+  const nextRunStats: RunStats = {
+    ...runStats,
+    resolvedBalls: runStats.resolvedBalls + 1,
+    portalSplitCount: runStats.portalSplitCount + (ball.triggeredPortal ? 1 : 0),
+    luckyBallHitCount: runStats.luckyBallHitCount + (ball.usedLuckyBonus ? 1 : 0),
+    helperPositiveOutcomeCount:
+      runStats.helperPositiveOutcomeCount +
+      (ball.source === 'helper' && didEarnPositiveOutcome ? 1 : 0),
+    positiveOutcomeCount:
+      runStats.positiveOutcomeCount + (didEarnPositiveOutcome ? 1 : 0),
   }
 
-  runStats.resolvedBalls += 1
+  if (ball.triggeredPortal) {
+    const portalNode = ball.path[ball.path.length - 1] ?? {
+      x: ball.cancelX ?? 0,
+      y: ball.cancelY ?? 0,
+    }
+    const childStart = now + 70
+    const childCount = getPortalChildCount(state)
+    const childBalls = Array.from({ length: childCount }, (_, index) =>
+      createPortalChildBall(
+        state,
+        ball,
+        state.nextBallId + index,
+        childStart + index * 120,
+        nextRunStats.spawnedBalls + index,
+      ),
+    )
 
-  if (lane === state.bonusLane) {
-    runStats.hitBonusLaneCount += 1
-  }
-
-  if (nextModuleStates.burst.lightningShotsRemaining > 0) {
-    points += getLightningBonus(state)
-    nextModuleStates.burst.lightningShotsRemaining -= 1
-    runStats.lightningBallsResolved += 1
-    variant = 'lightning'
-  }
-
-  if (lane === nextModuleStates.diverter.jackpotSide) {
-    runStats.hitJackpotLaneCount += 1
-
-    if (runStats.featureUsage.usedIf) {
-      points += JACKPOT_BONUS
-      nextModuleStates.diverter.returnGateOpen = true
-      runStats.openedReturnGate = true
-
-      if (variant === 'normal') {
-        variant = 'jackpot'
-      }
+    return {
+      ...state,
+      currentRunStats: {
+        ...nextRunStats,
+        spawnedBalls: nextRunStats.spawnedBalls + childCount,
+      },
+      resolvedDropCount: state.resolvedDropCount + 1,
+      lastPoints: 0,
+      streak: 0,
+      nextBallId: state.nextBallId + childCount,
+      activeBalls: state.activeBalls.flatMap((entry) =>
+        entry.id === ball.id
+          ? [markBallCanceled(entry, now, portalNode.x, portalNode.y), ...childBalls]
+          : [entry],
+      ),
     }
   }
 
-  if (lane === nextModuleStates.diverter.returnSide) {
-    runStats.hitReturnLaneCount += 1
-
-    if (nextModuleStates.diverter.returnGateOpen) {
-      points += RETURN_GATE_BONUS
-      runStats.usedReturnGateCount += 1
-
-      if (!state.supportUpgradeIds.includes('return_gate_hold')) {
-        nextModuleStates.diverter.returnGateOpen = false
-      }
-
-      if (variant === 'normal') {
-        variant = 'return'
-      }
-    }
-  }
-
-  if (
-    nextModuleStates.relay.relayArmed &&
-    nextModuleStates.relay.relayTargetLane === lane
-  ) {
-    points += getRelayBonus(state)
-    runStats.relayTriggeredCount += 1
-    nextModuleStates.relay.relayArmed = false
-    nextModuleStates.relay.relayTargetLane = null
-
-    if (variant === 'normal') {
-      variant = 'relay'
-    }
-  }
-
-  if (runStats.featureUsage.usedHelperCall && lane === state.bonusLane) {
-    nextModuleStates.relay.relayArmed = true
-    nextModuleStates.relay.relayTargetLane = state.bonusLane
-    runStats.relayArmedThisRun = true
-  }
-
-  if (runStats.featureUsage.usedFor && lane === nextModuleStates.burst.comboTarget) {
-    runStats.feederHitCount += 1
-    nextModuleStates.burst.feederCharge += 1
-
-    if (nextModuleStates.burst.feederCharge >= nextModuleStates.burst.feederTarget) {
-      nextModuleStates.burst.feederCharge = 0
-      nextModuleStates.burst.burstReady = true
-    }
-  }
+  const points = ball.points
 
   return {
     ...state,
-    moduleStates: nextModuleStates,
-    currentRunStats: runStats,
-    score: state.score + points,
+    currentRunStats: nextRunStats,
+    score: Math.max(0, state.score + points),
     resolvedDropCount: state.resolvedDropCount + 1,
     lastPoints: points,
     lastBucket: ball.bucketIndex + 1,
-    streak: points >= 6 ? state.streak + 1 : 0,
+    streak: points >= 8 ? state.streak + 1 : 0,
     activeBalls: state.activeBalls.map((entry) =>
       entry.id === ball.id
         ? markBallSettled(
             {
               ...entry,
               points,
-              variant,
+              scoreBreakdown: createScoreBreakdown(entry, points),
             },
             now,
           )
@@ -422,7 +499,7 @@ function hasUsedCurrentTopicFeature(
 
   switch (topicId) {
     case 'variables':
-      return featureUsage.usedSetAim || featureUsage.usedVariables
+      return featureUsage.usedChooseChute || featureUsage.usedVariables
     case 'conditions':
       return featureUsage.usedIf
     case 'functions':
@@ -444,25 +521,27 @@ function didCompleteTopicGoal(
   switch (topicId) {
     case 'variables':
       return (
-        runStats.featureUsage.usedSetAim &&
-        runStats.hitBonusLaneCount > 0 &&
-        /\bbonus_lane\b/.test(combinedSource)
+        runStats.featureUsage.usedChooseChute &&
+        runStats.portalSplitCount > 0 &&
+        /\bportal_side\b/.test(combinedSource)
       )
     case 'conditions':
       return (
         runStats.featureUsage.usedIf &&
-        (runStats.openedReturnGate || runStats.usedReturnGateCount > 0) &&
-        /\b(jackpot_side|return_side|return_gate_open)\b/.test(combinedSource)
+        runStats.skippedEvilBallCount > 0 &&
+        /\bnext_ball\b/.test(combinedSource) &&
+        /\bevil_ball\b/.test(combinedSource)
       )
     case 'functions':
       return (
         runStats.featureUsage.usedHelperCall &&
-        (runStats.relayArmedThisRun || runStats.relayTriggeredCount > 0)
+        runStats.helperPositiveOutcomeCount > 0
       )
     case 'loops':
       return (
         runStats.featureUsage.usedFor &&
-        (runStats.feederHitCount > 0 || runStats.lightningBallsResolved > 0)
+        runStats.programStepSpawnedCount >= 3 &&
+        runStats.positiveOutcomeCount >= 2
       )
     default:
       return false
@@ -470,48 +549,15 @@ function didCompleteTopicGoal(
 }
 
 function refreshMachineState(state: GameState): GameState {
-  const nextLaneValues = rollLaneValues()
-  const nextGateState = state.moduleStates.diverter.returnGateOpen
-    ? {
-        jackpotSide: state.moduleStates.diverter.jackpotSide,
-        returnSide: state.moduleStates.diverter.returnSide,
-      }
-    : rollGateState()
-  const nextComboTarget =
-    state.moduleStates.burst.feederCharge > 0 ||
-    state.moduleStates.burst.burstReady ||
-    state.moduleStates.burst.lightningShotsRemaining > 0
-      ? state.moduleStates.burst.comboTarget
-      : rollComboTarget()
-  const nextModuleStates = {
-    calibration: {
-      ...state.moduleStates.calibration,
-      ...nextLaneValues,
-    },
-    diverter: {
-      ...state.moduleStates.diverter,
-      jackpotSide: nextGateState.jackpotSide,
-      returnSide: nextGateState.returnSide,
-    },
-    relay: { ...state.moduleStates.relay },
-    burst: {
-      ...state.moduleStates.burst,
-      comboTarget: nextComboTarget,
-    },
-  }
-
-  if (
-    !state.supportUpgradeIds.includes('feeder_persistence') &&
-    (state.currentRunStats?.feederHitCount ?? 0) === 0 &&
-    !nextModuleStates.burst.burstReady
-  ) {
-    nextModuleStates.burst.feederCharge = 0
-  }
-
   return {
     ...state,
-    bonusLane: rollBonusLane(),
-    moduleStates: nextModuleStates,
+    ballQueue: getRefilledQueue(state),
+    ballQueueCursor: 0,
+    moduleStates: {
+      board: {
+        portalSide: rollPortalSide(),
+      },
+    },
   }
 }
 
@@ -547,9 +593,9 @@ function unlockTopic(
         ...unlocks,
         editorEditable: true,
         lineCapacity: Math.max(unlocks.lineCapacity, 3),
-        allowedCommands: unlocks.allowedCommands.includes('set_aim')
+        allowedCommands: unlocks.allowedCommands.includes('choose_chute')
           ? unlocks.allowedCommands
-          : [...unlocks.allowedCommands, 'set_aim'],
+          : [...unlocks.allowedCommands, 'choose_chute'],
         unlockedConstructs: unlocks.unlockedConstructs.includes('variables')
           ? unlocks.unlockedConstructs
           : [...unlocks.unlockedConstructs, 'variables'],
@@ -559,6 +605,9 @@ function unlockTopic(
       unlocks = {
         ...unlocks,
         lineCapacity: Math.max(unlocks.lineCapacity, 5),
+        allowedCommands: unlocks.allowedCommands.includes('skip_ball')
+          ? unlocks.allowedCommands
+          : [...unlocks.allowedCommands, 'skip_ball'],
         unlockedConstructs: unlocks.unlockedConstructs.includes('if')
           ? unlocks.unlockedConstructs
           : [...unlocks.unlockedConstructs, 'if'],
@@ -590,6 +639,7 @@ function unlockTopic(
   const learnedTopicIds = state.learnedTopicIds.includes(topicId)
     ? state.learnedTopicIds
     : [...state.learnedTopicIds, topicId]
+  const shouldRegenerateQueue = topicId === 'conditions'
 
   return revalidatePrograms(
     prependFeedEntries(
@@ -605,6 +655,22 @@ function unlockTopic(
         activeCheckpointTaskIds: [],
         checkpointIndex: 0,
         activeTaskId: null,
+        ballQueue: shouldRegenerateQueue
+          ? createBallQueue({
+              conditionsUnlocked: learnedTopicIds.includes('conditions'),
+              currentTopicId: topicId,
+              topicStage: 'new_unlock_spotlight',
+            })
+          : getRefilledQueue({
+              ...state,
+              learnedTopicIds,
+            }),
+        ballQueueCursor: 0,
+        moduleStates: {
+          board: {
+            portalSide: rollPortalSide(),
+          },
+        },
       },
       [
         {
@@ -626,6 +692,7 @@ function completeRun(
     isRunning: false,
     activeLineNumber: null,
     nextSpawnAt: null,
+    plannedBallCount: 0,
   }
 
   if (nextState.topicStage === 'onboarding') {
@@ -634,6 +701,7 @@ function completeRun(
       ...nextState,
       currentRunFeatureUsage: null,
       currentRunStats: null,
+      plannedBallCount: 0,
     })
     nextState = revalidatePrograms(nextState)
 
@@ -702,6 +770,7 @@ function completeRun(
     ...nextState,
     currentRunFeatureUsage: null,
     currentRunStats: null,
+    plannedBallCount: 0,
   })
 
   return nextState
@@ -764,9 +833,14 @@ export function createInitialGameState(): GameState {
     nextBallId: 1,
     nextSpawnAt: null,
     lastPoints: 0,
-    lastBucket: 3,
+    lastBucket: 5,
     streak: 0,
-    bonusLane: rollBonusLane(),
+    ballQueue: createBallQueue({
+      conditionsUnlocked: false,
+      currentTopicId: null,
+      topicStage: 'onboarding',
+    }),
+    ballQueueCursor: 0,
     currentTopicId: null,
     learnedTopicIds: [],
     masteredTopicIds: [],
@@ -783,6 +857,7 @@ export function createInitialGameState(): GameState {
     nextFeedEntryId: 1,
     currentRunFeatureUsage: null,
     currentRunStats: null,
+    plannedBallCount: 0,
     hasOpenedShop: false,
   }
 
@@ -857,6 +932,7 @@ export function startProgramRun(state: GameState): GameState {
     state.unlocks.allowedCommands,
     state.unlocks.unlockedConstructs,
     getEvaluationContext(state),
+    state.ballQueue.slice(state.ballQueueCursor),
   )
 
   if (!parsed.mainValidation.isValid || !parsed.helperValidation.isValid) {
@@ -867,6 +943,7 @@ export function startProgramRun(state: GameState): GameState {
       queuedSteps: [],
       activeLineNumber: null,
       isRunning: false,
+      plannedBallCount: 0,
     }
   }
 
@@ -878,10 +955,11 @@ export function startProgramRun(state: GameState): GameState {
       queuedSteps: [],
       activeLineNumber: null,
       isRunning: false,
+      plannedBallCount: 0,
     }
   }
 
-  const nextState: GameState = {
+  return {
     ...state,
     programValidation: parsed.mainValidation,
     helperProgramValidation: parsed.helperValidation,
@@ -889,24 +967,11 @@ export function startProgramRun(state: GameState): GameState {
     isRunning: true,
     nextSpawnAt: Date.now(),
     activeLineNumber: parsed.steps[0]?.lineNumber ?? null,
+    plannedBallCount: parsed.mainValidation.executionStepCount,
     currentView: state.currentView === 'shop' ? 'play' : state.currentView,
     currentRunFeatureUsage: parsed.featureUsage,
     currentRunStats: createRunStats(parsed.featureUsage),
-    moduleStates: {
-      ...state.moduleStates,
-      burst:
-        state.moduleStates.burst.burstReady &&
-        state.moduleStates.burst.lightningShotsRemaining === 0
-          ? {
-              ...state.moduleStates.burst,
-              burstReady: false,
-              lightningShotsRemaining: 2,
-            }
-          : state.moduleStates.burst,
-    },
   }
-
-  return nextState
 }
 
 export function advanceProgramRun(
@@ -931,6 +996,7 @@ export function advanceProgramRun(
       isRunning: false,
       activeLineNumber: null,
       nextSpawnAt: null,
+      plannedBallCount: 0,
     }
   }
 

@@ -1,6 +1,8 @@
 import type {
+  ActiveBallSource,
   AimLevel,
   AllowedCommand,
+  BallType,
   ExecutionStep,
   LockedConstruct,
   ParsedProgram,
@@ -11,8 +13,8 @@ import type {
 
 export const INITIAL_PROGRAM_SOURCE = 'drop_ball()'
 export const INITIAL_HELPER_SOURCE = [
-  'def follow_bonus():',
-  '    set_aim(bonus_lane)',
+  'def follow_portal():',
+  '    choose_chute(portal_side)',
   '    drop_ball()',
 ].join('\n')
 export const MAX_FOR_RANGE = 8
@@ -41,7 +43,9 @@ type ConditionNode = {
 
 type StatementNode =
   | { type: 'drop_ball'; lineNumber: number }
-  | { type: 'set_aim'; lineNumber: number; value: ExprNode }
+  | { type: 'skip_ball'; lineNumber: number }
+  | { type: 'continue'; lineNumber: number }
+  | { type: 'choose_chute'; lineNumber: number; value: ExprNode }
   | { type: 'assign'; lineNumber: number; name: string; value: ExprNode }
   | {
       type: 'if'
@@ -54,6 +58,7 @@ type StatementNode =
       type: 'for_range'
       lineNumber: number
       iterations: number
+      loopVariable: string
       body: StatementNode[]
     }
   | { type: 'helper_call'; lineNumber: number; name: string }
@@ -70,6 +75,7 @@ type ParseContext = {
   allowHelperCalls: boolean
   helperNames: Set<string>
   allowFunctionDefinitions: boolean
+  insideLoop: boolean
 }
 
 type Token =
@@ -78,11 +84,16 @@ type Token =
   | { type: 'operator'; value: '+' | '-' | '*' | '(' | ')' }
 
 type EvaluationContext = Record<string, number>
+type PlanningContext = {
+  ballQueue: BallType[]
+  queueIndex: number
+}
+type ExecutionControl = 'none' | 'continue'
 
 function createFeatureUsage(): ProgramFeatureUsage {
   return {
     usedVariables: false,
-    usedSetAim: false,
+    usedChooseChute: false,
     usedIf: false,
     usedHelperCall: false,
     usedFor: false,
@@ -104,6 +115,36 @@ function createValidation(
     executionStepCount: hasIssues ? 0 : executionStepCount,
     helperCount,
   }
+}
+
+function getBallTypeValue(ballType: BallType): number {
+  switch (ballType) {
+    case 'lucky':
+      return 2
+    case 'evil':
+      return 3
+    case 'normal':
+    default:
+      return 1
+  }
+}
+
+function peekBallType(planning: PlanningContext): BallType {
+  return planning.ballQueue[planning.queueIndex] ?? 'normal'
+}
+
+function syncNextBall(environment: Record<string, number>, planning: PlanningContext): void {
+  environment.next_ball = getBallTypeValue(peekBallType(planning))
+}
+
+function consumeNextBall(
+  environment: Record<string, number>,
+  planning: PlanningContext,
+): BallType {
+  const current = peekBallType(planning)
+  planning.queueIndex += 1
+  syncNextBall(environment, planning)
+  return current
 }
 
 function tokenizeExpression(source: string): Token[] | null {
@@ -404,6 +445,10 @@ function detectLockedConstruct(line: string): LockedConstruct | null {
     return 'for'
   }
 
+  if (line === 'continue') {
+    return 'for'
+  }
+
   if (/^[A-Za-z_]\w*\s*=/.test(line)) {
     return 'variables'
   }
@@ -588,7 +633,7 @@ function parseStatements(
         continue
       }
 
-      const forMatch = line.trimmed.match(/^for _ in range\((\d+)\):$/)
+      const forMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in range\((\d+)\):$/)
 
       if (forMatch === null) {
         issues.push({
@@ -599,7 +644,8 @@ function parseStatements(
         continue
       }
 
-      const iterations = Number(forMatch[1])
+      const loopVariable = forMatch[1] ?? '_'
+      const iterations = Number(forMatch[2])
 
       if (
         !Number.isInteger(iterations) ||
@@ -619,7 +665,10 @@ function parseStatements(
         lines,
         index + 1,
         currentIndent,
-        context,
+        {
+          ...context,
+          insideLoop: true,
+        },
         'for_body_required',
       )
       issues.push(...block.issues)
@@ -635,9 +684,32 @@ function parseStatements(
         type: 'for_range',
         lineNumber: line.lineNumber,
         iterations,
+        loopVariable,
         body: block.statements,
       })
       index = block.nextIndex
+      continue
+    }
+
+    if (line.trimmed === 'continue') {
+      if (!context.unlockedConstructs.includes('for')) {
+        issues.push({
+          code: 'locked_construct',
+          lineNumber: line.lineNumber,
+          construct: 'for',
+        })
+      } else if (!context.insideLoop) {
+        issues.push({
+          code: 'continue_outside_loop',
+          lineNumber: line.lineNumber,
+        })
+      } else {
+        statements.push({
+          type: 'continue',
+          lineNumber: line.lineNumber,
+        })
+      }
+      index += 1
       continue
     }
 
@@ -697,8 +769,27 @@ function parseStatements(
         continue
       }
 
-      if (name === 'set_aim') {
-        if (!context.allowedCommands.includes('set_aim')) {
+      if (name === 'skip_ball') {
+        if (args !== '' || !context.allowedCommands.includes('skip_ball')) {
+          issues.push({
+            code: context.allowedCommands.includes('skip_ball')
+              ? 'invalid_command'
+              : 'locked_construct',
+            lineNumber: line.lineNumber,
+            construct: 'if',
+          })
+        } else {
+          statements.push({
+            type: 'skip_ball',
+            lineNumber: line.lineNumber,
+          })
+        }
+        index += 1
+        continue
+      }
+
+      if (name === 'choose_chute' || name === 'set_aim') {
+        if (!context.allowedCommands.includes('choose_chute')) {
           issues.push({
             code: 'locked_construct',
             lineNumber: line.lineNumber,
@@ -720,7 +811,7 @@ function parseStatements(
         }
 
         statements.push({
-          type: 'set_aim',
+          type: 'choose_chute',
           lineNumber: line.lineNumber,
           value: expression,
         })
@@ -867,7 +958,12 @@ function parseHelperProgram(
 
     const helperName = defMatch[1] ?? ''
 
-    if (helperName === 'drop_ball' || helperName === 'set_aim') {
+    if (
+      helperName === 'drop_ball' ||
+      helperName === 'skip_ball' ||
+      helperName === 'choose_chute' ||
+      helperName === 'set_aim'
+    ) {
       issues.push({
         code: 'duplicate_function',
         lineNumber: line.lineNumber,
@@ -907,6 +1003,7 @@ function parseHelperProgram(
         allowHelperCalls: false,
         helperNames: new Set<string>(),
         allowFunctionDefinitions: false,
+        insideLoop: false,
       },
       'for_body_required',
     )
@@ -938,28 +1035,49 @@ function executeStatements(
   steps: ExecutionStep[],
   issues: ValidationIssue[],
   featureUsage: ProgramFeatureUsage,
+  planning: PlanningContext,
   callStack: string[] = [],
-): void {
+): ExecutionControl {
   for (const statement of statements) {
     if (steps.length >= MAX_STEPS_PER_RUN) {
       issues.push({
         code: 'step_limit_exceeded',
         maxSteps: MAX_STEPS_PER_RUN,
       })
-      return
+      return 'none'
     }
 
     try {
       switch (statement.type) {
         case 'drop_ball':
+          {
+            const source: ActiveBallSource =
+              callStack.length > 0 ? 'helper' : 'main'
+            const ballType = consumeNextBall(environment, planning)
+
+            steps.push({
+              type: 'drop_ball',
+              lineNumber: statement.lineNumber,
+              aim: environment.__aim as AimLevel,
+              source,
+              ballType,
+            })
+          }
+          break
+        case 'skip_ball': {
+          const ballType = consumeNextBall(environment, planning)
+
           steps.push({
-            type: 'drop_ball',
+            type: 'skip_ball',
             lineNumber: statement.lineNumber,
-            aim: environment.__aim as AimLevel,
+            ballType,
           })
           break
-        case 'set_aim': {
-          featureUsage.usedSetAim = true
+        }
+        case 'continue':
+          return 'continue'
+        case 'choose_chute': {
+          featureUsage.usedChooseChute = true
           const value = evaluateExpression(statement.value, environment)
 
           if (value < 1 || value > 3) {
@@ -967,7 +1085,7 @@ function executeStatements(
               code: 'aim_range_limit',
               lineNumber: statement.lineNumber,
             })
-            return
+            return 'none'
           }
 
           environment.__aim = value
@@ -982,33 +1100,50 @@ function executeStatements(
           break
         case 'if':
           featureUsage.usedIf = true
-          executeStatements(
-            evaluateCondition(statement.condition, environment)
-              ? statement.thenBody
-              : statement.elseBody,
-            environment,
-            helperDefinitions,
-            steps,
-            issues,
-            featureUsage,
-            callStack,
-          )
+          {
+            const control = executeStatements(
+              evaluateCondition(statement.condition, environment)
+                ? statement.thenBody
+                : statement.elseBody,
+              environment,
+              helperDefinitions,
+              steps,
+              issues,
+              featureUsage,
+              planning,
+              callStack,
+            )
+
+            if (issues.length > 0) {
+              return 'none'
+            }
+
+            if (control === 'continue') {
+              return 'continue'
+            }
+          }
           break
         case 'for_range':
           featureUsage.usedFor = true
           for (let iteration = 0; iteration < statement.iterations; iteration += 1) {
-            executeStatements(
+            environment[statement.loopVariable] = iteration
+            const control = executeStatements(
               statement.body,
               environment,
               helperDefinitions,
               steps,
               issues,
               featureUsage,
+              planning,
               callStack,
             )
 
             if (issues.length > 0) {
-              return
+              return 'none'
+            }
+
+            if (control === 'continue') {
+              continue
             }
           }
           break
@@ -1022,7 +1157,7 @@ function executeStatements(
               lineNumber: statement.lineNumber,
               helperName: statement.name,
             })
-            return
+            return 'none'
           }
 
           if (callStack.includes(statement.name)) {
@@ -1030,18 +1165,29 @@ function executeStatements(
               code: 'invalid_command',
               lineNumber: statement.lineNumber,
             })
-            return
+            return 'none'
           }
 
-          executeStatements(
-            helper.body,
-            environment,
-            helperDefinitions,
-            steps,
-            issues,
-            featureUsage,
-            [...callStack, statement.name],
-          )
+          {
+            const control = executeStatements(
+              helper.body,
+              environment,
+              helperDefinitions,
+              steps,
+              issues,
+              featureUsage,
+              planning,
+              [...callStack, statement.name],
+            )
+
+            if (issues.length > 0) {
+              return 'none'
+            }
+
+            if (control === 'continue') {
+              return 'continue'
+            }
+          }
           break
         }
         default:
@@ -1052,14 +1198,16 @@ function executeStatements(
         code:
           statement.type === 'if'
             ? 'invalid_condition'
-            : statement.type === 'set_aim' || statement.type === 'assign'
+            : statement.type === 'choose_chute' || statement.type === 'assign'
               ? 'invalid_expression'
               : 'invalid_command',
         lineNumber: statement.lineNumber,
       })
-      return
+      return 'none'
     }
   }
+
+  return 'none'
 }
 
 export function parseProgram(
@@ -1070,6 +1218,7 @@ export function parseProgram(
   allowedCommands: AllowedCommand[],
   unlockedConstructs: LockedConstruct[],
   evaluationContext: EvaluationContext,
+  ballQueue: BallType[],
 ): ParsedProgram {
   const mainLines = parseLines(source)
   const nonEmptyLineCount = countNonEmptyLines(mainLines)
@@ -1104,6 +1253,7 @@ export function parseProgram(
       allowHelperCalls: unlockedConstructs.includes('functions'),
       helperNames,
       allowFunctionDefinitions: false,
+      insideLoop: false,
     },
   )
 
@@ -1113,6 +1263,11 @@ export function parseProgram(
     __aim: 2,
     ...evaluationContext,
   }
+  const planning: PlanningContext = {
+    ballQueue,
+    queueIndex: 0,
+  }
+  syncNextBall(environment, planning)
   const steps: ExecutionStep[] = []
   const evaluationIssues: ValidationIssue[] = []
   const featureUsage = createFeatureUsage()
@@ -1125,6 +1280,7 @@ export function parseProgram(
       steps,
       evaluationIssues,
       featureUsage,
+      planning,
     )
   }
 
@@ -1137,13 +1293,15 @@ export function parseProgram(
 
   const combinedMainIssues = [...mainIssues, ...evaluationIssues]
 
+  const launchStepCount = steps.filter((step) => step.type === 'drop_ball').length
+
   return {
     steps: combinedMainIssues.length === 0 ? steps : [],
     featureUsage,
     mainValidation: createValidation(
       combinedMainIssues,
       nonEmptyLineCount,
-      steps.length,
+      launchStepCount,
       helperResult.validation.helperCount,
     ),
     helperValidation: helperResult.validation,

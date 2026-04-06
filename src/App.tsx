@@ -100,6 +100,7 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'invalid_function_definition') ??
     validation.issues.find((issue) => issue.code === 'aim_range_limit') ??
     validation.issues.find((issue) => issue.code === 'invalid_set_aim') ??
+    validation.issues.find((issue) => issue.code === 'continue_outside_loop') ??
     validation.issues.find((issue) => issue.code === 'invalid_condition') ??
     validation.issues.find((issue) => issue.code === 'invalid_expression') ??
     validation.issues.find((issue) => issue.code === 'locked_construct') ??
@@ -167,6 +168,12 @@ function getProgramValidationMessage(
       return formatText(ui.programErrorInvalidSetAim, {
         line: String(prioritizedIssue.lineNumber ?? 1),
       })
+    case 'continue_outside_loop':
+      return ui.programErrorContinueOutsideLoop
+        ? formatText(ui.programErrorContinueOutsideLoop, {
+            line: String(prioritizedIssue.lineNumber ?? 1),
+          })
+        : `Line ${String(prioritizedIssue.lineNumber ?? 1)}: continue can only be used inside a for loop.`
     case 'aim_range_limit':
       return formatText(ui.programErrorAimRangeLimit, {
         line: String(prioritizedIssue.lineNumber ?? 1),
@@ -347,47 +354,33 @@ function buildReferenceValues(
     ...(gameState.learnedTopicIds.includes('variables')
       ? [
           {
-            id: 'bonus_lane',
-            label: 'bonus_lane',
-            description: ui.referenceBonusLaneDescription,
+            id: 'portal_side',
+            label: 'portal_side',
+            description: ui.referencePortalSideDescription,
           },
         ]
       : []),
     ...(gameState.learnedTopicIds.includes('conditions')
       ? [
           {
-            id: 'jackpot_side',
-            label: 'jackpot_side',
-            description: ui.referenceJackpotSideDescription,
+            id: 'next_ball',
+            label: 'next_ball',
+            description: ui.referenceNextBallDescription,
           },
           {
-            id: 'return_side',
-            label: 'return_side',
-            description: ui.referenceReturnSideDescription,
+            id: 'normal_ball',
+            label: 'normal_ball',
+            description: ui.referenceNormalBallDescription,
           },
           {
-            id: 'return_gate_open',
-            label: 'return_gate_open',
-            description: ui.referenceReturnGateDescription,
-          },
-        ]
-      : []),
-    ...(gameState.learnedTopicIds.includes('loops')
-      ? [
-          {
-            id: 'feeder_charge',
-            label: 'feeder_charge',
-            description: ui.referenceFeederChargeDescription,
+            id: 'lucky_ball',
+            label: 'lucky_ball',
+            description: ui.referenceLuckyBallDescription,
           },
           {
-            id: 'combo_target',
-            label: 'combo_target',
-            description: ui.referenceComboTargetDescription,
-          },
-          {
-            id: 'burst_ready',
-            label: 'burst_ready',
-            description: ui.referenceBurstReadyDescription,
+            id: 'evil_ball',
+            label: 'evil_ball',
+            description: ui.referenceEvilBallDescription,
           },
         ]
       : []),
@@ -404,7 +397,7 @@ function buildReferenceExamples(
           {
             id: 'variables-example',
             label: ui.referenceExampleVariablesLabel,
-            code: 'target = bonus_lane\nset_aim(target)\ndrop_ball()',
+            code: 'target = portal_side\nchoose_chute(target)\ndrop_ball()',
           },
         ]
       : []),
@@ -413,7 +406,8 @@ function buildReferenceExamples(
           {
             id: 'conditions-example',
             label: ui.referenceExampleConditionsLabel,
-            code: 'if jackpot_side == 1:\n    set_aim(1)\nelse:\n    set_aim(3)\ndrop_ball()',
+            code:
+              'if next_ball == evil_ball:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()',
           },
         ]
       : []),
@@ -422,7 +416,7 @@ function buildReferenceExamples(
           {
             id: 'functions-example',
             label: ui.referenceExampleFunctionsLabel,
-            code: 'follow_bonus()',
+            code: 'follow_portal()',
           },
         ]
       : []),
@@ -431,7 +425,8 @@ function buildReferenceExamples(
           {
             id: 'loops-example',
             label: ui.referenceExampleLoopsLabel,
-            code: 'for _ in range(3):\n    follow_bonus()',
+            code:
+              'for ball in range(3):\n    if next_ball == evil_ball:\n        skip_ball()\n        continue\n    follow_portal()',
           },
         ]
       : []),
@@ -533,24 +528,36 @@ function App() {
   const helperFeedbackTone = helperValidationMessage ? 'error' : 'success'
   const availableFunctions = [
     'drop_ball()',
-    ...(gameState.unlocks.allowedCommands.includes('set_aim') ? ['set_aim(2)'] : []),
-    ...(functionsUnlocked ? ['follow_bonus()'] : []),
+    ...(gameState.unlocks.allowedCommands.includes('choose_chute')
+      ? ['choose_chute(2)']
+      : []),
+    ...(gameState.unlocks.allowedCommands.includes('skip_ball')
+      ? ['skip_ball()']
+      : []),
+    ...(functionsUnlocked ? ['follow_portal()'] : []),
   ]
   const availableStructures = [
     ...(gameState.unlocks.unlockedConstructs.includes('variables')
-      ? ['target = bonus_lane']
+      ? ['target = portal_side']
       : []),
     ...(gameState.unlocks.unlockedConstructs.includes('if')
-      ? ['if jackpot_side == 1:']
+      ? ['if next_ball == evil_ball:']
       : []),
-    ...(functionsUnlocked ? ['def follow_bonus():'] : []),
+    ...(functionsUnlocked ? ['def follow_portal():'] : []),
     ...(gameState.unlocks.unlockedConstructs.includes('for')
-      ? ['for _ in range(3):']
+      ? ['for ball in range(3):', 'continue']
       : []),
   ]
   const referenceValues = buildReferenceValues(gameState, ui)
   const referenceExamples = buildReferenceExamples(gameState, ui)
   const nextStep = buildNextStepModel(gameState, topics, ui)
+  const previewCount = gameState.supportUpgradeIds.includes('queue_peek') ? 3 : 1
+  const upcomingBallPreview = gameState.learnedTopicIds.includes('conditions')
+    ? gameState.ballQueue.slice(
+        gameState.ballQueueCursor,
+        gameState.ballQueueCursor + previewCount,
+      )
+    : []
   const checkpointTasks = tasks.filter(
     (task) =>
       activeTask !== null &&
@@ -802,10 +809,12 @@ function App() {
             <PachinkoBoard
               ui={ui}
               activeBalls={gameState.activeBalls}
-              bonusLane={gameState.bonusLane}
-              moduleStates={gameState.moduleStates}
-              supportUpgradeIds={gameState.supportUpgradeIds}
+              portalSide={gameState.moduleStates.board.portalSide}
               learnedTopicIds={gameState.learnedTopicIds}
+              upcomingBalls={upcomingBallPreview}
+              portalChildCount={
+                gameState.supportUpgradeIds.includes('portal_overcharge') ? 3 : 2
+              }
               now={animationNow}
             />
 

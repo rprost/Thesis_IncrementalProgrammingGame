@@ -1,17 +1,18 @@
+import { formatText } from '../content'
 import {
   BOARD_BUCKET_BOTTOM,
   BOARD_BUCKET_TOP,
   BOARD_BUCKETS,
+  BOARD_MAIN_CHUTE_X,
   BOARD_PIN_ROWS,
+  BOARD_PORTALS,
   BOARD_VIEWBOX,
   getBallRenderState,
 } from '../game/pachinko'
 import type {
   ActiveBall,
-  BonusLane,
-  GameState,
-  SideLane,
-  SupportUpgradeId,
+  BallType,
+  PortalSide,
   TaskTopicId,
   UiText,
 } from '../types'
@@ -19,87 +20,84 @@ import type {
 type PachinkoBoardProps = {
   ui: UiText
   activeBalls: ActiveBall[]
-  bonusLane: BonusLane
-  moduleStates: GameState['moduleStates']
-  supportUpgradeIds: SupportUpgradeId[]
+  portalSide: PortalSide
   learnedTopicIds: TaskTopicId[]
+  upcomingBalls: BallType[]
+  portalChildCount: number
   now: number
 }
 
-function getLaneLabel(lane: BonusLane | SideLane | null, ui: UiText): string {
-  switch (lane) {
-    case 1:
-      return ui.boardLaneLeft
-    case 2:
-      return ui.boardLaneCenter
-    case 3:
-      return ui.boardLaneRight
-    default:
-      return '-'
-  }
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
 }
 
-function getLaneCenterX(lane: BonusLane): number {
-  switch (lane) {
-    case 1:
-      return 64
-    case 2:
-      return 160
-    case 3:
-    default:
-      return 256
-  }
-}
-
-function getRailX(side: SideLane): number {
-  return side === 1 ? 18 : 302
-}
-
-function isHighlightedBucket(
-  bonusLane: BonusLane,
-  bucketId: (typeof BOARD_BUCKETS)[number]['id'],
-): boolean {
-  if (bonusLane === 1) {
-    return bucketId === 'outer_left' || bucketId === 'inner_left'
-  }
-
-  if (bonusLane === 2) {
-    return bucketId === 'center'
-  }
-
-  return bucketId === 'inner_right' || bucketId === 'outer_right'
+function getLaneLabel(lane: PortalSide, ui: UiText): string {
+  return lane === 1 ? ui.boardLaneLeft : ui.boardLaneRight
 }
 
 function getBucketPath(centerX: number): string {
-  const left = centerX - 28
-  const right = centerX + 28
+  const left = centerX - 20
+  const right = centerX + 20
   const bottom = BOARD_BUCKET_BOTTOM
   const top = BOARD_BUCKET_TOP
 
   return `M ${left} ${top} L ${left} ${bottom} L ${right} ${bottom} L ${right} ${top}`
 }
 
+function getScoreLineText(
+  kind: ActiveBall['scoreBreakdown'][number]['kind'],
+  value: number,
+  ui: UiText,
+): string {
+  switch (kind) {
+    case 'bucket':
+      return `${value} ${ui.boardScoreBucketLabel}`
+    case 'lucky_bonus':
+      return `+${value} ${ui.boardScoreLuckyBonusLabel}`
+    case 'evil_penalty':
+      return `-${value} ${ui.boardScoreEvilPenaltyLabel}`
+    case 'total':
+      return `= ${value} ${ui.boardScoreTotalLabel}`
+    default:
+      return String(value)
+  }
+}
+
+function getPortalSpiralPath(x: number, y: number): string {
+  return [
+    `M ${x + 8} ${y - 3}`,
+    `C ${x + 11} ${y - 11}, ${x - 1} ${y - 13}, ${x - 8} ${y - 7}`,
+    `C ${x - 14} ${y - 1}, ${x - 10} ${y + 10}, ${x + 1} ${y + 9}`,
+    `C ${x + 8} ${y + 8}, ${x + 9} ${y + 2}, ${x + 4} ${y - 1}`,
+  ].join(' ')
+}
+
+function getBallTypeLabel(ballType: BallType, ui: UiText): string {
+  switch (ballType) {
+    case 'lucky':
+      return ui.boardBallTypeLucky
+    case 'evil':
+      return ui.boardBallTypeEvil
+    case 'normal':
+    default:
+      return ui.boardBallTypeNormal
+  }
+}
+
 export function PachinkoBoard({
   ui,
   activeBalls,
-  bonusLane,
-  moduleStates,
-  supportUpgradeIds,
+  portalSide,
   learnedTopicIds,
+  upcomingBalls,
+  portalChildCount,
   now,
 }: PachinkoBoardProps) {
-  const showConditions = learnedTopicIds.includes('conditions')
-  const showFunctions = learnedTopicIds.includes('functions')
-  const showLoops = learnedTopicIds.includes('loops')
-  const gatePreviewUnlocked = supportUpgradeIds.includes('gate_preview')
-  const relayBonusUnlocked = supportUpgradeIds.includes('relay_bonus')
-  const lightningBonusUnlocked = supportUpgradeIds.includes('lightning_bonus')
-  const feederBulbs = Array.from(
-    { length: moduleStates.burst.feederTarget },
-    (_, index) => index < moduleStates.burst.feederCharge,
-  )
-  const lightningReady =
-    moduleStates.burst.burstReady || moduleStates.burst.lightningShotsRemaining > 0
+  const showPortalState = learnedTopicIds.includes('variables')
+  const showPreview = learnedTopicIds.includes('conditions') && upcomingBalls.length > 0
+  const portalSplitLabel = formatText(ui.boardPortalSplitLabel, {
+    count: String(portalChildCount),
+  })
 
   return (
     <section className="board-shell" aria-label={ui.boardTitle}>
@@ -108,11 +106,34 @@ export function PachinkoBoard({
           <p className="panel-kicker">{ui.boardTitle}</p>
           <p className="board-subtitle">{ui.boardSubtitle}</p>
         </div>
-        <div className={`board-risk lane-${bonusLane}`}>
-          <span>{ui.boardBonusLaneLabel}</span>
-          <strong>{getLaneLabel(bonusLane, ui)}</strong>
+        <div className="board-header-chips">
+          {showPortalState ? (
+            <div className={`board-risk portal-${portalSide}`}>
+              <span>{ui.boardActivePortalLabel}</span>
+              <strong>{getLaneLabel(portalSide, ui)}</strong>
+            </div>
+          ) : null}
         </div>
       </div>
+
+      {showPreview ? (
+        <div className="board-preview-strip" aria-label={ui.boardUpcomingBallsLabel}>
+          <span className="board-preview-label">
+            {upcomingBalls.length === 1 ? ui.boardNextBallLabel : ui.boardUpcomingBallsLabel}
+          </span>
+          <div className="board-preview-list">
+            {upcomingBalls.map((ballType, index) => (
+              <span
+                className={`board-preview-pill type-${ballType}`}
+                key={`${ballType}-${index}`}
+              >
+                <span className="board-preview-dot" aria-hidden="true" />
+                {getBallTypeLabel(ballType, ui)}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="board-stage">
         <svg
@@ -120,122 +141,50 @@ export function PachinkoBoard({
           className="board-svg"
           viewBox={`0 0 ${BOARD_VIEWBOX.width} ${BOARD_VIEWBOX.height}`}
         >
-          {showConditions ? (
-            <g className="board-rails">
-              {[1, 3].map((side) => {
-                const resolvedSide = side as SideLane
-                const railRole =
-                  moduleStates.diverter.jackpotSide === resolvedSide
-                    ? 'jackpot'
-                    : 'return'
-                const x = getRailX(resolvedSide)
-                const label =
-                  railRole === 'jackpot'
-                    ? ui.boardJackpotSideLabel
-                    : ui.boardReturnSideLabel
-                const isReturnRail = railRole === 'return'
-                const gateX = resolvedSide === 1 ? x + 10 : x - 10
+          <rect className="board-zone" height="304" rx="28" width="138" x="20" y="28" />
+          <rect className="board-zone" height="304" rx="28" width="144" x="158" y="28" />
+          <rect className="board-zone" height="304" rx="28" width="138" x="302" y="28" />
 
-                return (
-                  <g
-                    className={`board-side-rail ${railRole}${
-                      gatePreviewUnlocked ? ' preview' : ''
-                    }`}
-                    key={`rail-${resolvedSide}`}
-                  >
-                    <text className="board-side-label" textAnchor="middle" x={x} y="22">
-                      {label}
-                    </text>
-                    <line x1={x} y1="34" x2={x} y2="210" />
-                    {isReturnRail ? (
-                      <>
-                        <rect
-                          className={`board-return-gate${
-                            moduleStates.diverter.returnGateOpen ? ' open' : ''
-                          }`}
-                          height="22"
-                          rx="10"
-                          width="18"
-                          x={gateX - 9}
-                          y="190"
-                        />
-                        <text
-                          className="board-gate-label"
-                          textAnchor="middle"
-                          x={gateX}
-                          y="228"
-                        >
-                          {ui.boardReturnGateLabel}
-                        </text>
-                      </>
-                    ) : null}
-                  </g>
-                )
-              })}
-            </g>
-          ) : null}
-
-          {showLoops ? (
-            <g className="board-feeder-ui">
-              <text className="board-feeder-label" x="250" y="20">
-                {ui.boardBurstTitle}
-              </text>
-              {feederBulbs.map((isFilled, index) => (
+          <g className="board-launchers">
+            <text className="board-overlay-label" textAnchor="middle" x="230" y="18">
+              {ui.boardMainLauncherLabel}
+            </text>
+            {[1, 2, 3].map((aim) => (
+              <g key={`main-chute-${aim}`}>
                 <circle
-                  className={`board-feeder-light${isFilled ? ' filled' : ''}`}
-                  cx={228 + index * 18}
-                  cy="36"
-                  key={`feeder-${index}`}
-                  r="5.5"
+                  className="board-launcher-cap"
+                  cx={BOARD_MAIN_CHUTE_X[aim as 1 | 2 | 3]}
+                  cy="34"
+                  r="11"
                 />
-              ))}
-              {lightningReady ? (
-                <g className={`board-lightning-badge${lightningBonusUnlocked ? ' boosted' : ''}`}>
-                  <rect height="22" rx="11" width="92" x="197" y="48" />
-                  <text textAnchor="middle" x="243" y="63">
-                    {ui.boardBurstReady}
-                  </text>
+                <text
+                  className="board-launcher-label"
+                  textAnchor="middle"
+                  x={BOARD_MAIN_CHUTE_X[aim as 1 | 2 | 3]}
+                  y="39"
+                >
+                  {aim}
+                </text>
+              </g>
+            ))}
+          </g>
+
+          {showPortalState ? (
+            (() => {
+              const portal = BOARD_PORTALS[portalSide]
+
+              return (
+                <g className={`board-portal side-${portalSide} active`}>
+                  <circle className="board-portal-aura" cx={portal.x} cy={portal.y} r="21" />
+                  <circle className="board-portal-ring outer" cx={portal.x} cy={portal.y} r="16" />
+                  <circle className="board-portal-ring inner" cx={portal.x} cy={portal.y} r="11" />
+                  <ellipse className="board-portal-core" cx={portal.x} cy={portal.y} rx="6.5" ry="7.5" />
+                  <path className="board-portal-spiral" d={getPortalSpiralPath(portal.x, portal.y)} />
+                  <circle className="board-portal-spark" cx={portal.x + 10} cy={portal.y - 7} r="2.7" />
                 </g>
-              ) : null}
-              <circle
-                className="board-combo-target"
-                cx={getLaneCenterX(moduleStates.burst.comboTarget)}
-                cy="188"
-                r="19"
-              />
-            </g>
+              )
+            })()
           ) : null}
-
-          {showFunctions &&
-          moduleStates.relay.relayArmed &&
-          moduleStates.relay.relayTargetLane !== null ? (
-            <g
-              className={`board-echo-target${
-                relayBonusUnlocked ? ' boosted' : ''
-              }`}
-            >
-              <text
-                className="board-echo-label"
-                textAnchor="middle"
-                x={getLaneCenterX(moduleStates.relay.relayTargetLane)}
-                y="90"
-              >
-                {ui.boardEchoTargetLabel}
-              </text>
-              <circle
-                cx={getLaneCenterX(moduleStates.relay.relayTargetLane)}
-                cy="120"
-                r="14"
-              />
-              <circle
-                cx={getLaneCenterX(moduleStates.relay.relayTargetLane)}
-                cy="120"
-                r="24"
-              />
-            </g>
-          ) : null}
-
-          <circle className="board-launch-dot" cx="160" cy="18" r="5" />
 
           {BOARD_PIN_ROWS.flat().map((pin, index) => (
             <circle
@@ -243,23 +192,18 @@ export function PachinkoBoard({
               cx={pin.x}
               cy={pin.y}
               key={`${pin.x}-${pin.y}-${index}`}
-              r="4.5"
+              r="4.7"
             />
           ))}
 
           {BOARD_BUCKETS.map((bucket) => (
             <g key={bucket.id}>
-              <path
-                className={`board-bucket-shape${
-                  isHighlightedBucket(bonusLane, bucket.id) ? ' highlighted' : ''
-                }`}
-                d={getBucketPath(bucket.x)}
-              />
+              <path className="board-bucket-shape" d={getBucketPath(bucket.x)} />
               <text
                 className="board-bucket-points"
                 textAnchor="middle"
                 x={bucket.x}
-                y={BOARD_BUCKET_TOP + 32}
+                y={BOARD_BUCKET_TOP + 34}
               >
                 {bucket.points}
               </text>
@@ -268,25 +212,73 @@ export function PachinkoBoard({
 
           {activeBalls.map((ball) => {
             const renderState = getBallRenderState(ball, now)
+            const breakdownX = clamp(renderState.x, 90, BOARD_VIEWBOX.width - 90)
+            const breakdownWidth = 112
+            const breakdownHeight = 18 + ball.scoreBreakdown.length * 13
+            const breakdownY = clamp(renderState.y - 78 - breakdownHeight / 2, 52, 188)
 
             return (
               <g key={ball.id}>
-                <circle
-                  className={`board-ball ball-aim-${ball.aim} ${ball.state} ${ball.variant}`}
-                  cx={renderState.x}
-                  cy={renderState.y}
-                  opacity={renderState.opacity}
-                  r={renderState.scale * 6}
-                />
-                {ball.state === 'settled' ? (
-                  <text
-                    className="board-ball-points"
-                    textAnchor="middle"
-                    x={renderState.x}
-                    y={renderState.y - 16}
-                  >
-                    +{ball.points}
-                  </text>
+                {ball.spawnKind === 'portal' ? (
+                  <g opacity={renderState.opacity}>
+                    <circle
+                      className="board-ball portal-child"
+                      cx={renderState.x}
+                      cy={renderState.y}
+                      r={renderState.scale * 6.7}
+                    />
+                    <circle
+                      className={`board-ball-inner source-${ball.source} type-${ball.ballType}`}
+                      cx={renderState.x}
+                      cy={renderState.y}
+                      r={renderState.scale * 5.1}
+                    />
+                  </g>
+                ) : (
+                  <circle
+                    className={`board-ball source-${ball.source} type-${ball.ballType}`}
+                    cx={renderState.x}
+                    cy={renderState.y}
+                    opacity={renderState.opacity}
+                    r={renderState.scale * 6.1}
+                  />
+                )}
+
+                {ball.state === 'canceled' && ball.triggeredPortal ? (
+                  <g className="board-portal-popup" opacity={renderState.opacity}>
+                    <circle
+                      className="board-portal-burst"
+                      cx={renderState.x}
+                      cy={renderState.y}
+                      r="15"
+                    />
+                    <text textAnchor="middle" x={renderState.x} y={renderState.y - 22}>
+                      {portalSplitLabel}
+                    </text>
+                  </g>
+                ) : null}
+
+                {ball.state === 'settled' && ball.scoreBreakdown.length > 0 ? (
+                  <g className="board-score-breakdown">
+                    <rect
+                      height={breakdownHeight}
+                      rx="11"
+                      width={breakdownWidth}
+                      x={breakdownX - breakdownWidth / 2}
+                      y={breakdownY}
+                    />
+                    {ball.scoreBreakdown.map((line, index) => (
+                      <text
+                        className={`board-score-line ${line.kind}`}
+                        key={`${ball.id}-${line.kind}-${index}`}
+                        textAnchor="middle"
+                        x={breakdownX}
+                        y={breakdownY + 16 + index * 13}
+                      >
+                        {getScoreLineText(line.kind, line.value, ui)}
+                      </text>
+                    ))}
+                  </g>
                 ) : null}
               </g>
             )

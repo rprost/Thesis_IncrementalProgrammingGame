@@ -5,33 +5,23 @@
     "description": "Add one more main-program line so your strategy fits more comfortably."
   },
   {
-    "id": "gate_preview",
-    "title": "Brighter side rails",
-    "description": "Make the jackpot and return rails glow more clearly on the board."
+    "id": "portal_overcharge",
+    "title": "Portal overcharge",
+    "description": "Make active portals split into 3 child balls instead of 2."
   },
   {
-    "id": "return_gate_hold",
-    "title": "Gate hold",
-    "description": "Keep the return gate open longer so a good conditional can cash it in more easily."
+    "id": "queue_peek",
+    "title": "Queue peek",
+    "description": "Preview the next 3 ball types instead of only the next 1."
+  },
+  {
+    "id": "lucky_bonus",
+    "title": "Lucky bonus",
+    "description": "Give lucky balls an extra visible score bonus when they land in a bucket."
   },
   {
     "id": "helper_line_capacity",
     "title": "Helper buffer",
     "description": "Give the helper editor two extra lines for a longer reusable tactic."
-  },
-  {
-    "id": "relay_bonus",
-    "title": "Echo boost",
-    "description": "Make the visible echo target pay out more when the marked lane is hit."
-  },
-  {
-    "id": "feeder_persistence",
-    "title": "Feeder persistence",
-    "description": "Keep combo lights charged between weaker runs instead of emptying immediately."
-  },
-  {
-    "id": "lightning_bonus",
-    "title": "Lightning bonus",
-    "description": "Make lightning shots worth more after the combo feeder fully charges."
   }
 ]

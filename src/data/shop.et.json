@@ -2,36 +2,26 @@
   {
     "id": "extra_line",
     "title": "Lisarida",
-    "description": "Lisa põhiprogrammi üks rida juurde, et strateegia mugavamalt ära mahuks."
+    "description": "Lisa põhiprogrammi üks rida juurde, et strateegia mahuks mugavamalt ära."
   },
   {
-    "id": "gate_preview",
-    "title": "Heledamad külgrailid",
-    "description": "Muuda jackpot- ja return-railid laual selgemalt hõõguvaks."
+    "id": "portal_overcharge",
+    "title": "Portaali ülelaadimine",
+    "description": "Tee nii, et aktiivne portaal jagab palli 2 asemel 3 lapsepalliks."
   },
   {
-    "id": "return_gate_hold",
-    "title": "Värava hoidmine",
-    "description": "Hoia tagasiväravat kauem avatuna, et hea tingimuslause saaks selle lihtsamini ära kasutada."
+    "id": "queue_peek",
+    "title": "Järjekorra eelvaade",
+    "description": "Näita ainult ühe asemel ette järgmised 3 pallitüüpi."
+  },
+  {
+    "id": "lucky_bonus",
+    "title": "Lucky-boonus",
+    "description": "Anna lucky-ballidele kastis maandudes lisaks nähtav punktiboonus."
   },
   {
     "id": "helper_line_capacity",
     "title": "Abipuhver",
     "description": "Anna abiredaktorile kaks lisarida, et pikem taaskasutatav taktika ära mahuks."
-  },
-  {
-    "id": "relay_bonus",
-    "title": "Kajavõimendus",
-    "description": "Suurenda nähtava kajasihi tasu, kui märgitud rada saab tabamuse."
-  },
-  {
-    "id": "feeder_persistence",
-    "title": "Sööturi püsivus",
-    "description": "Lase kombotuledel nõrgemate jooksude vahel laengut hoida, mitte kohe tühjeneda."
-  },
-  {
-    "id": "lightning_bonus",
-    "title": "Välguboonus",
-    "description": "Muuda välgupallid väärtuslikumaks pärast seda, kui kombosöötur saab täis."
   }
 ]

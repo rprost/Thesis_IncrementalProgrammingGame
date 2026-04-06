@@ -10,7 +10,7 @@ export type TopicStage =
   | 'new_unlock_spotlight'
   | 'completed'
 
-export type AllowedCommand = 'drop_ball' | 'set_aim'
+export type AllowedCommand = 'drop_ball' | 'choose_chute' | 'skip_ball'
 
 export type GameView = 'play' | 'shop'
 
@@ -18,12 +18,10 @@ export type LockedConstruct = 'for' | 'variables' | 'if' | 'functions'
 
 export type SupportUpgradeId =
   | 'extra_line'
-  | 'gate_preview'
-  | 'return_gate_hold'
+  | 'portal_overcharge'
+  | 'queue_peek'
+  | 'lucky_bonus'
   | 'helper_line_capacity'
-  | 'relay_bonus'
-  | 'feeder_persistence'
-  | 'lightning_bonus'
 
 export type SupportUpgradeKind =
   | 'capacity'
@@ -50,40 +48,57 @@ export type ShopNodeStatus = 'completed' | 'available' | 'locked'
 
 export type AimLevel = 1 | 2 | 3
 
-export type BonusLane = 1 | 2 | 3
+export type PortalSide = 1 | 3
 
-export type SideLane = 1 | 3
+export type ActiveBallSource = 'main' | 'helper'
+export type BallSpawnKind = 'direct' | 'portal'
+export type BallType = 'normal' | 'lucky' | 'evil'
 
-export type BoardBucket =
-  | 'outer_left'
-  | 'inner_left'
-  | 'center'
-  | 'inner_right'
-  | 'outer_right'
+export type BoardPathNode = {
+  x: number
+  y: number
+  contact?: boolean
+}
 
-export type ActiveBallVariant =
-  | 'normal'
-  | 'lucky'
-  | 'relay'
-  | 'lightning'
-  | 'return'
-  | 'jackpot'
+export type ScoreBreakdownKind =
+  | 'bucket'
+  | 'lucky_bonus'
+  | 'evil_penalty'
+  | 'total'
+
+export type ScoreBreakdownLine = {
+  kind: ScoreBreakdownKind
+  value: number
+}
 
 export type BoardOutcome = {
-  bucket: BoardBucket
   bucketIndex: number
+  basePoints: number
   points: number
+  ballType: BallType
+  usedLuckyBonus: boolean
+  usedEvilPenalty: boolean
+  triggeredPortal: boolean
+  path: BoardPathNode[]
 }
 
-export type ExecutionStep = {
-  type: 'drop_ball'
-  lineNumber: number
-  aim: AimLevel
-}
+export type ExecutionStep =
+  | {
+      type: 'drop_ball'
+      lineNumber: number
+      aim: AimLevel
+      source: ActiveBallSource
+      ballType: BallType
+    }
+  | {
+      type: 'skip_ball'
+      lineNumber: number
+      ballType: BallType
+    }
 
 export type ProgramFeatureUsage = {
   usedVariables: boolean
-  usedSetAim: boolean
+  usedChooseChute: boolean
   usedIf: boolean
   usedHelperCall: boolean
   usedFor: boolean
@@ -95,12 +110,18 @@ export type ActiveBall = {
   id: number
   lineNumber: number
   aim: AimLevel
-  bucket: BoardBucket
+  source: ActiveBallSource
+  ballType: BallType
+  spawnKind: BallSpawnKind
+  portalDepth: number
   bucketIndex: number
-  laneBonus: number
+  basePoints: number
+  usedLuckyBonus: boolean
+  usedEvilPenalty: boolean
+  triggeredPortal: boolean
   points: number
-  variant: ActiveBallVariant
-  pathXs: number[]
+  scoreBreakdown: ScoreBreakdownLine[]
+  path: BoardPathNode[]
   spawnedAt: number
   settleAt: number
   removeAt: number
@@ -124,6 +145,7 @@ export type ProgramValidationIssueCode =
   | 'invalid_expression'
   | 'invalid_condition'
   | 'invalid_set_aim'
+  | 'continue_outside_loop'
   | 'aim_range_limit'
   | 'invalid_function_definition'
   | 'duplicate_function'
@@ -272,6 +294,7 @@ export type UiText = {
   programErrorInvalidExpression: string
   programErrorInvalidCondition: string
   programErrorInvalidSetAim: string
+  programErrorContinueOutsideLoop: string
   programErrorAimRangeLimit: string
   programErrorInvalidFunctionDefinition: string
   programErrorDuplicateFunction: string
@@ -298,12 +321,11 @@ export type UiText = {
   referenceLaneNumbersDescription: string
   referenceNoExamples: string
   referenceBonusLaneDescription: string
-  referenceJackpotSideDescription: string
-  referenceReturnSideDescription: string
-  referenceReturnGateDescription: string
-  referenceFeederChargeDescription: string
-  referenceComboTargetDescription: string
-  referenceBurstReadyDescription: string
+  referencePortalSideDescription: string
+  referenceNextBallDescription: string
+  referenceNormalBallDescription: string
+  referenceLuckyBallDescription: string
+  referenceEvilBallDescription: string
   referenceExampleVariablesLabel: string
   referenceExampleConditionsLabel: string
   referenceExampleFunctionsLabel: string
@@ -377,6 +399,19 @@ export type UiText = {
   boardTitle: string
   boardSubtitle: string
   boardBonusLaneLabel: string
+  boardActivePortalLabel: string
+  boardUpcomingBallsLabel: string
+  boardNextBallLabel: string
+  boardBallTypeNormal: string
+  boardBallTypeLucky: string
+  boardBallTypeEvil: string
+  boardSkipLabel: string
+  boardMainLauncherLabel: string
+  boardScoreBucketLabel: string
+  boardScoreLuckyBonusLabel: string
+  boardScoreEvilPenaltyLabel: string
+  boardScoreTotalLabel: string
+  boardPortalSplitLabel: string
   boardLastPointsLabel: string
   boardLastBucketLabel: string
   boardStreakLabel: string
@@ -459,55 +494,24 @@ export type UnlockState = {
   unlockedConstructs: LockedConstruct[]
 }
 
-export type CalibrationModuleState = {
-  leftValue: number
-  centerValue: number
-  rightValue: number
-  focusCharge: number
-  focusThreshold: number
-  luckyBallReady: boolean
-}
-
-export type DiverterModuleState = {
-  jackpotSide: SideLane
-  returnSide: SideLane
-  returnGateOpen: boolean
-}
-
-export type RelayModuleState = {
-  helperName: string
-  relayArmed: boolean
-  relayTargetLane: BonusLane | null
-}
-
-export type BurstModuleState = {
-  feederCharge: number
-  feederTarget: number
-  comboTarget: BonusLane
-  burstReady: boolean
-  lightningShotsRemaining: number
+export type BoardModuleState = {
+  portalSide: PortalSide
 }
 
 export type MachineModuleState = {
-  calibration: CalibrationModuleState
-  diverter: DiverterModuleState
-  relay: RelayModuleState
-  burst: BurstModuleState
+  board: BoardModuleState
 }
 
 export type RunStats = {
   featureUsage: ProgramFeatureUsage
+  spawnedBalls: number
+  programStepSpawnedCount: number
   resolvedBalls: number
-  hitBonusLaneCount: number
-  hitBestLaneCount: number
-  hitJackpotLaneCount: number
-  hitReturnLaneCount: number
-  openedReturnGate: boolean
-  usedReturnGateCount: number
-  relayArmedThisRun: boolean
-  relayTriggeredCount: number
-  feederHitCount: number
-  lightningBallsResolved: number
+  portalSplitCount: number
+  skippedEvilBallCount: number
+  luckyBallHitCount: number
+  helperPositiveOutcomeCount: number
+  positiveOutcomeCount: number
 }
 
 export type GameState = {
@@ -528,7 +532,8 @@ export type GameState = {
   lastPoints: number
   lastBucket: number
   streak: number
-  bonusLane: BonusLane
+  ballQueue: BallType[]
+  ballQueueCursor: number
   currentTopicId: TaskTopicId | null
   learnedTopicIds: TaskTopicId[]
   masteredTopicIds: TaskTopicId[]
@@ -545,5 +550,6 @@ export type GameState = {
   nextFeedEntryId: number
   currentRunFeatureUsage: ProgramFeatureUsage | null
   currentRunStats: RunStats | null
+  plannedBallCount: number
   hasOpenedShop: boolean
 }

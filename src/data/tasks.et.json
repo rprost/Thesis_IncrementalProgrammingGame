@@ -6,20 +6,20 @@
     "topicId": "variables",
     "topicOrder": 1,
     "taskOrder": 1,
-    "title": "Järgi tugevdatud rada",
-    "question": "Kui bonus_lane on 2, siis millist rada see programm sihib?",
-    "code": "target = bonus_lane\nset_aim(target)\ndrop_ball()",
-    "boardHint": "Rajanumbrid on lihtsad: 1 = vasak, 2 = kesk, 3 = parem.",
-    "unlockConnection": "Muutuja saab kopeerida nähtava väärtuse bonus_lane ja kasutada seda sihtimiseks.",
+    "title": "Loe aktiivset portaali",
+    "question": "Kui portal_side on 3, millise chute'i see programm valib?",
+    "code": "target = portal_side\nchoose_chute(target)\ndrop_ball()",
+    "boardHint": "Rajanumbrid on endiselt lihtsad: 1 = vasak, 2 = kesk, 3 = parem.",
+    "unlockConnection": "Muutuja saab kopeerida nähtava portal_side väärtuse ja kasutada seda chute'i valikuks uuesti.",
     "options": [
-      "Vasak rada",
-      "Keskmine rada",
-      "Parem rada",
-      "Mitte ühtegi rada"
+      "Vasak chute",
+      "Keskmine chute",
+      "Parem chute",
+      "Mitte ühtegi chute'i"
     ],
-    "correctOption": 1,
-    "successMessage": "Õige. target saab väärtuseks 2, seega sihitakse keskmisele rajale.",
-    "failureMessage": "target kopeerib väärtuse bonus_lane. Kui bonus_lane on 2, sihib programm keskmisele rajale."
+    "correctOption": 2,
+    "successMessage": "Õige. target muutub väärtuseks 3, seega valib masin parema chute'i.",
+    "failureMessage": "target kopeerib väärtuse portal_side. Kui portal_side on 3, valib programm parema chute'i."
   },
   {
     "id": "variables-choose",
@@ -28,20 +28,20 @@
     "topicId": "variables",
     "topicOrder": 1,
     "taskOrder": 2,
-    "title": "Vali keskmine rada",
-    "question": "Milline rida peaks asendama ???, et programm sihiks alati keskmisele rajale?",
-    "code": "???\nset_aim(target)\ndrop_ball()",
-    "boardHint": "Keskmise raja number on 2.",
-    "unlockConnection": "Muutujad lasevad sul salvestada rajanumbri ja anda selle siis käsule set_aim(...).",
+    "title": "Kopeeri aktiivne pool",
+    "question": "Milline rida peaks asendama ??? nii, et programm järgiks aktiivset portaali poolt?",
+    "code": "???\nchoose_chute(target)\ndrop_ball()",
+    "boardHint": "portal_side sisaldab juba praegust vasaku või parema väärtust.",
+    "unlockConnection": "Muutujad lasevad sul laua väärtuse kõigepealt salvestada ja alles siis choose_chute(...) käsule edasi anda.",
     "options": [
-      "target = 1",
       "target = 2",
-      "target = 3",
-      "target = bonus_lane + 2"
+      "target = portal_side",
+      "target = 4",
+      "target = evil_ball"
     ],
     "correctOption": 1,
-    "successMessage": "Õige. target = 2 salvestab keskmise raja numbri enne, kui set_aim(...) seda kasutab.",
-    "failureMessage": "Kui tahad alati keskmist rada, peab target saama väärtuseks 2."
+    "successMessage": "Õige. target = portal_side kopeerib praeguse portaalipoole enne, kui choose_chute(...) seda kasutab.",
+    "failureMessage": "Kui tahad aktiivset portaali järgida, peab target kopeerima väärtuse portal_side otse."
   },
   {
     "id": "variables-repair",
@@ -50,20 +50,20 @@
     "topicId": "variables",
     "topicOrder": 1,
     "taskOrder": 3,
-    "title": "Paranda sihiväärtus",
-    "question": "Milline asendus parandab programmi nii, et see järgiks turvaliselt praegust tugevdatud rada?",
-    "code": "target = bonus_lane + 1\nset_aim(target)\ndrop_ball()",
-    "boardHint": "set_aim(...) peab jääma radade 1 ja 3 vahele.",
-    "unlockConnection": "See parandus kontrollib, kas saad aru, et bonus_lane sisaldab juba vajalikku rajanumbrit.",
+    "title": "Paranda chute'i väärtus",
+    "question": "Milline asendus parandab programmi nii, et see järgiks aktiivset portaali ohutult?",
+    "code": "target = portal_side + 1\nchoose_chute(target)\ndrop_ball()",
+    "boardHint": "choose_chute(...) peab jääma vahemikku 1 kuni 3.",
+    "unlockConnection": "See parandus kontrollib, kas saad aru, et portal_side sisaldab juba vajalikku väärtust.",
     "options": [
-      "target = bonus_lane",
-      "target = bonus_lane + 2",
-      "target = 4",
-      "target = 0"
+      "target = portal_side",
+      "target = portal_side + 2",
+      "target = 0",
+      "target = 4"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. bonus_lane sisaldab juba praeguse raja numbrit, seega saab programm seda otse kasutada.",
-    "failureMessage": "bonus_lane sisaldab juba praeguse raja numbrit. Sellele juurde liitmine võib viia sihi lubatud vahemikust välja."
+    "successMessage": "Õige. portal_side sisaldab juba chute'i väärtust, seega saab programm seda otse kasutada.",
+    "failureMessage": "portal_side salvestab juba praeguse poole. Liitmine võib chute'i valiku lubatud vahemikust välja viia."
   },
   {
     "id": "conditions-read",
@@ -72,20 +72,20 @@
     "topicId": "conditions",
     "topicOrder": 2,
     "taskOrder": 1,
-    "title": "Harune jackpot-poolele",
-    "question": "Kui jackpot_side on 3, siis milline rada valitakse?",
-    "code": "if jackpot_side == 1:\n    set_aim(1)\nelse:\n    set_aim(3)\ndrop_ball()",
-    "boardHint": "jackpot_side näitab, kummal pool masinat järgmine haruotsus rohkem tasub.",
-    "unlockConnection": "Tingimuslaused lasevad masinal reageerida elavale lauaolekule, mitte kasutada igas jooksus sama sihti.",
+    "title": "Loe järgmist palli",
+    "question": "Kui next_ball on evil_ball, mis siin juhtub?",
+    "code": "if next_ball == evil_ball:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()",
+    "boardHint": "skip_ball() kulutab eelvaates olnud palli ära ilma seda lauale saatmata.",
+    "unlockConnection": "Tingimuslaused on siin olulised, sest masin saab reageerida järgmisele pallile enne selle starti.",
     "options": [
-      "Vasak rada",
-      "Keskmine rada",
-      "Parem rada",
-      "Mitte ühtegi rada"
+      "Evil-ball jäetakse vahele",
+      "Evil-ball muutub lucky-balliks",
+      "Valitakse keskmine chute",
+      "Midagi ei juhtu"
     ],
-    "correctOption": 2,
-    "successMessage": "Õige. Töötama hakkab else-haru ja masin sihib paremale.",
-    "failureMessage": "Siin ei ole jackpot_side väärtus 1, seega kasutatakse else-haru ja sihitakse paremale."
+    "correctOption": 0,
+    "successMessage": "Õige. Tingimus on tõene, seega evil-ball jäetakse vahele.",
+    "failureMessage": "Kui next_ball võrdub evil_balliga, käivitub if-haru ja skip_ball() kulutab selle palli ära."
   },
   {
     "id": "conditions-choose",
@@ -95,19 +95,19 @@
     "topicOrder": 2,
     "taskOrder": 2,
     "title": "Vali õige tingimus",
-    "question": "Milline tingimus peaks avama parempoolse haru siis, kui jackpot on paremal?",
-    "code": "if ???:\n    set_aim(3)\nelse:\n    set_aim(1)\ndrop_ball()",
-    "boardHint": "Parempoolne rada kasutab selles masinas rajanumbrit 3.",
-    "unlockConnection": "Õige tingimuse valimine teeb uuest väravamoodulist päriselt kasuliku asja.",
+    "question": "Milline tingimus jätab vahele ainult evil-ballid?",
+    "code": "if ???:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()",
+    "boardHint": "Programm peaks võrdlema eelvaate väärtust evil-ball konstandiga.",
+    "unlockConnection": "Kasulik if-lause kontrollib järgmise palli tüüpi enne, kui masin otsustab, mida teha.",
     "options": [
-      "jackpot_side == 3",
-      "return_side == 1",
-      "return_gate_open == 1",
-      "bonus_lane == 2"
+      "next_ball == evil_ball",
+      "portal_side == evil_ball",
+      "next_ball == portal_side",
+      "next_ball == 4"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. jackpot_side == 3 suunab masina õigel hetkel parempoolsesse harusse.",
-    "failureMessage": "Tingimus peab lugema jackpot-poole väärtust otse. Parempoolne jackpot tähendab väärtust 3."
+    "successMessage": "Õige. next_ball == evil_ball jätab halva palli vahele ja hoiab teised alles.",
+    "failureMessage": "Tingimus peab lugema next_ball väärtust ja võrdlema seda otse evil_balliga."
   },
   {
     "id": "conditions-repair",
@@ -116,20 +116,20 @@
     "topicId": "conditions",
     "topicOrder": 2,
     "taskOrder": 3,
-    "title": "Paranda küljeväravate loogika",
-    "question": "Milline asendus parandab vigase haru nii, et programm järgiks väärtust jackpot_side?",
-    "code": "if return_side == 1:\n    set_aim(1)\nelse:\n    set_aim(1)\ndrop_ball()",
-    "boardHint": "Hea parandus kasutab väärtust jackpot_side ja annab harudele erinevad sihid.",
-    "unlockConnection": "Parandusülesanded kontrollivad, kas uus haruloogika juhib päriselt seda masinat, mida ta peaks juhtima.",
+    "title": "Paranda eelvaate loogika",
+    "question": "Milline asendus parandab katkise haru nii, et programm jätaks evil-ballid vahele ja laseks teised välja?",
+    "code": "if next_ball == lucky_ball:\n    skip_ball()\nelse:\n    drop_ball()",
+    "boardHint": "Parandus peaks jätma vahele evil_ball juhtumi ja säilitama else-harus päris lasu.",
+    "unlockConnection": "Parandusülesanne kontrollib, kas sinu haruloogika sobib päriselt palli eelvaate süsteemiga.",
     "options": [
-      "if jackpot_side == 1:\n    set_aim(1)\nelse:\n    set_aim(3)",
-      "if bonus_lane == 2:\n    set_aim(2)\nelse:\n    set_aim(2)",
-      "if return_gate_open == 1:\n    drop_ball()\nelse:\n    drop_ball()",
-      "if jackpot_side == 3:\n    set_aim(1)\nelse:\n    set_aim(1)"
+      "if next_ball == evil_ball:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()",
+      "if next_ball == lucky_ball:\n    choose_chute(2)\nelse:\n    skip_ball()",
+      "if portal_side == 1:\n    skip_ball()\nelse:\n    drop_ball()",
+      "if next_ball == normal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. Parandatud versioon loeb jackpot_side väärtust ja saadab vasaku ning parema haru erinevatesse sihtidesse.",
-    "failureMessage": "Parandus peab päriselt harunema jackpot_side järgi ja valima else-harus teise raja."
+    "successMessage": "Õige. Parandatud versioon jätab vahele ainult evil-ballid ja saadab ülejäänud pallid valitud chute'i kaudu lauale.",
+    "failureMessage": "Parandus peab võrdlema next_ball väärtust evil_balliga, jätma selle vahele ja ikkagi ülejäänud pallid välja laskma."
   },
   {
     "id": "functions-read",
@@ -138,11 +138,11 @@
     "topicId": "functions",
     "topicOrder": 3,
     "taskOrder": 1,
-    "title": "Mida helper-kutse teeb?",
-    "question": "Mis juhtub siis, kui põhiprogramm käivitab follow_bonus()?",
-    "code": "def follow_bonus():\n    set_aim(bonus_lane)\n    drop_ball()\n\nfollow_bonus()",
-    "boardHint": "Abiredaktor salvestab ühe nimelise taktika ja põhiprogramm saab selle välja kutsuda.",
-    "unlockConnection": "Funktsioonid on siin olulised, sest üks taaskasutatav funktsioon saab nüüd juhtida abisüsteemi.",
+    "title": "Mida abifunktsiooni väljakutse teeb?",
+    "question": "Mis juhtub siis, kui põhiprogramm käivitab follow_portal()?",
+    "code": "def follow_portal():\n    choose_chute(portal_side)\n    drop_ball()\n\nfollow_portal()",
+    "boardHint": "Abiredaktor hoiab ühte nimega taktikat ning põhiprogramm saab selle välja kutsuda.",
+    "unlockConnection": "Funktsioonid on siin tähtsad, sest üks taaskasutatav taktika saab nüüd saata nähtava abivärviga palli lauale.",
     "options": [
       "Abifunktsiooni sisu käivitub ühe korra",
       "Abifunktsiooni sisu ignoreeritakse",
@@ -150,8 +150,8 @@
       "Pood avaneb"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. follow_bonus() käivitab selle abifunktsiooni ühe korra.",
-    "failureMessage": "Abikõne käivitab funktsiooni keha ühe korra selles kohas, kus kutse tehakse."
+    "successMessage": "Õige. follow_portal() käivitab selle abifunktsiooni ühe korra.",
+    "failureMessage": "Abifunktsiooni väljakutse käivitab abifunktsiooni sisu ühel korral selles kohas."
   },
   {
     "id": "functions-choose",
@@ -160,20 +160,20 @@
     "topicId": "functions",
     "topicOrder": 3,
     "taskOrder": 2,
-    "title": "Vali taaskasutatav helper",
-    "question": "Milline helper-body salvestab kõige paremini korduva taktika „järgi praegust bonus lane'i”?",
-    "code": "def follow_bonus():\n    ???",
-    "boardHint": "Helper peaks sisaldama tervet taktikat, mida tahad uuesti kasutada, mitte ühte suvalist rida.",
-    "unlockConnection": "Hea helper muudab korduva lauakäitumise üheks nimeliseks taktikaks.",
+    "title": "Vali taaskasutatav abifunktsioon",
+    "question": "Milline abifunktsiooni sisu salvestab kõige paremini taaskasutatava 'järgi aktiivset portaali' taktika?",
+    "code": "def follow_portal():\n    ???",
+    "boardHint": "Abifunktsioon peaks sisaldama tervet taktikat, mida tahad taaskasutada, mitte üht suvalist rida.",
+    "unlockConnection": "Hea abifunktsioon muudab korduva lauakäitumise üheks nimega taktikaks.",
     "options": [
-      "set_aim(bonus_lane)\ndrop_ball()",
-      "bonus_lane = 2",
-      "if jackpot_side == 1:\n    set_aim(1)",
-      "for _ in range(3):\n    drop_ball()"
+      "choose_chute(portal_side)\ndrop_ball()",
+      "portal_side = 2",
+      "skip_ball()",
+      "for ball in range(3):\n    drop_ball()"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. See helper salvestab terve korduva taktika: sihi ja siis lase pall.",
-    "failureMessage": "Helper peaks haarama tervet korduvat taktikat, mitte ainult ühte selle osa."
+    "successMessage": "Õige. See abifunktsioon salvestab kogu taaskasutatava taktika: vali chute ja siis lase pall.",
+    "failureMessage": "Abifunktsioon peaks salvestama päris korduva taktika, mitte ainult ühe fragmendi sellest."
   },
   {
     "id": "functions-repair",
@@ -182,20 +182,20 @@
     "topicId": "functions",
     "topicOrder": 3,
     "taskOrder": 3,
-    "title": "Paranda põhiprogrammi kutse",
-    "question": "Milline rida peaks asendama ???, et põhiprogramm kasutaks helper-funktsiooni päriselt?",
+    "title": "Paranda põhiprogrammi väljakutse",
+    "question": "Milline rida peaks asendama ??? nii, et põhiprogramm kasutaks päriselt abifunktsiooni?",
     "code": "???",
-    "boardHint": "Põhiredaktor vajab endiselt funktsioonikutset, et salvestatud helper-body käivitada.",
-    "unlockConnection": "Abisüsteem loeb ainult siis, kui põhiprogramm helperi päriselt välja kutsub, mitte ei jäta seda vahele.",
+    "boardHint": "Põhiredaktor vajab endiselt funktsioonikutset, et salvestatud abikeha käivitada.",
+    "unlockConnection": "Abivärviga pallid ilmuvad alles siis, kui põhiprogramm tõesti kutsub abifunktsiooni välja.",
     "options": [
-      "follow_bonus()",
-      "def follow_bonus():",
-      "set_aim(bonus_lane)",
-      "bonus_lane = 1"
+      "follow_portal()",
+      "def follow_portal():",
+      "choose_chute(portal_side)",
+      "portal_side = 1"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. follow_bonus() on rida, mis käivitab salvestatud helper-funktsiooni.",
-    "failureMessage": "Helperi kasutamiseks vajab põhiprogramm helperi nime koos sulgudega."
+    "successMessage": "Õige. follow_portal() on rida, mis käivitab salvestatud abifunktsiooni.",
+    "failureMessage": "Abifunktsiooni kasutamiseks vajab põhiprogramm funktsiooni nime ja sulge."
   },
   {
     "id": "loops-read",
@@ -204,11 +204,11 @@
     "topicId": "loops",
     "topicOrder": 4,
     "taskOrder": 1,
-    "title": "Korduvad helper-kutsed",
-    "question": "Mitu korda helper siin töötab?",
-    "code": "for _ in range(3):\n    follow_bonus()",
-    "boardHint": "Kõik loopi kehas olevad read korduvad iga range väärtuse kohta ühe korra.",
-    "unlockConnection": "Tsüklid lasevad ühel heal helper-funktsioonil sama jooksu jooksul masinat mitu korda toita.",
+    "title": "Korduvad abifunktsiooni väljakutsed",
+    "question": "Mitu korda käivitub siin abifunktsioon?",
+    "code": "for ball in range(3):\n    follow_portal()",
+    "boardHint": "Kõik tsükli sees olevad read korduvad ühe korra iga range väärtuse kohta.",
+    "unlockConnection": "Tsüklid lasevad ühel heal abifunktsioonil sama jooksu ajal masinat mitu korda toita.",
     "options": [
       "1",
       "2",
@@ -216,8 +216,8 @@
       "4"
     ],
     "correctOption": 2,
-    "successMessage": "Õige. range(3) kordab helper-kutset kolm korda.",
-    "failureMessage": "Loopi keha töötab iga väärtuse jaoks ühe korra, seega helper käivitub kolm korda."
+    "successMessage": "Õige. range(3) kordab abifunktsiooni väljakutset kolm korda.",
+    "failureMessage": "Tsükli keha käivitub iga range(3) väärtuse kohta, seega käivitub abifunktsioon kolm korda."
   },
   {
     "id": "loops-choose",
@@ -226,11 +226,11 @@
     "topicId": "loops",
     "topicOrder": 4,
     "taskOrder": 2,
-    "title": "Vali bursti suurus",
-    "question": "Milline range väärtus peaks asendama ?, kui soovid nelja korduvat viset masinasse?",
-    "code": "for _ in range(?):\n    follow_bonus()",
-    "boardHint": "range(...) sees olev arv otsustab, mitu korda taktika kordub.",
-    "unlockConnection": "Õige range valimine teeb tsüklist sihiliku burst-mustri, mitte juhusliku kordamise.",
+    "title": "Vali korduste arv",
+    "question": "Milline range väärtus peaks asendama ? siis, kui tahad nelja korduvat lasku?",
+    "code": "for shot in range(?):\n    follow_portal()",
+    "boardHint": "range(...) sees olev arv määrab, mitu korda taktika kordub.",
+    "unlockConnection": "Õige range väärtus teeb tsüklist teadliku mitme palli plaani, mitte juhusliku korduse.",
     "options": [
       "2",
       "3",
@@ -238,8 +238,8 @@
       "5"
     ],
     "correctOption": 2,
-    "successMessage": "Õige. range(4) kordab helper-funktsiooni neli korda.",
-    "failureMessage": "Kasuta täpselt nii suurt korduste arvu, kui tahad. Neli kordust tähendab range(4)."
+    "successMessage": "Õige. range(4) kordab abifunktsiooni neli korda.",
+    "failureMessage": "Kasuta täpselt nii palju kordusi, kui soovid. Neli kordust tähendab range(4)."
   },
   {
     "id": "loops-repair",
@@ -248,19 +248,19 @@
     "topicId": "loops",
     "topicOrder": 4,
     "taskOrder": 3,
-    "title": "Paranda loopi keha",
-    "question": "Milline asendus parandab koodi nii, et helper korduks tsüklis, mitte ei töötaks ainult ühe korra pärast seda?",
-    "code": "for _ in range(3):\n    ???",
-    "boardHint": "Korduv tegevus peab olema loopi kehas ja taandega selle sees.",
-    "unlockConnection": "Loopi parandused kontrollivad, kas kombosöötur laetakse päriselt korduva loogikaga, mitte ühe viimase käsuga väljaspool tsüklit.",
+    "title": "Paranda tsükli keha",
+    "question": "Milline asendus parandab koodi nii, et abifunktsioon kordub tsükli sees, mitte ei käivitu vaid ühe korra pärast seda?",
+    "code": "for turn in range(3):\n    ???",
+    "boardHint": "Korduv tegevus peab olema tsükli sees taandega.",
+    "unlockConnection": "Tsüklite parandus kontrollib, kas korduvad lasud tulevad päriselt korduvast loogikast, mitte ühest viimasest väljakutsest.",
     "options": [
-      "follow_bonus()",
-      "for _ in range(3):",
+      "follow_portal()",
+      "for turn in range(3):",
       "drop_ball()",
-      "set_aim(combo_target)"
+      "skip_ball()"
     ],
     "correctOption": 0,
-    "successMessage": "Õige. follow_bonus() peab olema loopi kehas, et see korduks kolm korda.",
-    "failureMessage": "Loopi kehas peab olema korduv helper-kutse ja see peab jääma for-rea alla taandesse."
+    "successMessage": "Õige. follow_portal() kuulub tsükli kehasse, et see korduks kolm korda.",
+    "failureMessage": "Tsükli keha peab sisaldama korduvat abifunktsiooni väljakutset ning see peab jääma for-rea alla taandesse."
   }
 ]
