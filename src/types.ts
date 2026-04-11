@@ -1,6 +1,10 @@
 export type Locale = 'et' | 'en'
 
-export type TaskTopicId = 'variables' | 'conditions' | 'functions' | 'loops'
+export type TaskTopicId =
+  | 'variables'
+  | 'conditions'
+  | 'functions'
+  | 'loops'
 
 export type TopicStage =
   | 'onboarding'
@@ -10,24 +14,32 @@ export type TopicStage =
   | 'new_unlock_spotlight'
   | 'completed'
 
-export type AllowedCommand = 'drop_ball' | 'choose_chute' | 'skip_ball'
+export type AllowedCommand =
+  | 'drop_ball'
+  | 'choose_input'
+  | 'skip_ball'
 
 export type GameView = 'play' | 'shop'
 
-export type LockedConstruct = 'for' | 'variables' | 'if' | 'functions'
+export type LockedConstruct =
+  | 'for'
+  | 'variables'
+  | 'if'
+  | 'functions'
 
 export type SupportUpgradeId =
   | 'extra_line'
-  | 'portal_overcharge'
+  | 'extra_portal_split'
   | 'queue_peek'
-  | 'lucky_bonus'
+  | 'center_bin_bonus'
   | 'helper_line_capacity'
+  | 'portal_chain_once'
 
 export type SupportUpgradeKind =
   | 'capacity'
   | 'visibility'
-  | 'reliability'
-  | 'conversion'
+  | 'scoring'
+  | 'automation'
 
 export type SupportUpgradeDefinition = {
   id: SupportUpgradeId
@@ -36,6 +48,11 @@ export type SupportUpgradeDefinition = {
   requiredTopicId: TaskTopicId
   mainLineCapacityBonus?: number
   helperLineCapacityBonus?: number
+  previewCountBonus?: number
+  extraPortalChildren?: number
+  extraCenterBinBonus?: number
+  maxPortalDepth?: number
+  ambientDropIntervalMs?: number
 }
 
 export type SupportUpgradeCopy = {
@@ -46,13 +63,23 @@ export type SupportUpgradeCopy = {
 
 export type ShopNodeStatus = 'completed' | 'available' | 'locked'
 
+export type SupportUpgradeEffects = {
+  mainLineCapacityBonus: number
+  helperLineCapacityBonus: number
+  previewCount: number
+  extraPortalChildren: number
+  extraCenterBinBonus: number
+  maxPortalDepth: number
+  ambientDropIntervalMs: number | null
+}
+
 export type AimLevel = 1 | 2 | 3
 
 export type PortalSide = 1 | 3
 
-export type ActiveBallSource = 'main' | 'helper'
+export type ActiveBallSource = 'main' | 'helper' | 'loader' | 'ambient'
 export type BallSpawnKind = 'direct' | 'portal'
-export type BallType = 'normal' | 'lucky' | 'evil'
+export type BallType = 'plain' | 'center' | 'portal' | 'negative'
 
 export type BoardPathNode = {
   x: number
@@ -62,8 +89,8 @@ export type BoardPathNode = {
 
 export type ScoreBreakdownKind =
   | 'bucket'
-  | 'lucky_bonus'
-  | 'evil_penalty'
+  | 'center_bonus'
+  | 'negative_penalty'
   | 'total'
 
 export type ScoreBreakdownLine = {
@@ -76,8 +103,9 @@ export type BoardOutcome = {
   basePoints: number
   points: number
   ballType: BallType
-  usedLuckyBonus: boolean
-  usedEvilPenalty: boolean
+  centerBonusValue: number
+  usedCenterBonus: boolean
+  usedNegativePenalty: boolean
   triggeredPortal: boolean
   path: BoardPathNode[]
 }
@@ -98,11 +126,58 @@ export type ExecutionStep =
 
 export type ProgramFeatureUsage = {
   usedVariables: boolean
-  usedChooseChute: boolean
+  usedChooseInput: boolean
   usedIf: boolean
   usedHelperCall: boolean
   usedFor: boolean
+  usedContinue: boolean
 }
+
+export type PreviewResponseKind = 'skip' | 'main_launch' | 'helper_launch'
+
+export type PreviewResponse = {
+  type: PreviewResponseKind
+  ballType: BallType
+  aim: AimLevel | null
+}
+
+export type PreviewResponseExpectation = {
+  type: PreviewResponseKind
+  aim?: AimLevel | 'portal_side'
+}
+
+export type ExecutionExpectation = {
+  requiredFeatures?: Array<keyof ProgramFeatureUsage>
+  requiredIdentifiers?: string[]
+  expectedMainLaunchAims?: AimLevel[]
+  expectedHelperLaunchAims?: AimLevel[]
+  previewResponses?: PreviewResponseExpectation[]
+  minMainLaunchCount?: number
+  maxMainLaunchCount?: number
+  minHelperLaunchCount?: number
+  maxHelperLaunchCount?: number
+  minSkippedNegativeBallCount?: number
+  maxSkippedNegativeBallCount?: number
+  minPortalSplitCount?: number
+  minCenterBonusCount?: number
+  minPositiveOutcomeCount?: number
+}
+
+export type WriteTaskFeedbackKey =
+  | 'taskFeedbackWrongChute'
+  | 'taskFeedbackNeedChooseChute'
+  | 'taskFeedbackNeedDropBall'
+  | 'taskFeedbackNeedVariableStore'
+  | 'taskFeedbackNeedSkipEvil'
+  | 'taskFeedbackNeedElseLaunch'
+  | 'taskFeedbackNeedPortalLaunch'
+  | 'taskFeedbackNeedCenterLaunch'
+  | 'taskFeedbackNeedHelperCall'
+  | 'taskFeedbackNeedHelperGateLogic'
+  | 'taskFeedbackNeedLoop'
+  | 'taskFeedbackNeedIf'
+  | 'taskFeedbackNeedContinue'
+  | 'taskFeedbackWrongLaunchCount'
 
 export type ActiveBallState = 'falling' | 'settled' | 'canceled'
 
@@ -116,8 +191,9 @@ export type ActiveBall = {
   portalDepth: number
   bucketIndex: number
   basePoints: number
-  usedLuckyBonus: boolean
-  usedEvilPenalty: boolean
+  usedCenterBonus: boolean
+  centerBonusValue: number
+  usedNegativePenalty: boolean
   triggeredPortal: boolean
   points: number
   scoreBreakdown: ScoreBreakdownLine[]
@@ -196,7 +272,36 @@ export type FeedEntry = {
 
 export type TaskKind = 'onboarding' | 'mastery'
 
-export type TaskArchetype = 'read' | 'choose' | 'repair'
+export type TaskArchetype = 'trace' | 'choose' | 'repair' | 'write'
+
+export type TaskWriteCase = {
+  title: string
+  requirement: string
+  scenario: PracticeGoalScenario
+  programContextSource?: string
+  helperContextSource?: string
+  expectation: ExecutionExpectation
+  hiddenFromPrompt?: boolean
+}
+
+export type TaskWriteValidation = {
+  target: 'main' | 'helper'
+  starterSource: string
+  lineLimit?: number
+  cases: TaskWriteCase[]
+  presentation?:
+    | {
+        mode: 'none'
+      }
+    | {
+        mode: 'cases'
+      }
+    | {
+        mode: 'summary'
+        title: string
+        body: string
+      }
+}
 
 export type GameTask = {
   id: string
@@ -210,10 +315,42 @@ export type GameTask = {
   code: string
   boardHint: string
   unlockConnection: string
-  options: string[]
-  correctOption: number
+  options?: string[]
+  correctOption?: number
+  writeValidation?: TaskWriteValidation
+  reviewOriginTopicId?: TaskTopicId
   successMessage: string
   failureMessage: string
+}
+
+export type PracticeGoalScenario = {
+  portalSide: PortalSide
+  previewQueue: BallType[]
+  visiblePreviewCount?: number
+  launchPlan?: number[]
+  planFocusIndex?: number | null
+}
+
+export type PracticeGoalDefinition = {
+  id: string
+  title: string
+  instruction: string
+  boardHint: string
+  primerCards?: UnlockPrimerCard[]
+  suggestedSnippet: string
+  starterProgramSource: string
+  starterHelperSource?: string | null
+  scenario: PracticeGoalScenario
+  acceptance: ExecutionExpectation
+  requiresCodeChange?: boolean
+  changeTarget?: 'main' | 'helper'
+}
+
+export type UnlockPrimerCard = {
+  id: string
+  title: string
+  body: string
+  syntax: string
 }
 
 export type TopicDefinition = {
@@ -225,12 +362,10 @@ export type TopicDefinition = {
   masteryTaskIds: string[]
   visibleStateLabels: string[]
   supportUpgradeIds: SupportUpgradeId[]
-  goalText: string
-  machineObjectiveText: string
-  boardMeaningText: string
-  nextActionText: string
+  boardSubtitle: string
   unlockSpotlightText: string
-  suggestedSnippet: string
+  unlockPrimerCards: UnlockPrimerCard[]
+  practiceGoals: PracticeGoalDefinition[]
 }
 
 export type ReferenceValueItem = {
@@ -254,19 +389,39 @@ export type UiText = {
   languageLabel: string
   estonianLabel: string
   englishLabel: string
+  settingsButtonLabel: string
+  settingsTitle: string
+  settingsLanguageLabel: string
+  settingsSoundLabel: string
+  settingsSoundDescription: string
+  settingsSoundOn: string
+  settingsSoundOff: string
+  settingsProgressLabel: string
+  settingsResetProgressButton: string
+  settingsResetProgressConfirm: string
+  settingsCloseButton: string
   editorTitle: string
   editorLockedTitle: string
   editorUnlockedTitle: string
+  editorReadOnlyTitle: string
   editorLockedDescription: string
   editorUnlockedDescription: string
+  editorSpotlightDescription: string
   helperEditorTitle: string
   helperEditorLockedDescription: string
   helperEditorUnlockedDescription: string
+  helperEditorSpotlightDescription: string
+  helperEditorExpandButton: string
+  helperEditorCollapseButton: string
+  helperEditorCollapsedDescription: string
   editorLineUsageValue: string
   helperEditorLineUsageValue: string
   programReadyMessage: string
   helperProgramReadyMessage: string
   programZeroStepMessage: string
+  programZeroStepNeedActionMessage: string
+  programZeroStepUnhandledBallMessage: string
+  programZeroStepWrongBallMessage: string
   runBlockedInvalidProgram: string
   runButton: string
   runButtonRunning: string
@@ -277,6 +432,7 @@ export type UiText = {
   runPanelInvalidMessage: string
   runPanelCheckpointReadyMessage: string
   runPanelCheckpointActiveMessage: string
+  runPanelSpotlightMessage: string
   executionStatusLabel: string
   actionsPerRunLabel: string
   actionsPerRunValue: string
@@ -333,6 +489,8 @@ export type UiText = {
   nextStepLabel: string
   nextStepProgressLabel: string
   nextStepProgressValue: string
+  nextStepPrimerLabel: string
+  nextStepPrimerSyntaxLabel: string
   nextStepOnboardingTitle: string
   nextStepOnboardingBody: string
   nextStepLearningTitle: string
@@ -398,10 +556,15 @@ export type UiText = {
   currentGoalSpotlightAction: string
   boardTitle: string
   boardSubtitle: string
+  boardLaunchPlanLabel: string
+  boardSubtitleOnboarding: string
+  boardSubtitleCompleted: string
   boardBonusLaneLabel: string
   boardActivePortalLabel: string
+  boardActivePortalValue: string
   boardUpcomingBallsLabel: string
   boardNextBallLabel: string
+  boardBallTypePlain: string
   boardBallTypeNormal: string
   boardBallTypeLucky: string
   boardBallTypeEvil: string
@@ -412,6 +575,10 @@ export type UiText = {
   boardScoreEvilPenaltyLabel: string
   boardScoreTotalLabel: string
   boardPortalSplitLabel: string
+  boardGateExplanation: string
+  boardGateExplanationAdvanced: string
+  boardRandomnessExplanation: string
+  boardRandomnessExplanationAdvanced: string
   boardLastPointsLabel: string
   boardLastBucketLabel: string
   boardStreakLabel: string
@@ -451,8 +618,10 @@ export type UiText = {
   challengeLabel: string
   challengeProgressValue: string
   taskReadLabel: string
+  taskTraceLabel: string
   taskChooseLabel: string
   taskRepairLabel: string
+  taskWriteLabel: string
   submitButton: string
   continueButton: string
   retryButton: string
@@ -462,6 +631,27 @@ export type UiText = {
   taskUnlockConnectionLabel: string
   taskShowHintButton: string
   taskHideHintButton: string
+  taskAnswerCodeLabel: string
+  taskContextCodeLabel: string
+  taskMainProgramLabel: string
+  taskHelperProgramLabel: string
+  taskValidationNeedsRun: string
+  taskValidationExpectedBehavior: string
+  taskValidationCaseFailure: string
+  taskFeedbackWrongChute: string
+  taskFeedbackNeedChooseChute: string
+  taskFeedbackNeedDropBall: string
+  taskFeedbackNeedVariableStore: string
+  taskFeedbackNeedSkipEvil: string
+  taskFeedbackNeedElseLaunch: string
+  taskFeedbackNeedPortalLaunch: string
+  taskFeedbackNeedCenterLaunch: string
+  taskFeedbackNeedHelperCall: string
+  taskFeedbackNeedHelperGateLogic: string
+  taskFeedbackNeedLoop: string
+  taskFeedbackNeedIf: string
+  taskFeedbackNeedContinue: string
+  taskFeedbackWrongLaunchCount: string
   activityFeedTitle: string
   activityFeedEmpty: string
   feedCategoryModule: string
@@ -484,6 +674,49 @@ export type UiText = {
   shopCostValue: string
   shopAvailableHint: string
   shopLockedHint: string
+  introEyebrow: string
+  introTitle: string
+  introBody: string
+  introChecklistLabel: string
+  introChecklistOne: string
+  introChecklistTwo: string
+  introChecklistThree: string
+  introStartButton: string
+  nextStepHintLabel: string
+  nextStepSnippetLabel: string
+  nextStepOnboardingAfterRunBody: string
+  nextStepOnboardingTaskBody: string
+  nextStepUnlockBody: string
+  nextStepCompleteBody: string
+  nextStepOnboardingSnippet: string
+  onboardingTaskSolvedFeed: string
+  objectiveShowHintButton: string
+  objectiveHideHintButton: string
+  objectiveShowExampleButton: string
+  objectiveHideExampleButton: string
+  goalEditRequiredMainMessage: string
+  goalEditRequiredHelperMessage: string
+  topicGuideChooseInputDescription: string
+  topicGuideBluePortalDescription: string
+  topicGuideVariablesDescription: string
+  topicGuidePortalSideDescription: string
+  topicGuideConditionsNextBallDescription: string
+  topicGuideConditionsIfDescription: string
+  topicGuideConditionsSkipDescription: string
+  topicGuideFunctionsDescription: string
+  topicGuideLoopsForDescription: string
+  topicGuideLoopsContinueDescription: string
+  boardPreviewMeaningNormal: string
+  boardPreviewMeaningLucky: string
+  boardPreviewMeaningEvil: string
+  scoreMultiplierLabel: string
+  autoRunLabel: string
+  autoRunOn: string
+  autoRunOff: string
+  autoRunReadyLabel: string
+  boardPortalCodeValue: string
+  boardNextBallCodeValue: string
+  shopMultiplierValue: string
 }
 
 export type UnlockState = {
@@ -508,16 +741,34 @@ export type RunStats = {
   programStepSpawnedCount: number
   resolvedBalls: number
   portalSplitCount: number
-  skippedEvilBallCount: number
-  luckyBallHitCount: number
+  skippedNegativeBallCount: number
+  skippedBallTypes: BallType[]
+  centerBonusCount: number
+  negativePenaltyCount: number
   helperPositiveOutcomeCount: number
   positiveOutcomeCount: number
+  mainLaunchCount: number
+  helperLaunchCount: number
+  launchAims: AimLevel[]
+  helperLaunchAims: AimLevel[]
+  previewResponses: PreviewResponse[]
+  pointsEarned: number
+}
+
+export type RunSummary = {
+  pointsEarned: number
+  launchedBalls: number
+  skippedBalls: number
+  portalSplits: number
+  centerBonuses: number
+  negativePenalties: number
 }
 
 export type GameState = {
   currentView: GameView
   score: number
   resolvedDropCount: number
+  soundEnabled: boolean
   isRunning: boolean
   unlocks: UnlockState
   programSource: string
@@ -531,6 +782,7 @@ export type GameState = {
   nextSpawnAt: number | null
   lastPoints: number
   lastBucket: number
+  lastRunSummary: RunSummary | null
   streak: number
   ballQueue: BallType[]
   ballQueueCursor: number
@@ -540,11 +792,15 @@ export type GameState = {
   topicStage: TopicStage
   topicMeter: number
   topicMeterGoal: number
+  goalBaselineProgramSource: string | null
+  goalBaselineHelperSource: string | null
+  goalChangeNoticeTarget: 'main' | 'helper' | null
   activeCheckpointTaskIds: string[]
   checkpointIndex: number
   activeTaskId: string | null
   solvedTaskIds: string[]
   moduleStates: MachineModuleState
+  activeScenario: PracticeGoalScenario | null
   supportUpgradeIds: SupportUpgradeId[]
   feedEntries: FeedEntry[]
   nextFeedEntryId: number
@@ -552,4 +808,7 @@ export type GameState = {
   currentRunStats: RunStats | null
   plannedBallCount: number
   hasOpenedShop: boolean
+  introDismissed: boolean
+  autoRunUnlocked: boolean
+  autoRunEnabled: boolean
 }

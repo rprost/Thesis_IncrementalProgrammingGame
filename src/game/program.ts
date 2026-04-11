@@ -14,7 +14,7 @@ import type {
 export const INITIAL_PROGRAM_SOURCE = 'drop_ball()'
 export const INITIAL_HELPER_SOURCE = [
   'def follow_portal():',
-  '    choose_chute(portal_side)',
+  '    choose_input(portal_side)',
   '    drop_ball()',
 ].join('\n')
 export const MAX_FOR_RANGE = 8
@@ -45,7 +45,7 @@ type StatementNode =
   | { type: 'drop_ball'; lineNumber: number }
   | { type: 'skip_ball'; lineNumber: number }
   | { type: 'continue'; lineNumber: number }
-  | { type: 'choose_chute'; lineNumber: number; value: ExprNode }
+  | { type: 'choose_input'; lineNumber: number; value: ExprNode }
   | { type: 'assign'; lineNumber: number; name: string; value: ExprNode }
   | {
       type: 'if'
@@ -93,10 +93,11 @@ type ExecutionControl = 'none' | 'continue'
 function createFeatureUsage(): ProgramFeatureUsage {
   return {
     usedVariables: false,
-    usedChooseChute: false,
+    usedChooseInput: false,
     usedIf: false,
     usedHelperCall: false,
     usedFor: false,
+    usedContinue: false,
   }
 }
 
@@ -119,26 +120,28 @@ function createValidation(
 
 function getBallTypeValue(ballType: BallType): number {
   switch (ballType) {
-    case 'lucky':
+    case 'portal':
       return 2
-    case 'evil':
+    case 'negative':
       return 3
-    case 'normal':
+    case 'plain':
+      return 0
+    case 'center':
     default:
       return 1
   }
 }
 
 function peekBallType(planning: PlanningContext): BallType {
-  return planning.ballQueue[planning.queueIndex] ?? 'normal'
+  return planning.ballQueue[planning.queueIndex] ?? 'plain'
 }
 
-function syncNextBall(environment: Record<string, number>, planning: PlanningContext): void {
+function syncNextBall(environment: EvaluationContext, planning: PlanningContext): void {
   environment.next_ball = getBallTypeValue(peekBallType(planning))
 }
 
 function consumeNextBall(
-  environment: Record<string, number>,
+  environment: EvaluationContext,
   planning: PlanningContext,
 ): BallType {
   const current = peekBallType(planning)
@@ -224,7 +227,7 @@ function parseExpression(source: string): ExprNode | null {
   const expressionTokens = tokens
   let index = 0
 
-  function parsePrimary(): ExprNode | null {
+  function parseBasePrimary(): ExprNode | null {
     const token = expressionTokens[index]
 
     if (token === undefined) {
@@ -263,7 +266,16 @@ function parseExpression(source: string): ExprNode | null {
       return inner
     }
 
-    if (token.type === 'operator' && token.value === '-') {
+    return null
+  }
+
+  function parsePrimary(): ExprNode | null {
+    const token = expressionTokens[index]
+
+    if (
+      token?.type === 'operator' &&
+      token.value === '-'
+    ) {
       index += 1
       const inner = parsePrimary()
 
@@ -278,7 +290,13 @@ function parseExpression(source: string): ExprNode | null {
       }
     }
 
-    return null
+    const base = parseBasePrimary()
+
+    if (base === null) {
+      return null
+    }
+
+    return base
   }
 
   function parseMultiplicative(): ExprNode | null {
@@ -379,7 +397,7 @@ function parseCondition(source: string): ConditionNode | null {
 
 function evaluateExpression(
   node: ExprNode,
-  environment: Record<string, number>,
+  environment: EvaluationContext,
 ): number {
   switch (node.type) {
     case 'number':
@@ -394,10 +412,10 @@ function evaluateExpression(
       return value
     }
     case 'unary':
-      return -evaluateExpression(node.value, environment)
+      return -evaluateNumericExpression(node.value, environment)
     case 'binary': {
-      const left = evaluateExpression(node.left, environment)
-      const right = evaluateExpression(node.right, environment)
+      const left = evaluateNumericExpression(node.left, environment)
+      const right = evaluateNumericExpression(node.right, environment)
 
       switch (node.operator) {
         case '+':
@@ -415,12 +433,19 @@ function evaluateExpression(
   }
 }
 
+function evaluateNumericExpression(
+  node: ExprNode,
+  environment: EvaluationContext,
+): number {
+  return evaluateExpression(node, environment)
+}
+
 function evaluateCondition(
   node: ConditionNode,
-  environment: Record<string, number>,
+  environment: EvaluationContext,
 ): boolean {
-  const left = evaluateExpression(node.left, environment)
-  const right = evaluateExpression(node.right, environment)
+  const left = evaluateNumericExpression(node.left, environment)
+  const right = evaluateNumericExpression(node.right, environment)
 
   switch (node.operator) {
     case '==':
@@ -788,8 +813,8 @@ function parseStatements(
         continue
       }
 
-      if (name === 'choose_chute' || name === 'set_aim') {
-        if (!context.allowedCommands.includes('choose_chute')) {
+      if (name === 'choose_input') {
+        if (!context.allowedCommands.includes('choose_input')) {
           issues.push({
             code: 'locked_construct',
             lineNumber: line.lineNumber,
@@ -811,7 +836,7 @@ function parseStatements(
         }
 
         statements.push({
-          type: 'choose_chute',
+          type: 'choose_input',
           lineNumber: line.lineNumber,
           value: expression,
         })
@@ -961,8 +986,7 @@ function parseHelperProgram(
     if (
       helperName === 'drop_ball' ||
       helperName === 'skip_ball' ||
-      helperName === 'choose_chute' ||
-      helperName === 'set_aim'
+      helperName === 'choose_input'
     ) {
       issues.push({
         code: 'duplicate_function',
@@ -1030,7 +1054,7 @@ function parseHelperProgram(
 
 function executeStatements(
   statements: StatementNode[],
-  environment: Record<string, number>,
+  environment: EvaluationContext,
   helperDefinitions: Map<string, HelperDefinition>,
   steps: ExecutionStep[],
   issues: ValidationIssue[],
@@ -1075,10 +1099,11 @@ function executeStatements(
           break
         }
         case 'continue':
+          featureUsage.usedContinue = true
           return 'continue'
-        case 'choose_chute': {
-          featureUsage.usedChooseChute = true
-          const value = evaluateExpression(statement.value, environment)
+        case 'choose_input': {
+          featureUsage.usedChooseInput = true
+          const value = evaluateNumericExpression(statement.value, environment)
 
           if (value < 1 || value > 3) {
             issues.push({
@@ -1093,10 +1118,7 @@ function executeStatements(
         }
         case 'assign':
           featureUsage.usedVariables = true
-          environment[statement.name] = evaluateExpression(
-            statement.value,
-            environment,
-          )
+          environment[statement.name] = evaluateExpression(statement.value, environment)
           break
         case 'if':
           featureUsage.usedIf = true
@@ -1198,7 +1220,7 @@ function executeStatements(
         code:
           statement.type === 'if'
             ? 'invalid_condition'
-            : statement.type === 'choose_chute' || statement.type === 'assign'
+            : statement.type === 'choose_input' || statement.type === 'assign'
               ? 'invalid_expression'
               : 'invalid_command',
         lineNumber: statement.lineNumber,
@@ -1259,7 +1281,7 @@ export function parseProgram(
 
   mainIssues.push(...mainStatements.issues)
 
-  const environment: Record<string, number> = {
+  const environment: EvaluationContext = {
     __aim: 2,
     ...evaluationContext,
   }
@@ -1292,7 +1314,6 @@ export function parseProgram(
   }
 
   const combinedMainIssues = [...mainIssues, ...evaluationIssues]
-
   const launchStepCount = steps.filter((step) => step.type === 'drop_ball').length
 
   return {

@@ -14,9 +14,10 @@ export const BALL_FALL_DURATION_MS = 920
 export const BALL_SETTLE_HOLD_MS = 900
 export const BALL_CANCEL_DURATION_MS = 180
 export const BALL_QUEUE_LENGTH = 24
-export const DEFAULT_LUCKY_BONUS = 2
-export const DEFAULT_EVIL_PENALTY = 4
+export const DEFAULT_CENTER_BONUS = 6
+export const DEFAULT_NEGATIVE_PENALTY = 10
 export const DEFAULT_PORTAL_CHILD_COUNT = 2
+export const PORTAL_BALL_CHILD_COUNT = 4
 
 const BOARD_CENTER_X = 230
 const BUCKET_SPACING = 46
@@ -24,9 +25,9 @@ const HALF_STEP_X = BUCKET_SPACING / 2
 const PIN_START_Y = 64
 const PIN_STEP_Y = 28
 const BUCKET_COUNT = 9
-const CHUTE_START_Y = 34
-const CHUTE_MID_Y = 82
-const CHUTE_LOW_Y = 118
+const INPUT_START_Y = 34
+const INPUT_MID_Y = 82
+const INPUT_LOW_Y = 118
 
 export const BOARD_VIEWBOX = {
   width: 460,
@@ -66,7 +67,7 @@ const ENTRY_COLUMN_BY_AIM: Record<AimLevel, number> = {
   3: 3,
 }
 
-export const BOARD_MAIN_CHUTE_X: Record<AimLevel, number> = {
+export const BOARD_MAIN_INPUT_X: Record<AimLevel, number> = {
   1: BOARD_PIN_ROWS[3]?.[0]?.x ?? 161,
   2: BOARD_PIN_ROWS[0]?.[0]?.x ?? 230,
   3: BOARD_PIN_ROWS[3]?.[3]?.x ?? 299,
@@ -77,42 +78,9 @@ export const BOARD_PORTAL_TRIGGER_PEGS: Record<PortalSide, { x: number; y: numbe
   3: BOARD_PIN_ROWS[6]?.[5] ?? { x: 322, y: 232 },
 }
 
-function getPortalCenter(portalSide: PortalSide): { x: number; y: number } {
-  const rowIndex = 6
-  const triggerColumnIndex = portalSide === 1 ? 1 : 5
-  const upperRow = BOARD_PIN_ROWS[rowIndex - 1] ?? []
-  const lowerRow = BOARD_PIN_ROWS[rowIndex] ?? []
-  const surroundingPins = [
-    upperRow[triggerColumnIndex - 1],
-    upperRow[triggerColumnIndex],
-    lowerRow[triggerColumnIndex],
-    lowerRow[triggerColumnIndex + 1],
-  ].filter((pin): pin is { x: number; y: number } => pin !== undefined)
-
-  if (surroundingPins.length === 0) {
-    return {
-      x: portalSide === 1 ? 150 : 334,
-      y: 218,
-    }
-  }
-
-  const totals = surroundingPins.reduce(
-    (accumulator, pin) => ({
-      x: accumulator.x + pin.x,
-      y: accumulator.y + pin.y,
-    }),
-    { x: 0, y: 0 },
-  )
-
-  return {
-    x: totals.x / surroundingPins.length,
-    y: totals.y / surroundingPins.length,
-  }
-}
-
 export const BOARD_PORTALS: Record<PortalSide, { x: number; y: number }> = {
-  1: getPortalCenter(1),
-  3: getPortalCenter(3),
+  1: BOARD_PORTAL_TRIGGER_PEGS[1],
+  3: BOARD_PORTAL_TRIGGER_PEGS[3],
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -150,20 +118,20 @@ function buildDecisions(aim: AimLevel, count: number): Array<-1 | 1> {
   return decisions
 }
 
-function getChuteLaunchNodes(aim: AimLevel): BoardPathNode[] {
-  const chuteX = BOARD_MAIN_CHUTE_X[aim]
+function getInputLaunchNodes(aim: AimLevel): BoardPathNode[] {
+  const inputX = BOARD_MAIN_INPUT_X[aim]
 
   if (aim === 2) {
     return [
-      { x: chuteX, y: CHUTE_START_Y },
-      { x: chuteX, y: 50 },
+      { x: inputX, y: INPUT_START_Y },
+      { x: inputX, y: 50 },
     ]
   }
 
   return [
-    { x: chuteX, y: CHUTE_START_Y },
-    { x: chuteX, y: CHUTE_MID_Y },
-    { x: chuteX, y: CHUTE_LOW_Y },
+    { x: inputX, y: INPUT_START_Y },
+    { x: inputX, y: INPUT_MID_Y },
+    { x: inputX, y: INPUT_LOW_Y },
   ]
 }
 
@@ -175,7 +143,7 @@ function buildPegPath(
   lastDirection: -1 | 1
   path: BoardPathNode[]
 } {
-  const path = [...getChuteLaunchNodes(aim)]
+  const path = [...getInputLaunchNodes(aim)]
   const startRowIndex = ENTRY_ROW_BY_AIM[aim]
   let columnIndex = ENTRY_COLUMN_BY_AIM[aim]
   const firstPin = BOARD_PIN_ROWS[startRowIndex]?.[columnIndex]
@@ -253,9 +221,10 @@ function getPortalTriggerIndex(
   path: BoardPathNode[],
   portalSide: PortalSide,
   portalDepth: number,
+  maxPortalDepth: number,
   portalEnabled: boolean,
 ): number {
-  if (!portalEnabled || portalDepth > 0) {
+  if (!portalEnabled || portalDepth >= maxPortalDepth) {
     return -1
   }
 
@@ -272,23 +241,25 @@ function rollBallType(): BallType {
   const value = Math.random()
 
   if (value < 0.18) {
-    return 'evil'
+    return 'negative'
   }
 
   if (value < 0.34) {
-    return 'lucky'
+    return 'portal'
   }
 
-  return 'normal'
+  return 'center'
 }
 
 export function getBallTypeValue(ballType: BallType): number {
   switch (ballType) {
-    case 'lucky':
+    case 'portal':
       return 2
-    case 'evil':
+    case 'negative':
       return 3
-    case 'normal':
+    case 'plain':
+      return 0
+    case 'center':
     default:
       return 1
   }
@@ -300,16 +271,16 @@ export function createBallQueue(options: {
   topicStage: TopicStage
 }): BallType[] {
   if (!options.conditionsUnlocked) {
-    return Array.from({ length: BALL_QUEUE_LENGTH }, () => 'normal' as const)
+    return Array.from({ length: BALL_QUEUE_LENGTH }, () => 'plain' as const)
   }
 
   const queue = Array.from({ length: BALL_QUEUE_LENGTH }, () => rollBallType())
 
   if (
     options.currentTopicId === 'conditions' &&
-    !queue.slice(0, 4).includes('evil')
+    !queue.slice(0, 4).includes('negative')
   ) {
-    queue[0] = 'evil'
+    queue[0] = 'negative'
   }
 
   return queue
@@ -325,7 +296,7 @@ export function refillBallQueue(
   const nextQueue = queue.slice(Math.max(0, cursor), BALL_QUEUE_LENGTH)
 
   while (nextQueue.length < BALL_QUEUE_LENGTH) {
-    nextQueue.push(options.conditionsUnlocked ? rollBallType() : 'normal')
+    nextQueue.push(options.conditionsUnlocked ? rollBallType() : 'plain')
   }
 
   return nextQueue
@@ -343,7 +314,8 @@ export function createBallOutcome(
     launchIndex: number
     portalEnabled: boolean
     portalDepth: number
-    luckyBonusValue: number
+    maxPortalDepth: number
+    extraCenterBinBonus: number
   },
 ): BoardOutcome {
   const decisionCount = Math.max(0, BOARD_PIN_ROWS.length - ENTRY_ROW_BY_AIM[aim] - 1)
@@ -358,6 +330,7 @@ export function createBallOutcome(
     pegPath.path,
     portalSide,
     options.portalDepth,
+    options.maxPortalDepth,
     options.portalEnabled,
   )
   const triggeredPortal = portalTriggerIndex >= 0
@@ -370,29 +343,32 @@ export function createBallOutcome(
       basePoints: 0,
       points: 0,
       ballType,
-      usedLuckyBonus: false,
-      usedEvilPenalty: false,
+      centerBonusValue: 0,
+      usedCenterBonus: false,
+      usedNegativePenalty: false,
       triggeredPortal: true,
       path: appendPortalNodes(trimmedPath, portalSide),
     }
   }
 
   const basePoints = BOARD_BUCKETS[bucketIndex]?.points ?? 1
-  const usedLuckyBonus = ballType === 'lucky'
-  const usedEvilPenalty = ballType === 'evil'
-  const modifier = usedLuckyBonus
-    ? options.luckyBonusValue
-    : usedEvilPenalty
-      ? -DEFAULT_EVIL_PENALTY
-      : 0
+  const centerBonusValue =
+    (ballType === 'center' && aim === 2 ? DEFAULT_CENTER_BONUS : 0) +
+    (ballType === 'center' && bucketIndex === Math.floor(BOARD_BUCKETS.length / 2)
+      ? options.extraCenterBinBonus
+      : 0)
+  const usedCenterBonus = centerBonusValue > 0
+  const usedNegativePenalty = ballType === 'negative'
+  const modifier = centerBonusValue + (usedNegativePenalty ? -DEFAULT_NEGATIVE_PENALTY : 0)
 
   return {
     bucketIndex,
     basePoints,
     points: basePoints + modifier,
     ballType,
-    usedLuckyBonus,
-    usedEvilPenalty,
+    centerBonusValue,
+    usedCenterBonus,
+    usedNegativePenalty,
     triggeredPortal: false,
     path: appendBucketNodes(pegPath.path, bucketIndex),
   }
@@ -441,7 +417,46 @@ function interpolatePath(
 export function getBallRenderState(
   ball: ActiveBall,
   now: number,
+  reducedMotion = false,
 ): { x: number; y: number; opacity: number; scale: number } {
+  if (reducedMotion) {
+    if (
+      ball.state === 'canceled' &&
+      ball.cancelX !== undefined &&
+      ball.cancelY !== undefined
+    ) {
+      return {
+        x: ball.cancelX,
+        y: ball.cancelY,
+        opacity: 1,
+        scale: 1,
+      }
+    }
+
+    if (now < ball.spawnedAt) {
+      const startNode = ball.path[0] ?? { x: BOARD_CENTER_X, y: INPUT_START_Y }
+
+      return {
+        x: startNode.x,
+        y: startNode.y,
+        opacity: 0,
+        scale: 1,
+      }
+    }
+
+    const settledNode = ball.path[ball.path.length - 1] ?? {
+      x: BOARD_CENTER_X,
+      y: BOARD_BUCKET_TOP + 26,
+    }
+
+    return {
+      x: settledNode.x,
+      y: settledNode.y,
+      opacity: 1,
+      scale: 1,
+    }
+  }
+
   if (
     ball.state === 'canceled' &&
     ball.cancelX !== undefined &&
@@ -459,7 +474,7 @@ export function getBallRenderState(
   }
 
   if (now < ball.spawnedAt) {
-    const startNode = ball.path[0] ?? { x: BOARD_CENTER_X, y: CHUTE_START_Y }
+    const startNode = ball.path[0] ?? { x: BOARD_CENTER_X, y: INPUT_START_Y }
 
     return {
       x: startNode.x,

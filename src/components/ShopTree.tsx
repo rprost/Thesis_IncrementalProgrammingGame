@@ -1,4 +1,4 @@
-import { formatText } from '../content'
+import { PointCostText } from './PointMark'
 import { canPurchaseShopNode, getShopNodeStatus, SHOP_NODES } from '../game/shop'
 import type {
   GameState,
@@ -52,9 +52,6 @@ export function ShopTree({
           const status = getShopNodeStatus(gameState, node)
           const canPurchase = canPurchaseShopNode(gameState, node.id)
           const isPurchased = gameState.supportUpgradeIds.includes(node.id)
-          const purchaseLabel = formatText(ui.shopBuyButton, {
-            cost: String(node.cost),
-          })
 
           return (
             <article className={`skill-node ${status}`} key={node.id}>
@@ -67,7 +64,7 @@ export function ShopTree({
                       : ui.shopNodeLocked}
                 </span>
                 <span className="skill-node-cost">
-                  {formatText(ui.shopCostValue, { cost: String(node.cost) })}
+                  <PointCostText amount={node.cost} template={ui.shopCostValue} />
                 </span>
               </div>
 
@@ -82,7 +79,11 @@ export function ShopTree({
                     disabled={!canPurchase}
                     type="button"
                   >
-                    {isPurchased ? ui.shopBoughtButton : purchaseLabel}
+                    {isPurchased ? (
+                      ui.shopBoughtButton
+                    ) : (
+                      <PointCostText amount={node.cost} template={ui.shopBuyButton} />
+                    )}
                   </button>
                   {!canPurchase ? (
                     <span className="skill-node-hint">{ui.shopAvailableHint}</span>

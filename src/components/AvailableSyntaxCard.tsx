@@ -9,7 +9,7 @@ type AvailableSyntaxCardProps = {
   functions: string[]
   structures: string[]
   referenceValues: ReferenceValueItem[]
-  examples: ReferenceExampleItem[]
+  patterns: ReferenceExampleItem[]
 }
 
 export function AvailableSyntaxCard({
@@ -17,13 +17,13 @@ export function AvailableSyntaxCard({
   functions,
   structures,
   referenceValues,
-  examples,
+  patterns,
 }: AvailableSyntaxCardProps) {
   return (
     <section className="syntax-card" aria-label={ui.referenceTitle}>
       <p className="panel-kicker">{ui.referenceTitle}</p>
 
-      <details className="reference-section" open>
+      <details className="reference-section">
         <summary className="reference-summary">{ui.referenceSectionAvailableLabel}</summary>
         <div className="reference-content">
           <div className="syntax-group">
@@ -58,7 +58,12 @@ export function AvailableSyntaxCard({
         <summary className="reference-summary">{ui.referenceSectionBoardLabel}</summary>
         <div className="reference-content reference-value-list">
           {referenceValues.map((entry) => (
-            <article className="reference-value-card" key={entry.id}>
+            <article
+              className={`reference-value-card${
+                entry.id.endsWith('_ball') ? ` tone-${entry.id}` : ''
+              }`}
+              key={entry.id}
+            >
               <div className="reference-value-header">
                 <code>{entry.label}</code>
               </div>
@@ -76,11 +81,11 @@ export function AvailableSyntaxCard({
       <details className="reference-section">
         <summary className="reference-summary">{ui.referenceSectionExamplesLabel}</summary>
         <div className="reference-content">
-          {examples.length === 0 ? (
+          {patterns.length === 0 ? (
             <p className="syntax-empty">{ui.referenceNoExamples}</p>
           ) : (
             <div className="reference-example-list">
-              {examples.map((entry) => (
+              {patterns.map((entry) => (
                 <article className="reference-example-card" key={entry.id}>
                   <span className="syntax-group-label">{entry.label}</span>
                   <pre className="reference-example-code">

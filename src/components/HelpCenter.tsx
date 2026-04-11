@@ -1,10 +1,10 @@
 import type { UiText } from '../types'
+import { useDialogFocusTrap } from '../useAccessibility'
 
 export type HelpEntry = {
   id: string
   title: string
   body: string
-  snippet?: string
 }
 
 type HelpCenterProps = {
@@ -28,6 +28,7 @@ export function HelpCenter({
   onClose,
   onSelect,
 }: HelpCenterProps) {
+  const dialogRef = useDialogFocusTrap<HTMLElement>(isOpen, onClose)
   const activeEntry =
     entries.find((entry) => entry.id === activeEntryId) ?? entries[entries.length - 1] ?? null
 
@@ -40,20 +41,40 @@ export function HelpCenter({
         onClick={onToggle}
         type="button"
       >
-        ?
+        {ui.helpCenterTitle}
       </button>
 
       {isOpen ? (
-        <div className="help-center-backdrop" role="presentation">
-          <section className="help-center" aria-label={ui.helpCenterTitle}>
+        <div
+          className="help-center-backdrop open"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              onClose()
+            }
+          }}
+          role="presentation"
+        >
+          <section
+            className="help-center open"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-center-title"
+            tabIndex={-1}
+          >
             <div className="help-center-header">
               <div>
                 <p className="panel-kicker">{ui.helpCenterTitle}</p>
-                <h2 className="help-center-title">
+                <h2 className="help-center-title" id="help-center-title">
                   {activeEntry?.title ?? ui.helpCenterEmpty}
                 </h2>
               </div>
-              <button className="ghost-button" onClick={onClose} type="button">
+              <button
+                className="ghost-button"
+                data-autofocus="true"
+                onClick={onClose}
+                type="button"
+              >
                 {ui.helpCenterCloseButton}
               </button>
             </div>
@@ -91,14 +112,7 @@ export function HelpCenter({
 
               <div className="help-center-body">
                 {activeEntry !== null ? (
-                  <>
-                    <p>{activeEntry.body}</p>
-                    {activeEntry.snippet !== undefined ? (
-                      <pre className="help-center-snippet">
-                        <code>{activeEntry.snippet}</code>
-                      </pre>
-                    ) : null}
-                  </>
+                  <p>{activeEntry.body}</p>
                 ) : (
                   <p className="help-center-empty">{ui.helpCenterEmpty}</p>
                 )}

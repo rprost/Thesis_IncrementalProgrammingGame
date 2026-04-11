@@ -3,7 +3,7 @@ import {
   BOARD_BUCKET_BOTTOM,
   BOARD_BUCKET_TOP,
   BOARD_BUCKETS,
-  BOARD_MAIN_CHUTE_X,
+  BOARD_MAIN_INPUT_X,
   BOARD_PIN_ROWS,
   BOARD_PORTALS,
   BOARD_VIEWBOX,
@@ -21,10 +21,14 @@ type PachinkoBoardProps = {
   ui: UiText
   activeBalls: ActiveBall[]
   portalSide: PortalSide
+  portalActive: boolean
   learnedTopicIds: TaskTopicId[]
   upcomingBalls: BallType[]
+  previewMeaning: string | null
+  showQueuePreview: boolean
   portalChildCount: number
   now: number
+  reducedMotion: boolean
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -33,6 +37,20 @@ function clamp(value: number, min: number, max: number): number {
 
 function getLaneLabel(lane: PortalSide, ui: UiText): string {
   return lane === 1 ? ui.boardLaneLeft : ui.boardLaneRight
+}
+
+function getBallTypeConstant(ballType: BallType): string {
+  switch (ballType) {
+    case 'plain':
+      return 'ball'
+    case 'portal':
+      return 'portal_ball'
+    case 'negative':
+      return 'negative_ball'
+    case 'center':
+    default:
+      return 'center_ball'
+  }
 }
 
 function getBucketPath(centerX: number): string {
@@ -52,9 +70,9 @@ function getScoreLineText(
   switch (kind) {
     case 'bucket':
       return `${value} ${ui.boardScoreBucketLabel}`
-    case 'lucky_bonus':
+    case 'center_bonus':
       return `+${value} ${ui.boardScoreLuckyBonusLabel}`
-    case 'evil_penalty':
+    case 'negative_penalty':
       return `-${value} ${ui.boardScoreEvilPenaltyLabel}`
     case 'total':
       return `= ${value} ${ui.boardScoreTotalLabel}`
@@ -63,24 +81,29 @@ function getScoreLineText(
   }
 }
 
-function getPortalSpiralPath(x: number, y: number): string {
-  return [
-    `M ${x + 8} ${y - 3}`,
-    `C ${x + 11} ${y - 11}, ${x - 1} ${y - 13}, ${x - 8} ${y - 7}`,
-    `C ${x - 14} ${y - 1}, ${x - 10} ${y + 10}, ${x + 1} ${y + 9}`,
-    `C ${x + 8} ${y + 8}, ${x + 9} ${y + 2}, ${x + 4} ${y - 1}`,
-  ].join(' ')
-}
-
 function getBallTypeLabel(ballType: BallType, ui: UiText): string {
   switch (ballType) {
-    case 'lucky':
+    case 'plain':
+      return ui.boardBallTypePlain
+    case 'portal':
       return ui.boardBallTypeLucky
-    case 'evil':
+    case 'negative':
       return ui.boardBallTypeEvil
-    case 'normal':
+    case 'center':
     default:
       return ui.boardBallTypeNormal
+  }
+}
+
+function getBallTypeDescription(ballType: BallType, ui: UiText): string {
+  switch (ballType) {
+    case 'portal':
+      return ui.referenceLuckyBallDescription
+    case 'negative':
+      return ui.referenceEvilBallDescription
+    case 'center':
+    default:
+      return ui.referenceNormalBallDescription
   }
 }
 
@@ -88,50 +111,100 @@ export function PachinkoBoard({
   ui,
   activeBalls,
   portalSide,
+  portalActive,
   learnedTopicIds,
   upcomingBalls,
+  previewMeaning,
+  showQueuePreview,
   portalChildCount,
   now,
+  reducedMotion,
 }: PachinkoBoardProps) {
-  const showPortalState = learnedTopicIds.includes('variables')
-  const showPreview = learnedTopicIds.includes('conditions') && upcomingBalls.length > 0
+  const showPortalState = portalActive
+  const showPreview =
+    showQueuePreview && learnedTopicIds.includes('conditions') && upcomingBalls.length > 0
+  const showBallGuide = learnedTopicIds.includes('conditions')
+  const previewTone = upcomingBalls[0] ?? 'plain'
+  const previewCodeValue =
+    upcomingBalls[0] !== undefined
+      ? formatText(ui.boardNextBallCodeValue, {
+          value: getBallTypeConstant(upcomingBalls[0]),
+        })
+      : null
   const portalSplitLabel = formatText(ui.boardPortalSplitLabel, {
     count: String(portalChildCount),
   })
+  const hasInfoRow = showPreview || showPortalState
 
   return (
     <section className="board-shell" aria-label={ui.boardTitle}>
-      <div className="board-header">
-        <div>
-          <p className="panel-kicker">{ui.boardTitle}</p>
-          <p className="board-subtitle">{ui.boardSubtitle}</p>
-        </div>
-        <div className="board-header-chips">
+      {hasInfoRow ? (
+        <div className={`board-info-row${showPreview && showPortalState ? ' split' : ''}`}>
+          {showPreview ? (
+            <div
+              className="board-preview-strip"
+              aria-label={
+                upcomingBalls.length === 1
+                  ? ui.boardNextBallLabel
+                  : ui.boardUpcomingBallsLabel
+              }
+            >
+              <div className="board-preview-copy">
+                <span className="board-preview-label">
+                  {upcomingBalls.length === 1
+                    ? ui.boardNextBallLabel
+                    : ui.boardUpcomingBallsLabel}
+                </span>
+                {previewCodeValue !== null ? (
+                  <small className="board-preview-code">{previewCodeValue}</small>
+                ) : null}
+                {previewMeaning !== null ? (
+                  <p className={`board-preview-meaning type-${previewTone}`}>
+                    {previewMeaning}
+                  </p>
+                ) : null}
+              </div>
+              <div className="board-preview-list">
+                {upcomingBalls.map((ballType, index) => (
+                  <span
+                    className={`board-preview-pill type-${ballType}`}
+                    key={`${ballType}-${index}`}
+                  >
+                    <span className="board-preview-dot" aria-hidden="true" />
+                    {getBallTypeLabel(ballType, ui)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {showPortalState ? (
             <div className={`board-risk portal-${portalSide}`}>
               <span>{ui.boardActivePortalLabel}</span>
-              <strong>{getLaneLabel(portalSide, ui)}</strong>
+              <strong>
+                {formatText(ui.boardActivePortalValue, {
+                  label: getLaneLabel(portalSide, ui),
+                  value: String(portalSide),
+                })}
+              </strong>
+              <small>
+                {formatText(ui.boardPortalCodeValue, {
+                  value: String(portalSide),
+                })}
+              </small>
             </div>
           ) : null}
         </div>
-      </div>
+      ) : null}
 
-      {showPreview ? (
-        <div className="board-preview-strip" aria-label={ui.boardUpcomingBallsLabel}>
-          <span className="board-preview-label">
-            {upcomingBalls.length === 1 ? ui.boardNextBallLabel : ui.boardUpcomingBallsLabel}
-          </span>
-          <div className="board-preview-list">
-            {upcomingBalls.map((ballType, index) => (
-              <span
-                className={`board-preview-pill type-${ballType}`}
-                key={`${ballType}-${index}`}
-              >
-                <span className="board-preview-dot" aria-hidden="true" />
-                {getBallTypeLabel(ballType, ui)}
-              </span>
-            ))}
-          </div>
+      {showBallGuide ? (
+        <div className="board-ball-guide" aria-label={ui.boardLegendTitle}>
+          {(['negative', 'portal', 'center'] as const).map((ballType) => (
+            <article className={`board-ball-guide-card type-${ballType}`} key={ballType}>
+              <code>{getBallTypeLabel(ballType, ui)}</code>
+              <p>{getBallTypeDescription(ballType, ui)}</p>
+            </article>
+          ))}
         </div>
       ) : null}
 
@@ -150,17 +223,17 @@ export function PachinkoBoard({
               {ui.boardMainLauncherLabel}
             </text>
             {[1, 2, 3].map((aim) => (
-              <g key={`main-chute-${aim}`}>
+              <g key={`main-input-${aim}`}>
                 <circle
                   className="board-launcher-cap"
-                  cx={BOARD_MAIN_CHUTE_X[aim as 1 | 2 | 3]}
+                  cx={BOARD_MAIN_INPUT_X[aim as 1 | 2 | 3]}
                   cy="34"
                   r="11"
                 />
                 <text
                   className="board-launcher-label"
                   textAnchor="middle"
-                  x={BOARD_MAIN_CHUTE_X[aim as 1 | 2 | 3]}
+                  x={BOARD_MAIN_INPUT_X[aim as 1 | 2 | 3]}
                   y="39"
                 >
                   {aim}
@@ -175,12 +248,9 @@ export function PachinkoBoard({
 
               return (
                 <g className={`board-portal side-${portalSide} active`}>
-                  <circle className="board-portal-aura" cx={portal.x} cy={portal.y} r="21" />
-                  <circle className="board-portal-ring outer" cx={portal.x} cy={portal.y} r="16" />
-                  <circle className="board-portal-ring inner" cx={portal.x} cy={portal.y} r="11" />
-                  <ellipse className="board-portal-core" cx={portal.x} cy={portal.y} rx="6.5" ry="7.5" />
-                  <path className="board-portal-spiral" d={getPortalSpiralPath(portal.x, portal.y)} />
-                  <circle className="board-portal-spark" cx={portal.x + 10} cy={portal.y - 7} r="2.7" />
+                  <ellipse className="board-portal-aura" cx={portal.x} cy={portal.y} rx="18" ry="13" />
+                  <ellipse className="board-portal-ring" cx={portal.x} cy={portal.y} rx="12.5" ry="8.5" />
+                  <ellipse className="board-portal-core" cx={portal.x} cy={portal.y} rx="8.5" ry="5.8" />
                 </g>
               )
             })()
@@ -211,7 +281,7 @@ export function PachinkoBoard({
           ))}
 
           {activeBalls.map((ball) => {
-            const renderState = getBallRenderState(ball, now)
+            const renderState = getBallRenderState(ball, now, reducedMotion)
             const breakdownX = clamp(renderState.x, 90, BOARD_VIEWBOX.width - 90)
             const breakdownWidth = 112
             const breakdownHeight = 18 + ball.scoreBreakdown.length * 13

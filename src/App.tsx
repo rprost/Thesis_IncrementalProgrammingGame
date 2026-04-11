@@ -1,8 +1,8 @@
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useEffect, useRef, useState } from 'react'
 import './App.css'
-import { ActivityFeed } from './components/ActivityFeed'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
 import { HelpCenter, type HelpEntry } from './components/HelpCenter'
+import { IntroModal } from './components/IntroModal'
 import { NextStepCard } from './components/NextStepCard'
 import { PachinkoBoard } from './components/PachinkoBoard'
 import { ProgramEditor } from './components/ProgramEditor'
@@ -17,29 +17,40 @@ import {
 import {
   advanceProgramRun,
   applyTaskResult,
-  createInitialGameState,
   dismissUnlockSpotlight,
+  isBluePortalActive,
+  loadPersistedGameState,
   purchaseShopNode,
+  resetProgress,
+  savePersistedGameState,
   setCurrentView,
+  setAutoRunEnabled,
+  setSoundEnabled,
+  spawnAmbientPlainBall,
   startCheckpoint,
   startProgramRun,
   updateHelperProgramSource,
   updateProgramSource,
+  validateWriteTaskAnswer,
 } from './game/engine'
 import { MAX_FOR_RANGE, MAX_STEPS_PER_RUN } from './game/program'
-import { canOpenShop } from './game/shop'
+import { canOpenShop, getSupportUpgradeEffects } from './game/shop'
+import { usePrefersReducedMotion } from './useAccessibility'
+import { useGameAudio } from './useGameAudio'
 import type {
+  BallType,
   GameTask,
   GameState,
   Locale,
   LockedConstruct,
+  PracticeGoalDefinition,
   ProgramValidation,
   ReferenceExampleItem,
   ReferenceValueItem,
   SupportUpgradeId,
-  TaskTopicId,
   TopicDefinition,
   UiText,
+  UnlockPrimerCard,
 } from './types'
 
 type NextStepModel = {
@@ -48,7 +59,10 @@ type NextStepModel = {
   stageLabel: string
   progressText: string | null
   progressValue: number | null
+  hintText: string | null
   actionLabel: string | null
+  actionKind: 'checkpoint' | 'dismiss_unlock' | null
+  primerCards: UnlockPrimerCard[]
 }
 
 type HelpEntryId =
@@ -205,27 +219,128 @@ function getProgramValidationMessage(
   }
 }
 
-function getUnlockHelpEntryId(topicId: TaskTopicId): HelpEntryId {
-  switch (topicId) {
-    case 'variables':
-      return 'unlock-variables'
-    case 'conditions':
-      return 'unlock-conditions'
-    case 'functions':
-      return 'unlock-functions'
-    case 'loops':
-      return 'unlock-loops'
-    default:
-      return 'unlock-variables'
+function getCurrentPracticeGoal(
+  gameState: GameState,
+  topics: TopicDefinition[],
+): PracticeGoalDefinition | null {
+  const currentTopic = getCurrentTopic(gameState, topics)
+
+  if (currentTopic === null) {
+    return null
   }
+
+  return currentTopic.practiceGoals[gameState.topicMeter] ?? null
+}
+
+function getBallTypeConstant(ballType: BallType): string {
+  switch (ballType) {
+    case 'plain':
+      return 'ball'
+    case 'portal':
+      return 'portal_ball'
+    case 'negative':
+      return 'negative_ball'
+    case 'center':
+    default:
+      return 'center_ball'
+  }
+}
+
+function getPreviewMeaning(upcomingBalls: BallType[], ui: UiText): string | null {
+  const nextBall = upcomingBalls[0]
+
+  switch (nextBall) {
+    case 'negative':
+      return ui.boardPreviewMeaningEvil
+    case 'portal':
+      return ui.boardPreviewMeaningLucky
+    case 'center':
+      return ui.boardPreviewMeaningNormal
+    default:
+      return null
+  }
+}
+
+function sourceMentionsToken(source: string, token: string): boolean {
+  const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escapedToken}\\b`).test(source)
+}
+
+function getZeroStepFeedbackMessage(
+  gameState: GameState,
+  ui: UiText,
+): string {
+  const combinedSource = `${gameState.programSource}\n${gameState.helperProgramSource}`
+  const mentionsDrop = combinedSource.includes('drop_ball()')
+  const mentionsSkip = combinedSource.includes('skip_ball()')
+
+  if (!mentionsDrop && !mentionsSkip) {
+    return ui.programZeroStepNeedActionMessage
+  }
+
+  if (!gameState.learnedTopicIds.includes('conditions')) {
+    return ui.programZeroStepMessage
+  }
+
+  const nextBall = gameState.ballQueue[gameState.ballQueueCursor] ?? null
+
+  if (nextBall === null || nextBall === 'plain') {
+    return ui.programZeroStepMessage
+  }
+
+  const mentionedBallTypes = (['negative', 'portal', 'center'] as const).filter(
+    (ballType) => sourceMentionsToken(combinedSource, getBallTypeConstant(ballType)),
+  )
+
+  if (mentionedBallTypes.includes(nextBall)) {
+    return ui.programZeroStepMessage
+  }
+
+  if (mentionedBallTypes.length === 1) {
+    return formatText(ui.programZeroStepWrongBallMessage, {
+      ball: getBallTypeConstant(nextBall),
+      handled: getBallTypeConstant(mentionedBallTypes[0]),
+    })
+  }
+
+  return formatText(ui.programZeroStepUnhandledBallMessage, {
+    ball: getBallTypeConstant(nextBall),
+  })
+}
+
+function buildBallReferenceValues(ui: UiText): ReferenceValueItem[] {
+  return [
+    {
+      id: 'center_ball',
+      label: 'center_ball',
+      description: ui.referenceNormalBallDescription,
+    },
+    {
+      id: 'portal_ball',
+      label: 'portal_ball',
+      description: ui.referenceLuckyBallDescription,
+    },
+    {
+      id: 'negative_ball',
+      label: 'negative_ball',
+      description: ui.referenceEvilBallDescription,
+    },
+  ]
 }
 
 function buildNextStepModel(
   gameState: GameState,
   topics: TopicDefinition[],
+  tasks: GameTask[],
   ui: UiText,
 ): NextStepModel {
   const currentTopic = getCurrentTopic(gameState, topics)
+  const currentGoal = getCurrentPracticeGoal(gameState, topics)
+  const unlockPrimerCards = currentTopic?.unlockPrimerCards ?? []
+  const onboardingTaskTotal = tasks.filter((task) => task.kind === 'onboarding').length
+  const solvedOnboardingCount = tasks.filter(
+    (task) => task.kind === 'onboarding' && gameState.solvedTaskIds.includes(task.id),
+  ).length
   const progressText =
     currentTopic !== null && gameState.topicMeterGoal > 0
       ? formatText(ui.nextStepProgressValue, {
@@ -242,11 +357,28 @@ function buildNextStepModel(
     case 'onboarding':
       return {
         title: ui.nextStepOnboardingTitle,
-        body: ui.nextStepOnboardingBody,
+        body:
+          gameState.activeTaskId === null
+            ? ui.nextStepOnboardingBody
+            : solvedOnboardingCount === 0
+              ? ui.nextStepOnboardingAfterRunBody
+              : ui.nextStepOnboardingTaskBody,
         stageLabel: ui.nextStepStageOnboarding,
-        progressText: null,
-        progressValue: null,
+        progressText:
+          onboardingTaskTotal > 0 && gameState.activeTaskId !== null
+            ? formatText(ui.nextStepProgressValue, {
+                current: String(solvedOnboardingCount),
+                total: String(onboardingTaskTotal),
+              })
+            : null,
+        progressValue:
+          onboardingTaskTotal > 0 && gameState.activeTaskId !== null
+            ? solvedOnboardingCount / onboardingTaskTotal
+            : null,
+        hintText: null,
         actionLabel: null,
+        actionKind: null,
+        primerCards: [],
       }
     case 'checkpoint_ready':
       return {
@@ -257,7 +389,10 @@ function buildNextStepModel(
         stageLabel: ui.nextStepStageCheckpointReady,
         progressText,
         progressValue: 1,
+        hintText: null,
         actionLabel: ui.currentGoalStartCheckpointButton,
+        actionKind: 'checkpoint',
+        primerCards: [],
       }
     case 'checkpoint_active':
       return {
@@ -268,75 +403,79 @@ function buildNextStepModel(
         stageLabel: ui.nextStepStageCheckpointActive,
         progressText,
         progressValue: 1,
+        hintText: null,
         actionLabel: null,
+        actionKind: null,
+        primerCards: [],
       }
     case 'completed':
       return {
         title: ui.nextStepCompletedTitle,
-        body: ui.nextStepCompletedBody,
+        body: ui.nextStepCompleteBody,
         stageLabel: ui.nextStepStageCompleted,
         progressText: null,
         progressValue: null,
+        hintText: null,
         actionLabel: null,
+        actionKind: null,
+        primerCards: [],
       }
     case 'new_unlock_spotlight':
       return {
         title: currentTopic?.title ?? ui.nextStepLearningTitle,
-        body: currentTopic?.nextActionText ?? ui.nextStepOnboardingBody,
+        body: currentTopic?.unlockSpotlightText ?? ui.nextStepUnlockBody,
         stageLabel: ui.nextStepStageUnlocked,
         progressText,
         progressValue,
-        actionLabel: null,
+        hintText: null,
+        actionLabel: ui.currentGoalDismissSpotlightButton,
+        actionKind: 'dismiss_unlock',
+        primerCards: unlockPrimerCards,
       }
     case 'topic_active':
     default:
       return {
-        title: currentTopic?.title ?? ui.nextStepLearningTitle,
-        body: currentTopic?.nextActionText ?? ui.nextStepOnboardingBody,
+        title: currentGoal?.title ?? currentTopic?.title ?? ui.nextStepLearningTitle,
+        body: currentGoal?.instruction ?? ui.nextStepOnboardingBody,
         stageLabel: ui.nextStepStageLearning,
         progressText,
         progressValue,
+        hintText: currentGoal?.boardHint ?? null,
         actionLabel: null,
+        actionKind: null,
+        primerCards: currentGoal?.primerCards ?? [],
       }
   }
 }
 
 function buildHelpCatalog(
   ui: UiText,
-  topics: TopicDefinition[],
 ): Record<HelpEntryId, HelpEntry> {
-  const topicById = new Map(topics.map((topic) => [topic.id, topic]))
-
   return {
     welcome: {
       id: 'welcome',
       title: ui.guideWelcomeTitle,
       body: ui.guideWelcomeBody,
-      snippet: 'drop_ball()',
     },
     'unlock-variables': {
       id: 'unlock-variables',
       title: ui.guideVariablesUnlockTitle,
       body: ui.guideVariablesUnlockBody,
-      snippet: topicById.get('variables')?.suggestedSnippet,
     },
     'unlock-conditions': {
       id: 'unlock-conditions',
       title: ui.guideConditionsUnlockTitle,
       body: ui.guideConditionsUnlockBody,
-      snippet: topicById.get('conditions')?.suggestedSnippet,
     },
     'unlock-functions': {
       id: 'unlock-functions',
       title: ui.guideFunctionsUnlockTitle,
       body: ui.guideFunctionsUnlockBody,
-      snippet: topicById.get('functions')?.suggestedSnippet,
     },
     'unlock-loops': {
       id: 'unlock-loops',
       title: ui.guideLoopsUnlockTitle,
       body: ui.guideLoopsUnlockBody,
-      snippet: topicById.get('loops')?.suggestedSnippet,
     },
   }
 }
@@ -345,18 +484,26 @@ function buildReferenceValues(
   gameState: GameState,
   ui: UiText,
 ): ReferenceValueItem[] {
+  const portalActive = isBluePortalActive(gameState)
+
   return [
     {
       id: 'lane_numbers',
       label: ui.referenceLaneNumbersLabel,
       description: ui.referenceLaneNumbersDescription,
     },
-    ...(gameState.learnedTopicIds.includes('variables')
+    ...(portalActive
       ? [
+          {
+            id: 'blue_portal',
+            label: ui.boardActivePortalLabel,
+            description: ui.topicGuideBluePortalDescription,
+          },
           {
             id: 'portal_side',
             label: 'portal_side',
             description: ui.referencePortalSideDescription,
+            example: `portal_side = ${String(gameState.moduleStates.board.portalSide)}`,
           },
         ]
       : []),
@@ -366,38 +513,29 @@ function buildReferenceValues(
             id: 'next_ball',
             label: 'next_ball',
             description: ui.referenceNextBallDescription,
+            example: `next_ball = ${getBallTypeConstant(
+              gameState.ballQueue[gameState.ballQueueCursor] ?? 'plain',
+            )}`,
           },
-          {
-            id: 'normal_ball',
-            label: 'normal_ball',
-            description: ui.referenceNormalBallDescription,
-          },
-          {
-            id: 'lucky_ball',
-            label: 'lucky_ball',
-            description: ui.referenceLuckyBallDescription,
-          },
-          {
-            id: 'evil_ball',
-            label: 'evil_ball',
-            description: ui.referenceEvilBallDescription,
-          },
+          ...buildBallReferenceValues(ui),
         ]
       : []),
   ]
 }
 
-function buildReferenceExamples(
+function buildReferencePatterns(
   gameState: GameState,
   ui: UiText,
 ): ReferenceExampleItem[] {
+  const portalActive = isBluePortalActive(gameState)
+
   return [
-    ...(gameState.learnedTopicIds.includes('variables')
+    ...(portalActive
       ? [
           {
             id: 'variables-example',
             label: ui.referenceExampleVariablesLabel,
-            code: 'target = portal_side\nchoose_chute(target)\ndrop_ball()',
+            code: 'target = portal_side',
           },
         ]
       : []),
@@ -406,8 +544,7 @@ function buildReferenceExamples(
           {
             id: 'conditions-example',
             label: ui.referenceExampleConditionsLabel,
-            code:
-              'if next_ball == evil_ball:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()',
+            code: 'if next_ball == negative_ball:\n    skip_ball()',
           },
         ]
       : []),
@@ -416,7 +553,7 @@ function buildReferenceExamples(
           {
             id: 'functions-example',
             label: ui.referenceExampleFunctionsLabel,
-            code: 'follow_portal()',
+            code: 'def follow_portal():\n    ...',
           },
         ]
       : []),
@@ -425,8 +562,7 @@ function buildReferenceExamples(
           {
             id: 'loops-example',
             label: ui.referenceExampleLoopsLabel,
-            code:
-              'for ball in range(3):\n    if next_ball == evil_ball:\n        skip_ball()\n        continue\n    follow_portal()',
+            code: 'for i in range(3):\n    ...',
           },
         ]
       : []),
@@ -434,18 +570,31 @@ function buildReferenceExamples(
 }
 
 function App() {
-  const [locale, setLocale] = useState<Locale>(() => getInitialLocale())
-  const [gameState, setGameState] = useState(() => createInitialGameState())
+  const initialLocale = getInitialLocale()
+  const [locale, setLocale] = useState<Locale>(() => initialLocale)
+  const [gameState, setGameState] = useState(() =>
+    loadPersistedGameState(
+      getLocaleContent(initialLocale).topics,
+      getLocaleContent(initialLocale).tasks,
+    ),
+  )
   const [animationNow, setAnimationNow] = useState(() => Date.now())
   const [selectedHelpEntryId, setSelectedHelpEntryId] =
     useState<HelpEntryId | null>(null)
   const [isHelpManuallyOpen, setIsHelpManuallyOpen] = useState(false)
-  const [dismissedAutoHelpIds, setDismissedAutoHelpIds] = useState<HelpEntryId[]>(
-    [],
-  )
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement | null>(null)
+  const previousAudioSnapshotRef = useRef<{
+    activeBallIds: number[]
+    portalSplitCount: number
+    score: number
+    supportUpgradeCount: number
+  } | null>(null)
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const { play: playSound, unlock: unlockAudio } = useGameAudio(gameState.soundEnabled)
 
   const { ui, tasks, shopNodes, topics } = getLocaleContent(locale)
-  const helpCatalog = buildHelpCatalog(ui, topics)
+  const helpCatalog = buildHelpCatalog(ui)
   const helpEntryIds: HelpEntryId[] = [
     'welcome',
     ...(gameState.learnedTopicIds.includes('variables')
@@ -461,31 +610,21 @@ function App() {
       ? (['unlock-loops'] as const)
       : []),
   ]
-  const forcedHelpEntryId: HelpEntryId | null =
-    gameState.topicStage === 'onboarding'
-      ? 'welcome'
-      : gameState.currentTopicId !== null &&
-          gameState.topicStage === 'new_unlock_spotlight'
-        ? getUnlockHelpEntryId(gameState.currentTopicId)
-        : null
-  const showForcedHelp =
-    forcedHelpEntryId !== null &&
-    !dismissedAutoHelpIds.includes(forcedHelpEntryId)
   const activeHelpEntryId =
-    showForcedHelp
-      ? forcedHelpEntryId
-      : selectedHelpEntryId ?? helpEntryIds[helpEntryIds.length - 1] ?? null
+    selectedHelpEntryId ?? helpEntryIds[helpEntryIds.length - 1] ?? null
   const helpEntries = helpEntryIds
     .map((entryId) => helpCatalog[entryId])
     .filter((entry): entry is HelpEntry => entry !== undefined)
-  const isHelpOpen = isHelpManuallyOpen || showForcedHelp
+  const isHelpOpen = isHelpManuallyOpen
   const activeTask =
     gameState.activeTaskId === null
       ? null
       : tasks.find((task) => task.id === gameState.activeTaskId) ?? null
   const shopIsAvailable = canOpenShop(gameState)
+  const supportEffects = getSupportUpgradeEffects(gameState.supportUpgradeIds)
   const functionsUnlocked =
     gameState.unlocks.unlockedConstructs.includes('functions')
+  const isSpotlight = gameState.topicStage === 'new_unlock_spotlight'
   const validationMessage = getProgramValidationMessage(
     gameState.programValidation,
     ui,
@@ -505,43 +644,64 @@ function App() {
   const isProgramReady =
     gameState.programValidation.isValid &&
     (!functionsUnlocked || gameState.helperProgramValidation.isValid)
-  const editorHelperText = gameState.unlocks.editorEditable
-    ? ui.editorUnlockedDescription
-    : ui.editorLockedDescription
-  const editorFeedbackMessage = validationMessage
-    ? validationMessage
+  const editorHelperText = !gameState.unlocks.editorEditable
+    ? ui.editorLockedDescription
+    : isSpotlight
+      ? ui.editorSpotlightDescription
+      : ui.editorUnlockedDescription
+  const helperHelperText = isSpotlight
+    ? ui.helperEditorSpotlightDescription
+    : ui.helperEditorUnlockedDescription
+  const editorFeedbackMessage = isSpotlight
+    ? null
+    : validationMessage
+      ? validationMessage
+    : gameState.goalChangeNoticeTarget === 'main'
+      ? ui.goalEditRequiredMainMessage
     : gameState.programValidation.executionStepCount === 0
-      ? ui.programZeroStepMessage
+      ? getZeroStepFeedbackMessage(gameState, ui)
       : formatText(ui.programReadyMessage, {
           count: String(gameState.programValidation.executionStepCount),
         })
-  const helperFeedbackMessage = helperValidationMessage
-    ? helperValidationMessage
+  const helperFeedbackMessage = isSpotlight
+    ? null
+    : helperValidationMessage
+      ? helperValidationMessage
+    : gameState.goalChangeNoticeTarget === 'helper'
+      ? ui.goalEditRequiredHelperMessage
     : functionsUnlocked
       ? ui.helperProgramReadyMessage
       : null
   const editorFeedbackTone = validationMessage
     ? 'error'
+    : gameState.goalChangeNoticeTarget === 'main'
+      ? 'warning'
     : gameState.programValidation.executionStepCount === 0
       ? 'warning'
       : 'success'
-  const helperFeedbackTone = helperValidationMessage ? 'error' : 'success'
+  const helperFeedbackTone =
+    helperValidationMessage
+      ? 'error'
+      : gameState.goalChangeNoticeTarget === 'helper'
+        ? 'warning'
+        : 'success'
   const availableFunctions = [
     'drop_ball()',
-    ...(gameState.unlocks.allowedCommands.includes('choose_chute')
-      ? ['choose_chute(2)']
+    ...(gameState.unlocks.allowedCommands.includes('choose_input')
+      ? ['choose_input(2)']
       : []),
     ...(gameState.unlocks.allowedCommands.includes('skip_ball')
       ? ['skip_ball()']
       : []),
     ...(functionsUnlocked ? ['follow_portal()'] : []),
   ]
+  const portalActive = isBluePortalActive(gameState)
   const availableStructures = [
-    ...(gameState.unlocks.unlockedConstructs.includes('variables')
+    ...(gameState.unlocks.unlockedConstructs.includes('variables') && portalActive
       ? ['target = portal_side']
       : []),
     ...(gameState.unlocks.unlockedConstructs.includes('if')
-      ? ['if next_ball == evil_ball:']
+      ? ['if next_ball == negative_ball:']
       : []),
     ...(functionsUnlocked ? ['def follow_portal():'] : []),
     ...(gameState.unlocks.unlockedConstructs.includes('for')
@@ -549,15 +709,20 @@ function App() {
       : []),
   ]
   const referenceValues = buildReferenceValues(gameState, ui)
-  const referenceExamples = buildReferenceExamples(gameState, ui)
-  const nextStep = buildNextStepModel(gameState, topics, ui)
-  const previewCount = gameState.supportUpgradeIds.includes('queue_peek') ? 3 : 1
+  const referencePatterns = buildReferencePatterns(gameState, ui)
+  const nextStep = buildNextStepModel(gameState, topics, tasks, ui)
+  const previewCount = Math.max(
+    supportEffects.previewCount,
+    gameState.activeScenario?.visiblePreviewCount ?? 0,
+  )
   const upcomingBallPreview = gameState.learnedTopicIds.includes('conditions')
-    ? gameState.ballQueue.slice(
-        gameState.ballQueueCursor,
-        gameState.ballQueueCursor + previewCount,
-      )
-    : []
+      ? gameState.ballQueue.slice(
+          gameState.ballQueueCursor,
+          gameState.ballQueueCursor + previewCount,
+        )
+      : []
+  const previewMeaning = getPreviewMeaning(upcomingBallPreview, ui)
+  const showQueuePreview = true
   const checkpointTasks = tasks.filter(
     (task) =>
       activeTask !== null &&
@@ -565,7 +730,11 @@ function App() {
       task.topicId === activeTask.topicId,
   )
   const currentTaskIndex =
-    activeTask === null ? null : gameState.checkpointIndex + 1
+    activeTask === null
+      ? null
+      : activeTask.kind === 'onboarding'
+        ? activeTask.taskOrder
+        : gameState.checkpointIndex + 1
   const currentTaskTotal =
     activeTask === null
       ? null
@@ -583,6 +752,68 @@ function App() {
   }, [locale])
 
   useEffect(() => {
+    savePersistedGameState(gameState)
+  }, [gameState])
+
+  useEffect(() => {
+    if (
+      supportEffects.ambientDropIntervalMs === null ||
+      gameState.currentView !== 'play' ||
+      gameState.topicStage !== 'completed' ||
+      gameState.activeTaskId !== null ||
+      gameState.isRunning ||
+      gameState.activeBalls.length > 0 ||
+      !gameState.introDismissed
+    ) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      setGameState((currentState) => spawnAmbientPlainBall(currentState))
+    }, supportEffects.ambientDropIntervalMs)
+
+    return () => window.clearInterval(intervalId)
+  }, [
+    gameState.activeBalls.length,
+    gameState.activeTaskId,
+    gameState.currentView,
+    gameState.introDismissed,
+    gameState.isRunning,
+    gameState.topicStage,
+    supportEffects.ambientDropIntervalMs,
+  ])
+
+  useEffect(() => {
+    if (!isSettingsOpen) {
+      return
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        settingsRef.current !== null &&
+        event.target instanceof Node &&
+        !settingsRef.current.contains(event.target)
+      ) {
+        setIsSettingsOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSettingsOpen(false)
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isSettingsOpen])
+
+  useEffect(() => {
     if (!gameState.isRunning && gameState.activeBalls.length === 0) {
       return
     }
@@ -597,7 +828,7 @@ function App() {
   }, [gameState.isRunning, gameState.activeBalls.length, tasks, topics])
 
   useEffect(() => {
-    if (gameState.activeBalls.length === 0) {
+    if (gameState.activeBalls.length === 0 || prefersReducedMotion) {
       return
     }
 
@@ -606,9 +837,97 @@ function App() {
     }, 16)
 
     return () => window.clearInterval(intervalId)
-  }, [gameState.activeBalls.length])
+  }, [gameState.activeBalls.length, prefersReducedMotion])
+
+  useEffect(() => {
+    const snapshot = {
+      activeBallIds: gameState.activeBalls.map((ball) => ball.id),
+      portalSplitCount: gameState.currentRunStats?.portalSplitCount ?? 0,
+      score: gameState.score,
+      supportUpgradeCount: gameState.supportUpgradeIds.length,
+    }
+    const previousSnapshot = previousAudioSnapshotRef.current
+
+    if (previousSnapshot !== null) {
+      const previousBallIds = new Set(previousSnapshot.activeBallIds)
+      const hasNewLaunch = gameState.activeBalls.some(
+        (ball) =>
+          !previousBallIds.has(ball.id) &&
+          ball.spawnKind === 'direct' &&
+          ball.source !== 'ambient',
+      )
+      const boughtUpgrade =
+        snapshot.supportUpgradeCount > previousSnapshot.supportUpgradeCount
+      const gainedPoints =
+        snapshot.score > previousSnapshot.score && gameState.lastPoints > 0
+      const lostPoints =
+        snapshot.score < previousSnapshot.score && gameState.lastPoints < 0
+      const triggeredPortal =
+        snapshot.portalSplitCount > previousSnapshot.portalSplitCount
+
+      if (hasNewLaunch) {
+        playSound('launch')
+      }
+
+      if (triggeredPortal) {
+        playSound('portal')
+      }
+
+      if (boughtUpgrade) {
+        playSound('shop')
+      } else if (gainedPoints) {
+        playSound('score')
+      } else if (lostPoints) {
+        playSound('penalty')
+      }
+    }
+
+    previousAudioSnapshotRef.current = snapshot
+  }, [
+    playSound,
+    gameState.activeBalls,
+    gameState.currentRunStats?.portalSplitCount,
+    gameState.lastPoints,
+    gameState.score,
+    gameState.supportUpgradeIds.length,
+  ])
+
+  useEffect(() => {
+    if (
+      !gameState.autoRunUnlocked ||
+      !gameState.autoRunEnabled ||
+      gameState.currentView !== 'play' ||
+      gameState.isRunning ||
+      activeTask !== null ||
+      !isProgramReady ||
+      gameState.topicStage === 'new_unlock_spotlight' ||
+      gameState.topicStage === 'checkpoint_ready' ||
+      gameState.topicStage === 'checkpoint_active' ||
+      !gameState.introDismissed
+    ) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setGameState((currentState) => startProgramRun(currentState))
+    }, 1600)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [
+    activeTask,
+    gameState.autoRunEnabled,
+    gameState.autoRunUnlocked,
+    gameState.currentView,
+    gameState.introDismissed,
+    gameState.isRunning,
+    gameState.programSource,
+    gameState.helperProgramSource,
+    gameState.topicStage,
+    isProgramReady,
+  ])
 
   const handleRunProgram = () => {
+    unlockAudio()
     setGameState((currentState) => startProgramRun(currentState))
   }
 
@@ -616,6 +935,11 @@ function App() {
     setGameState((currentState) =>
       applyTaskResult(currentState, task, wasCorrect, tasks, topics),
     )
+  }
+
+  const handleTaskEvaluated = (wasCorrect: boolean) => {
+    unlockAudio()
+    playSound(wasCorrect ? 'task_success' : 'task_failure')
   }
 
   const handleProgramChange = (value: string) => {
@@ -636,8 +960,23 @@ function App() {
     setGameState((currentState) => setCurrentView(currentState, view))
   }
 
+  const handleSetLocale = (nextLocale: Locale) => {
+    setLocale(nextLocale)
+  }
+
+  const handleToggleSettings = () => {
+    setIsSettingsOpen((current) => !current)
+  }
+
   const handlePurchaseNode = (nodeId: SupportUpgradeId) => {
+    unlockAudio()
     setGameState((currentState) => purchaseShopNode(currentState, nodeId))
+  }
+
+  const handleToggleAutoRun = () => {
+    setGameState((currentState) =>
+      setAutoRunEnabled(currentState, !currentState.autoRunEnabled),
+    )
   }
 
   const handleStartCheckpoint = () => {
@@ -645,22 +984,6 @@ function App() {
   }
 
   const handleCloseHelp = () => {
-    if (forcedHelpEntryId !== null) {
-      setDismissedAutoHelpIds((currentIds) =>
-        currentIds.includes(forcedHelpEntryId)
-          ? currentIds
-          : [...currentIds, forcedHelpEntryId],
-      )
-    }
-
-    if (
-      forcedHelpEntryId !== null &&
-      gameState.currentTopicId !== null &&
-      gameState.topicStage === 'new_unlock_spotlight'
-    ) {
-      setGameState((currentState) => dismissUnlockSpotlight(currentState))
-    }
-
     setIsHelpManuallyOpen(false)
   }
 
@@ -678,11 +1001,75 @@ function App() {
     setSelectedHelpEntryId(entryId as HelpEntryId)
   }
 
+  const handleDismissIntro = () => {
+    setGameState((currentState) => ({
+      ...currentState,
+      introDismissed: true,
+    }))
+  }
+
+  const handleDismissSpotlight = () => {
+    setGameState((currentState) => dismissUnlockSpotlight(currentState))
+  }
+
+  const handleToggleSound = () => {
+    if (!gameState.soundEnabled) {
+      unlockAudio()
+    }
+
+    setGameState((currentState) =>
+      setSoundEnabled(currentState, !currentState.soundEnabled),
+    )
+  }
+
+  const handleResetProgress = () => {
+    if (gameState.isRunning || !window.confirm(ui.settingsResetProgressConfirm)) {
+      return
+    }
+
+    setGameState((currentState) => resetProgress(currentState))
+    setIsHelpManuallyOpen(false)
+    setSelectedHelpEntryId(null)
+    setIsSettingsOpen(false)
+  }
+
+  const handleValidateWriteAnswer = (task: GameTask, answer: string) => {
+    const result = validateWriteTaskAnswer(task, answer)
+    const validationDetail =
+      result.validation !== null
+        ? (getProgramValidationMessage(result.validation, ui) ?? ui.taskValidationNeedsRun)
+        : undefined
+    const feedbackDetail =
+      result.feedback !== undefined
+        ? formatText(ui[result.feedback.key], result.feedback.values ?? {})
+        : undefined
+    const detail = feedbackDetail ?? validationDetail
+
+    return {
+      ...result,
+      feedbackMessage:
+        detail === undefined
+          ? undefined
+          : result.failedCaseTitle !== undefined
+            ? formatText(ui.taskValidationCaseFailure, {
+                case: result.failedCaseTitle,
+                detail,
+              })
+            : detail,
+    }
+  }
+
+  const nextStepAction =
+    nextStep.actionKind === 'checkpoint'
+      ? handleStartCheckpoint
+      : nextStep.actionKind === 'dismiss_unlock'
+        ? handleDismissSpotlight
+        : null
+
   return (
     <main className="app-shell">
       <section className="app-topbar">
         <div className="topbar-left">
-          <p className="eyebrow">{ui.eyebrow}</p>
           <nav className="view-tabs" aria-label="Primary">
             <button
               className={`view-tab${gameState.currentView === 'play' ? ' active' : ''}`}
@@ -701,44 +1088,131 @@ function App() {
               {ui.shopTabLabel}
             </button>
           </nav>
-          <div className="points-chip" aria-label={ui.pointsChipLabel}>
+          <div
+            className={`points-chip${
+              gameState.topicStage !== 'completed' ? ' points-chip-secondary' : ''
+            }`}
+            aria-label={ui.pointsChipLabel}
+          >
             <span className="points-chip-icon" aria-hidden="true" />
             <span>{ui.pointsChipLabel}</span>
             <strong>{gameState.score}</strong>
           </div>
         </div>
 
-        <div className="language-switcher" aria-label={ui.languageLabel}>
-          <span className="language-label">{ui.languageLabel}</span>
+        <div className="topbar-right" ref={settingsRef}>
           <button
-            className={`language-button${locale === 'et' ? ' active' : ''}`}
-            onClick={() => setLocale('et')}
+            className={`settings-button${isSettingsOpen ? ' active' : ''}`}
+            onClick={handleToggleSettings}
             type="button"
-            aria-pressed={locale === 'et'}
+            aria-expanded={isSettingsOpen}
+            aria-haspopup="dialog"
           >
-            {ui.estonianLabel}
+            {ui.settingsButtonLabel}
           </button>
-          <button
-            className={`language-button${locale === 'en' ? ' active' : ''}`}
-            onClick={() => setLocale('en')}
-            type="button"
-            aria-pressed={locale === 'en'}
-          >
-            {ui.englishLabel}
-          </button>
+
+          {isSettingsOpen ? (
+            <section className="settings-panel" aria-label={ui.settingsTitle}>
+              <div className="settings-header">
+                <div>
+                  <p className="panel-kicker">{ui.settingsTitle}</p>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <span className="settings-section-label">{ui.settingsLanguageLabel}</span>
+                <div className="language-switcher" aria-label={ui.settingsLanguageLabel}>
+                  <button
+                    className={`language-button${locale === 'et' ? ' active' : ''}`}
+                    onClick={() => handleSetLocale('et')}
+                    type="button"
+                    aria-pressed={locale === 'et'}
+                  >
+                    {ui.estonianLabel}
+                  </button>
+                  <button
+                    className={`language-button${locale === 'en' ? ' active' : ''}`}
+                    onClick={() => handleSetLocale('en')}
+                    type="button"
+                    aria-pressed={locale === 'en'}
+                  >
+                    {ui.englishLabel}
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <span className="settings-section-label">{ui.settingsSoundLabel}</span>
+                  <button
+                    className={`settings-toggle${gameState.soundEnabled ? ' active' : ''}`}
+                    onClick={handleToggleSound}
+                    type="button"
+                    aria-pressed={gameState.soundEnabled}
+                  >
+                    <span>{ui.settingsSoundLabel}</span>
+                    <strong>
+                      {gameState.soundEnabled
+                        ? ui.settingsSoundOn
+                        : ui.settingsSoundOff}
+                    </strong>
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <span className="settings-section-label">{ui.settingsProgressLabel}</span>
+                  <button
+                    className="ghost-button settings-reset"
+                    onClick={handleResetProgress}
+                    type="button"
+                    disabled={gameState.isRunning}
+                  >
+                    {ui.settingsResetProgressButton}
+                  </button>
+                </div>
+              </div>
+            </section>
+          ) : null}
         </div>
       </section>
 
       {gameState.currentView === 'play' ? (
-        <section className="play-panel">
-          <div className="editor-column">
+        <section className="play-layout">
+          <NextStepCard
+            key={`${nextStep.stageLabel}-${nextStep.title}-${nextStep.body}`}
+            ui={ui}
+            title={nextStep.title}
+            body={nextStep.body}
+            stageLabel={nextStep.stageLabel}
+            progressText={nextStep.progressText}
+            progressValue={nextStep.progressValue}
+            hintText={nextStep.hintText}
+            primerCards={nextStep.primerCards}
+            actionLabel={nextStep.actionLabel}
+            onAction={nextStepAction}
+          />
+
+          <div className="workspace-grid">
+            <div className="editor-column">
             <ProgramEditor
               code={gameState.programSource}
               title={ui.editorTitle}
               variant="main"
               ui={ui}
-              isEditable={gameState.unlocks.editorEditable && !gameState.isRunning}
-              isUnlocked={gameState.unlocks.editorEditable}
+              status={
+                !gameState.unlocks.editorEditable
+                  ? 'locked'
+                  : isSpotlight
+                    ? 'read-only'
+                    : 'editable'
+              }
+              isEditable={
+                gameState.unlocks.editorEditable &&
+                !gameState.isRunning &&
+                !isSpotlight
+              }
               isHighlighted={false}
               activeLineNumber={gameState.activeLineNumber}
               lineUsageText={lineUsageText}
@@ -754,78 +1228,85 @@ function App() {
                 title={ui.helperEditorTitle}
                 variant="helper"
                 ui={ui}
-                isEditable={!gameState.isRunning}
-                isUnlocked
+                status={isSpotlight ? 'read-only' : 'editable'}
+                isEditable={!gameState.isRunning && !isSpotlight}
                 isHighlighted={false}
                 activeLineNumber={null}
                 lineUsageText={helperUsageText}
-                helperText={ui.helperEditorUnlockedDescription}
+                helperText={helperHelperText}
                 feedbackMessage={helperFeedbackMessage}
                 feedbackTone={helperFeedbackTone}
                 onChange={handleHelperProgramChange}
               />
             ) : null}
+              <aside className="editor-toolbar">
+                <div className="editor-toolbar-main">
+                  <p className="panel-kicker">{ui.runPanelTitle}</p>
+                  {gameState.autoRunUnlocked ? (
+                    <button
+                      className={`auto-run-toggle${
+                        gameState.autoRunEnabled ? ' active' : ''
+                      }`}
+                      onClick={handleToggleAutoRun}
+                      type="button"
+                    >
+                      <span>{ui.autoRunLabel}</span>
+                      <strong>
+                        {gameState.autoRunEnabled ? ui.autoRunOn : ui.autoRunOff}
+                      </strong>
+                    </button>
+                  ) : null}
+                </div>
 
-            <AvailableSyntaxCard
-              ui={ui}
-              functions={availableFunctions}
-              structures={availableStructures}
-              referenceValues={referenceValues}
-              examples={referenceExamples}
-            />
-          </div>
+                <div className="editor-toolbar-actions">
+                  {isSpotlight ? (
+                    <p className="run-summary">{ui.runPanelSpotlightMessage}</p>
+                  ) : null}
+                  <button
+                    className="run-button compact"
+                    onClick={handleRunProgram}
+                    disabled={
+                      activeTask !== null ||
+                      gameState.isRunning ||
+                      !isProgramReady ||
+                      isSpotlight ||
+                      gameState.topicStage === 'checkpoint_ready'
+                    }
+                    type="button"
+                  >
+                    {gameState.isRunning ? ui.runButtonRunning : ui.runButton}
+                  </button>
+                </div>
+              </aside>
+            </div>
 
-          <div className="utility-column">
-            <NextStepCard
-              ui={ui}
-              title={nextStep.title}
-              body={nextStep.body}
-              stageLabel={nextStep.stageLabel}
-              progressText={nextStep.progressText}
-              progressValue={nextStep.progressValue}
-              actionLabel={nextStep.actionLabel}
-              onAction={
-                nextStep.actionLabel === null ? null : handleStartCheckpoint
-              }
-            />
-
-            <aside className="controls">
-              <p className="panel-kicker">{ui.runPanelTitle}</p>
-              <button
-                className="run-button"
-                onClick={handleRunProgram}
-                disabled={
-                  activeTask !== null ||
-                  gameState.isRunning ||
-                  !isProgramReady ||
-                  gameState.topicStage === 'checkpoint_ready'
+            <div className="board-column">
+              <PachinkoBoard
+                ui={ui}
+                activeBalls={gameState.activeBalls}
+                portalSide={gameState.moduleStates.board.portalSide}
+                portalActive={portalActive}
+                learnedTopicIds={gameState.learnedTopicIds}
+                upcomingBalls={upcomingBallPreview}
+                previewMeaning={previewMeaning}
+                showQueuePreview={showQueuePreview}
+                portalChildCount={
+                  (upcomingBallPreview[0] === 'portal' ? 4 : 2) +
+                  supportEffects.extraPortalChildren
                 }
-                type="button"
-              >
-                {gameState.isRunning ? ui.runButtonRunning : ui.runButton}
-              </button>
-            </aside>
-
-            <PachinkoBoard
-              ui={ui}
-              activeBalls={gameState.activeBalls}
-              portalSide={gameState.moduleStates.board.portalSide}
-              learnedTopicIds={gameState.learnedTopicIds}
-              upcomingBalls={upcomingBallPreview}
-              portalChildCount={
-                gameState.supportUpgradeIds.includes('portal_overcharge') ? 3 : 2
-              }
-              now={animationNow}
-            />
-
-            <ActivityFeed
-              entries={gameState.feedEntries}
-              tasks={tasks}
-              shopNodes={shopNodes}
-              topics={topics}
-              ui={ui}
-            />
+                now={animationNow}
+                reducedMotion={prefersReducedMotion}
+              />
+            </div>
           </div>
+
+          <AvailableSyntaxCard
+            ui={ui}
+            functions={availableFunctions}
+            structures={availableStructures}
+            referenceValues={referenceValues}
+            patterns={referencePatterns}
+          />
         </section>
       ) : (
         <ShopTree
@@ -836,12 +1317,23 @@ function App() {
         />
       )}
 
+      <IntroModal
+        ui={ui}
+        isOpen={!gameState.introDismissed}
+        onStart={handleDismissIntro}
+      />
+
       <TaskModal
         key={activeTask?.id ?? 'no-task'}
         task={activeTask}
         ui={ui}
         progressText={taskProgressText}
         onResolved={handleTaskResolved}
+        onEvaluated={handleTaskEvaluated}
+        validateWriteAnswer={handleValidateWriteAnswer}
+        getValidationMessage={(validation) =>
+          getProgramValidationMessage(validation, ui)
+        }
       />
 
       <HelpCenter

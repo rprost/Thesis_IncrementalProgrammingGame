@@ -10,8 +10,8 @@ type ProgramEditorProps = {
   ui: UiText
   title: string
   variant?: 'main' | 'helper'
+  status: 'locked' | 'editable' | 'read-only'
   isEditable: boolean
-  isUnlocked: boolean
   isHighlighted: boolean
   activeLineNumber: number | null
   lineUsageText: string
@@ -77,8 +77,8 @@ export function ProgramEditor({
   ui,
   title,
   variant = 'main',
+  status,
   isEditable,
-  isUnlocked,
   isHighlighted,
   activeLineNumber,
   lineUsageText,
@@ -91,12 +91,16 @@ export function ProgramEditor({
     code,
     activeLineNumber,
   )
+  const statusLabel =
+    status === 'editable'
+      ? ui.editorUnlockedTitle
+      : status === 'read-only'
+        ? ui.editorReadOnlyTitle
+        : ui.editorLockedTitle
 
   return (
     <section
-      className={`editor-shell ${variant}-editor${
-        isHighlighted ? ' tutorial-target' : ''
-      }`}
+      className={`editor-shell ${variant}-editor${isHighlighted ? ' tutorial-target' : ''}`}
       aria-label={title}
     >
       <div className="terminal-bar">
@@ -112,37 +116,45 @@ export function ProgramEditor({
         <div className="editor-badges">
           <span className="editor-line-badge">{lineUsageText}</span>
           <span
-            className={`editor-lock-badge${isUnlocked ? ' unlocked' : ''}`}
+            className={`editor-lock-badge${
+              status === 'editable'
+                ? ' unlocked'
+                : status === 'read-only'
+                  ? ' readonly'
+                  : ''
+            }`}
           >
-            {isUnlocked ? ui.editorUnlockedTitle : ui.editorLockedTitle}
+            {statusLabel}
           </span>
         </div>
       </div>
-      <CodeMirror
-        value={code}
-        editable={isEditable}
-        onChange={onChange}
-        basicSetup={{
-          foldGutter: false,
-          dropCursor: false,
-          allowMultipleSelections: false,
-          indentOnInput: false,
-          lineNumbers: true,
-          highlightActiveLine: isEditable,
-          highlightActiveLineGutter: isEditable,
-        }}
-        extensions={[
-          ...(isEditable ? editableExtensions : readOnlyExtensions),
-          ...executionHighlightExtension,
-        ]}
-        theme={oneDark}
-        className="code-editor"
-      />
-      {feedbackMessage !== null ? (
-        <p className={`editor-feedback ${feedbackTone}`} aria-live="polite">
-          {feedbackMessage}
-        </p>
-      ) : null}
+      <>
+        <CodeMirror
+          value={code}
+          editable={isEditable}
+          onChange={onChange}
+          basicSetup={{
+            foldGutter: false,
+            dropCursor: false,
+            allowMultipleSelections: false,
+            indentOnInput: false,
+            lineNumbers: true,
+            highlightActiveLine: isEditable,
+            highlightActiveLineGutter: isEditable,
+          }}
+          extensions={[
+            ...(isEditable ? editableExtensions : readOnlyExtensions),
+            ...executionHighlightExtension,
+          ]}
+          theme={oneDark}
+          className="code-editor"
+        />
+        {feedbackMessage !== null ? (
+          <p className={`editor-feedback ${feedbackTone}`} aria-live="polite">
+            {feedbackMessage}
+          </p>
+        ) : null}
+      </>
     </section>
   )
 }

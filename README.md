@@ -10,7 +10,7 @@ The current prototype includes:
 - bilingual English/Estonian UI
 - mini-tasks that interrupt progress
 - a player program editor with safe, limited syntax
-- a shop/skill-tree view for future Python unlocks
+- a shop view with optional support upgrades
 
 ## Local development
 

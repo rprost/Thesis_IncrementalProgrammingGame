@@ -53,7 +53,9 @@ function getEntryMessage(
     case 'checkpoint_ready':
       return formatText(ui.feedCheckpointReady, { topic: topicTitle })
     case 'task_solved':
-      return formatText(ui.feedTaskSolved, { task: taskTitle })
+      return tasks.find((task) => task.id === entry.taskId)?.kind === 'onboarding'
+        ? formatText(ui.onboardingTaskSolvedFeed, { task: taskTitle })
+        : formatText(ui.feedTaskSolved, { task: taskTitle })
     case 'topic_mastered':
       return formatText(ui.feedTopicMastered, { topic: topicTitle })
     case 'support_upgrade_bought':

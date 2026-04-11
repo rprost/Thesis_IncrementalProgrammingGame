@@ -1,66 +1,554 @@
 [
-  {
-    "id": "variables",
-    "courseOrderLabel": "1. Muutujad ja avaldised",
-    "title": "Muutujad ja avaldised",
-    "moduleName": "Portaali valik",
-    "meterGoal": 4,
-    "masteryTaskIds": ["variables-read", "variables-choose", "variables-repair"],
-    "visibleStateLabels": ["portal_side"],
-    "supportUpgradeIds": ["extra_line", "portal_overcharge"],
-    "goalText": "Kasuta chute'i valikut andmena, mida programm saab salvestada ja uuesti kasutada.",
-    "machineObjectiveText": "Loe aktiivset portaali poolt ja saada pall teadlikult sellesse portaali.",
-    "boardMeaningText": "portal_side ütleb, kumb küljeportaal on praegu aktiivne: 1 = vasak, 3 = parem.",
-    "nextActionText": "Loe portal_side, anna see käsule choose_chute(...), ja käivita portaali jagunemine. Iga õnnestunud jooks lisab ühe edenemissammu.",
-    "unlockSpotlightText": "Portaali juhtimine on avatud. Nüüd saad lugeda portal_side väärtust, salvestada selle muutujasse ja anda selle edasi käsule choose_chute(...).",
-    "suggestedSnippet": "target = portal_side\nchoose_chute(target)\ndrop_ball()"
-  },
-  {
-    "id": "conditions",
-    "courseOrderLabel": "2. Tingimuslaused",
-    "title": "Tingimuslaused",
-    "moduleName": "Pallide eelvaade",
-    "meterGoal": 4,
-    "masteryTaskIds": ["conditions-read", "conditions-choose", "conditions-repair"],
-    "visibleStateLabels": ["next_ball", "normal_ball", "lucky_ball", "evil_ball"],
-    "supportUpgradeIds": ["queue_peek", "lucky_bonus"],
-    "goalText": "Reageeri järgmisele pallile enne, kui see välja lastakse.",
-    "machineObjectiveText": "Kasuta if-lauseid, et jätta evil-ballid vahele ja hoida head pallid alles.",
-    "boardMeaningText": "next_ball näitab järgmist palli ette. Evil-ball tuleks vahele jätta. Lucky-ball annab lisapunkte.",
-    "nextActionText": "Kasuta tingimust if next_ball == evil_ball, et otsustada, millal skip_ball() käivitada. Jooks, mis jätab vähemalt ühe evil-balli vahele, lisab ühe edenemissammu.",
-    "unlockSpotlightText": "Pallide eelvaade on avatud. Nüüd saad lugeda next_ball väärtust, võrrelda seda pallitüübi konstantidega ja jätta halvad pallid enne starti vahele.",
-    "suggestedSnippet": "if next_ball == evil_ball:\n    skip_ball()\nelse:\n    choose_chute(portal_side)\n    drop_ball()"
-  },
-  {
-    "id": "functions",
-    "courseOrderLabel": "3. Funktsioonid",
-    "title": "Funktsioonid",
-    "moduleName": "Abilasud",
-    "meterGoal": 4,
-    "masteryTaskIds": ["functions-read", "functions-choose", "functions-repair"],
-    "visibleStateLabels": ["portal_side", "next_ball"],
-    "supportUpgradeIds": ["helper_line_capacity"],
-    "goalText": "Hoia üks taaskasutatav taktika funktsioonis ja kutsu seda välja siis, kui vaja.",
-    "machineObjectiveText": "Kasuta abifunktsiooni, et saata nähtavalt märgistatud abilaske.",
-    "boardMeaningText": "Abifunktsiooni väljakutsed loovad nüüd õrnalt märgistatud lasud, mis kasutavad siiski samu chute'e, portaale, pallityype ja kastiskoori.",
-    "nextActionText": "Kutsu oma abifunktsioon hea jooksu ajal välja. Kui abimärgistusega pall tekitab portaali jagunemise või maandub lucky-skoorina, lisab jooks ühe edenemissammu.",
-    "unlockSpotlightText": "Abilasud on avatud. Abifunktsioonid saadavad nüüd nähtavalt märgistatud pallid läbi samade chute'ide, portaalide, pallityüpide ja kastiskooride.",
-    "suggestedSnippet": "follow_portal()"
-  },
-  {
-    "id": "loops",
-    "courseOrderLabel": "4. Tsüklid",
-    "title": "Tsüklid",
-    "moduleName": "Korduvad lasud",
-    "meterGoal": 5,
-    "masteryTaskIds": ["loops-read", "loops-choose", "loops-repair"],
-    "visibleStateLabels": ["portal_side", "next_ball"],
-    "supportUpgradeIds": [],
-    "goalText": "Korda head taktikat teadlikult selle asemel, et sama asja käsitsi uuesti kirjutada.",
-    "machineObjectiveText": "Kasuta for-tsüklit lühikese mitme palli plaani jaoks.",
-    "boardMeaningText": "Tsüklid kordavad sama taktikat mitu korda ühes jooksus. continue võib pärast evil-balli vahelejätmist jätta vahele selle tsükli sammu ülejäänud read.",
-    "nextActionText": "Pane hea taktika kujule for ball in range(n):. Kasuta continue-rida pärast skip_ball(), kui tahad selle tsükli sammu kohe lõpetada. Jooks, mis laseb vähemalt 3 palli ja saab 2 positiivset tulemust, lisab ühe edenemissammu.",
-    "unlockSpotlightText": "Korduvad lasud on avatud. for-tsüklid võivad nüüd masinat ühes jooksus mitu korda toita ja continue võib ühe tsükli sammu lühendada.",
-    "suggestedSnippet": "for ball in range(3):\n    if next_ball == evil_ball:\n        skip_ball()\n        continue\n    follow_portal()"
-  }
+    {
+        "id":  "variables",
+        "courseOrderLabel":  "1. Muutujad ja avaldised",
+        "title":  "Muutujad ja avaldised",
+        "moduleName":  "Portaal",
+        "meterGoal":  3,
+        "masteryTaskIds":  [
+                               "variables-trace",
+                               "variables-repair",
+                               "variables-write"
+                           ],
+        "visibleStateLabels":  [
+                                   "portal_side"
+                               ],
+        "supportUpgradeIds":  [
+                                  "extra_line",
+                                  "extra_portal_split"
+                              ],
+        "boardSubtitle":  "Sihi algul kindlate sisenditega, siis kasuta sihtmärgina salvestatud väärtust.",
+        "unlockSpotlightText":  "Muutuja lubab sul väärtuse nime alla salvestada. Selles teemas sihid kõigepealt kindlate sisenditega ja siis kopeerid ühe laualt loetava väärtuse oma muutujasse, et seda `choose_input(...)` sees uuesti kasutada.",
+        "unlockPrimerCards":  [
+                                  {
+                                      "id":  "variables-what",
+                                      "title":  "Mis on muutuja",
+                                      "body":  "Muutuja on nimi, mille alla saad väärtuse salvestada ja seda hiljem uuesti kasutada.",
+                                      "syntax":  "target = 3"
+                                  },
+                                  {
+                                      "id":  "variables-store",
+                                      "title":  "Mida omistamine teeb",
+                                      "body":  "`target = 3` salvestab väärtuse 3 muutujasse `target`. Pärast seda tähendab `target` selles programmis sedasama väärtust.",
+                                      "syntax":  "target"
+                                  },
+                                  {
+                                      "id":  "variables-use",
+                                      "title":  "Mida siin teha",
+                                      "body":  "Algul sihid lihtsalt sisendi numbri järgi. Siis kasutad `choose_input(...)` sees oma muutujasse salvestatud väärtust.",
+                                      "syntax":  "choose_input(target)"
+                                  }
+                              ],
+        "practiceGoals":  [
+                              {
+                                  "id":  "variables-aim-left",
+                                  "title":  "Eesmärk 1: Lase sisendist 1",
+                                  "instruction":  "Lase üks pall sisendist 1.",
+                                  "boardHint":  "Kasuta `choose_input(1)` ja siis `drop_ball()`.",
+                                  "suggestedSnippet":  "choose_input(1)\ndrop_ball()",
+                                  "starterProgramSource":  "drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  1,
+                                                   "previewQueue":  [
+                                                                        "plain"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "expectedMainLaunchAims":  [
+                                                                                    1
+                                                                                ],
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "variables-aim-right",
+                                  "title":  "Eesmärk 2: Lase sisendist 3",
+                                  "instruction":  "Nüüd lase üks pall sisendist 3.",
+                                  "boardHint":  "Seekord on õige sisend 3.",
+                                  "suggestedSnippet":  "choose_input(3)\ndrop_ball()",
+                                  "starterProgramSource":  "choose_input(2)\ndrop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "plain"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "expectedMainLaunchAims":  [
+                                                                                    3
+                                                                                ],
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "variables-store-target",
+                                  "title":  "Eesmärk 3: Loe `portal_side`",
+                                  "instruction":  "Lauale ilmus portaal. Kopeeri `portal_side` kõigepealt oma muutujasse, kasuta seda muutujat `choose_input(...)` sees ja lase täpselt üks pall samale poole kui portaal.",
+                                  "boardHint":  "Laud näitab, kummal pool portaal on. Kopeeri see väärtus oma muutujasse ja kasuta seda siis `choose_input(...)` sees.",
+                                  "suggestedSnippet":  "target = portal_side\nchoose_input(target)\ndrop_ball()",
+                                  "starterProgramSource":  "choose_input(portal_side)\ndrop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "plain"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedVariables",
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "portal_side"
+                                                                             ],
+                                                     "expectedMainLaunchAims":  [
+                                                                                    3
+                                                                                ],
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main",
+                                  "primerCards":  [
+                                                      {
+                                                          "syntax":  "portal_side",
+                                                          "title":  "Mida laud sulle annab",
+                                                          "body":  "Laud näitab, kummal pool portaal on. Python loeb sama poole väärtusena `portal_side`.",
+                                                          "id":  "variables-board-gives"
+                                                      }
+                                                  ]
+                              }
+                          ]
+    },
+    {
+        "id":  "conditions",
+        "courseOrderLabel":  "2. Tingimuslaused",
+        "title":  "Tingimuslaused",
+        "moduleName":  "Palli eelvaade",
+        "meterGoal":  3,
+        "masteryTaskIds":  [
+                               "conditions-repair",
+                               "conditions-write",
+                               "conditions-review-variables"
+                           ],
+        "visibleStateLabels":  [
+                                   "next_ball",
+                                   "center_ball",
+                                   "portal_ball",
+                                   "negative_ball"
+                               ],
+        "supportUpgradeIds":  [
+                                  "queue_peek",
+                                  "center_bin_bonus"
+                              ],
+        "boardSubtitle":  "Loe enne väljalaset `next_ball` ja vali õige reaktsioon.",
+        "unlockSpotlightText":  "Laud näitab nüüd ette, mis pall järgmisena tuleb. Kasuta `if`-lauset, et `next_ball` väärtuse põhjal otsustada, mida teha, ja `skip_ball()`, kui palli ei tohi välja lasta.",
+        "unlockPrimerCards":  [
+                                  {
+                                      "id":  "conditions-what",
+                                      "title":  "Mida `if` teeb",
+                                      "body":  "`if`-lause laseb koodil eri olukordades eri moodi käituda.",
+                                      "syntax":  "if next_ball == negative_ball:"
+                                  },
+                                  {
+                                      "id":  "conditions-board",
+                                      "title":  "Mida laud näitab",
+                                      "body":  "Laud näitab enne väljalaset järgmist palli. Sama väärtus on koodis muutujas `next_ball`.",
+                                      "syntax":  "next_ball"
+                                  },
+                                  {
+                                      "id":  "conditions-use",
+                                      "title":  "Mida siin teha",
+                                      "body":  "Jäta `negative_ball` vahele, saada `portal_ball` portaali ja lase `center_ball` välja sisendist 2.",
+                                      "syntax":  "skip_ball()"
+                                  }
+                              ],
+        "practiceGoals":  [
+                              {
+                                  "id":  "conditions-skip-negative",
+                                  "title":  "Eesmärk 1: Jäta `negative_ball` vahele",
+                                  "instruction":  "Järgmine pall on `negative_ball`. Kirjuta kõige väiksem `if`-programm, mis jätab selle ühe palli vahele.",
+                                  "boardHint":  "Selles olukorras on ainult üks negatiivne pall. Kui jätad selle vahele, ei tohiks jooks midagi välja lasta.",
+                                  "suggestedSnippet":  "if next_ball == negative_ball:\n    skip_ball()",
+                                  "starterProgramSource":  "drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  1,
+                                                   "previewQueue":  [
+                                                                        "negative"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedIf"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "next_ball",
+                                                                                 "negative_ball"
+                                                                             ],
+                                                     "minSkippedNegativeBallCount":  1,
+                                                     "maxSkippedNegativeBallCount":  1,
+                                                     "maxMainLaunchCount":  0
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "conditions-send-portal",
+                                  "title":  "Eesmärk 2: Lase `portal_ball` välja",
+                                  "instruction":  "Hoia negatiivse palli vahelejätmise reegel alles ja saada `portal_ball` portaali.",
+                                  "boardHint":  "Negatiivse palli haru jätab palli endiselt vahele. Teine haru peab portaali sihtima ja palli välja laskma.",
+                                  "suggestedSnippet":  "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+                                  "starterProgramSource":  "if next_ball == negative_ball:\n    skip_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "portal"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedIf",
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "next_ball",
+                                                                                 "negative_ball",
+                                                                                 "portal_side"
+                                                                             ],
+                                                     "expectedMainLaunchAims":  [
+                                                                                    3
+                                                                                ],
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "conditions-center-rule",
+                                  "title":  "Eesmärk 3: Lase `center_ball` sisendist 2",
+                                  "instruction":  "Selles olukorras on järgmine pall `center_ball`. Kirjuta `if`-programm, mis laseb selle sisendist 2 välja.",
+                                  "boardHint":  "Selles ühe palli olukorras vajad ainult kesk-palli väljalaskeharu.",
+                                  "suggestedSnippet":  "if next_ball == center_ball:\n    choose_input(2)\n    drop_ball()",
+                                  "starterProgramSource":  "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "center"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedIf",
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "next_ball",
+                                                                                 "center_ball"
+                                                                             ],
+                                                     "expectedMainLaunchAims":  [
+                                                                                    2
+                                                                                ],
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              }
+                          ]
+    },
+    {
+        "id":  "functions",
+        "courseOrderLabel":  "3. Funktsioonid",
+        "title":  "Funktsioonid",
+        "moduleName":  "Abifunktsioon",
+        "meterGoal":  3,
+        "masteryTaskIds":  [
+                               "functions-trace",
+                               "functions-write",
+                               "functions-review-conditions"
+                           ],
+        "visibleStateLabels":  [
+                                   "portal_side",
+                                   "next_ball"
+                               ],
+        "supportUpgradeIds":  [
+                                  "helper_line_capacity"
+                              ],
+        "boardSubtitle":  "Hoia üks abifunktsioon abiredaktoris ja kutsu see põhiprogrammist välja.",
+        "unlockSpotlightText":  "Nüüd avaneb abiredaktor. Saad sinna kirjutada ühe abifunktsiooni ja seda põhiprogrammist nime järgi välja kutsuda, selle asemel et sama koodi iga kord uuesti kirjutada.",
+        "unlockPrimerCards":  [
+                                  {
+                                      "id":  "functions-what",
+                                      "title":  "Mis on funktsioon",
+                                      "body":  "Funktsioon on nimega koodiplokk, mida saad hiljem uuesti käivitada.",
+                                      "syntax":  "def follow_portal():"
+                                  },
+                                  {
+                                      "id":  "functions-game",
+                                      "title":  "Mida see mängus teeb",
+                                      "body":  "Abiredaktoris saad hoida üht abifunktsiooni. Põhiprogrammist saad selle käivitada ühe käsuga.",
+                                      "syntax":  "follow_portal()"
+                                  },
+                                  {
+                                      "id":  "functions-use",
+                                      "title":  "Mida siin teha",
+                                      "body":  "Kirjuta portaali sihtiv abifunktsioon abiredaktorisse ja kutsu see siis põhiprogrammist välja.",
+                                      "syntax":  "choose_input(portal_side)"
+                                  }
+                              ],
+        "practiceGoals":  [
+                              {
+                                  "id":  "functions-call-helper-left",
+                                  "title":  "Eesmärk 1: Kasuta abifunktsiooni",
+                                  "instruction":  "Kutsu `follow_portal()` välja, et abifunktsioon laseks ühe palli vasakust sisendist välja.",
+                                  "boardHint":  "Abiredaktoris on abifunktsioon juba olemas. Põhiprogrammis on vaja ainult rida `follow_portal()`.",
+                                  "suggestedSnippet":  "follow_portal()",
+                                  "starterProgramSource":  "drop_ball()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  1,
+                                                   "previewQueue":  [
+                                                                        "portal",
+                                                                        "center",
+                                                                        "center"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedHelperCall"
+                                                                          ],
+                                                     "expectedHelperLaunchAims":  [
+                                                                                      1
+                                                                                  ],
+                                                     "minHelperLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "functions-call-helper-right",
+                                  "title":  "Eesmärk 2: Kasuta sama abifunktsiooni uuesti",
+                                  "instruction":  "Kasuta sama abifunktsiooni uuesti. Seekord on portaal paremal, nii et abifunktsioon peaks sinna sihtima.",
+                                  "boardHint":  "Kui su abifunktsioon loeb juba `portal_side` väärtust, saad seda uuesti kasutada ilma keha ümber kirjutamata.",
+                                  "suggestedSnippet":  "follow_portal()",
+                                  "starterProgramSource":  "follow_portal()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "portal",
+                                                                        "center",
+                                                                        "portal"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedHelperCall"
+                                                                          ],
+                                                     "expectedHelperLaunchAims":  [
+                                                                                      3
+                                                                                  ],
+                                                     "minHelperLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  false,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "functions-write-center-helper",
+                                  "title":  "Eesmärk 3: Kirjuta `send_center()`",
+                                  "instruction":  "Loo uus abifunktsioon nimega `send_center()`, mis laseb ühe palli sisendist 2 välja. Seejärel kutsu see põhiprogrammist välja.",
+                                  "boardHint":  "Selle abifunktsiooni ainus töö on valida sisend 2 ja lasta üks pall välja. Portaali loogikat siin vaja ei ole.",
+                                  "suggestedSnippet":  "def send_center():\n    choose_input(2)\n    drop_ball()",
+                                  "starterProgramSource":  "follow_portal()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  1,
+                                                   "previewQueue":  [
+                                                                        "center",
+                                                                        "center",
+                                                                        "center"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedHelperCall",
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "send_center"
+                                                                             ],
+                                                     "expectedHelperLaunchAims":  [
+                                                                                      2
+                                                                                  ],
+                                                     "minHelperLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "helper"
+                              }
+                          ]
+    },
+    {
+        "id":  "loops",
+        "courseOrderLabel":  "4. Tsüklid",
+        "title":  "Tsüklid",
+        "moduleName":  "Automaatkäivitus",
+        "meterGoal":  3,
+        "masteryTaskIds":  [
+                               "loops-repair",
+                               "loops-write",
+                               "loops-review-functions"
+                           ],
+        "visibleStateLabels":  [
+                                   "next_ball",
+                                   "portal_side"
+                               ],
+        "supportUpgradeIds":  [
+                                  "portal_chain_once"
+                              ],
+        "boardSubtitle":  "Kasuta tsüklit, et töödelda lühike pallijada automaatselt.",
+        "unlockSpotlightText":  "Tsükkel kordab enda sees olevat koodi mitu korda. Nii saad ühe tsükliga töödelda mitu tulevast palli järjest. Kui jätad palli vahele, peab see haru lõppema enne järgmist väljalaskmist.",
+        "unlockPrimerCards":  [
+                                  {
+                                      "id":  "loops-what",
+                                      "title":  "Mis on tsükkel",
+                                      "body":  "Tsükkel kordab enda sees olevat koodi mitu korda, nii et sa ei pea samu ridu uuesti kirjutama.",
+                                      "syntax":  "for shot in range(3):"
+                                  },
+                                  {
+                                      "id":  "loops-game",
+                                      "title":  "Mida see mängus teeb",
+                                      "body":  "Üks tsükkel saab töödelda mitu tulevast palli järjest ja viia mängu samm-sammult automaatsema mängimiseni.",
+                                      "syntax":  "follow_portal()"
+                                  },
+                                  {
+                                      "id":  "loops-safety",
+                                      "title":  "Mida jälgida",
+                                      "body":  "Kui kasutad `skip_ball()`-i, peab selle haru tegevus lõppema enne, kui sama tsüklisamm jõuab järgmise väljalaskeni. Selleks sobib `continue`.",
+                                      "syntax":  "continue"
+                                  }
+                              ],
+        "practiceGoals":  [
+                              {
+                                  "id":  "loops-repeat-three",
+                                  "title":  "Eesmärk 1: Korda abifunktsiooni kolm korda",
+                                  "instruction":  "Kasuta `for ... in range(3)`, et abifunktsioon laseks ühe programmi käivituse ajal kolm palli.",
+                                  "boardHint":  "Kui see eesmärk on tehtud, avaneb automaatkäivitus lühikeste korduvate jooksude jaoks.",
+                                  "suggestedSnippet":  "for shot in range(3):\n    follow_portal()",
+                                  "starterProgramSource":  "follow_portal()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  1,
+                                                   "previewQueue":  [
+                                                                        "portal",
+                                                                        "portal",
+                                                                        "portal"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedFor",
+                                                                              "usedHelperCall"
+                                                                          ],
+                                                     "expectedHelperLaunchAims":  [
+                                                                                      1,
+                                                                                      1,
+                                                                                      1
+                                                                                  ],
+                                                     "minHelperLaunchCount":  3
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "loops-repeat-four",
+                                  "title":  "Eesmärk 2: Korda abifunktsiooni neli korda",
+                                  "instruction":  "Suurenda korduste arv neljani, et sama abifunktsioon laseks ühe käivituse ajal neli palli.",
+                                  "boardHint":  "Muuda ainult arvu `range(...)` sees. Abifunktsiooni väljakutse võib samaks jääda.",
+                                  "suggestedSnippet":  "for shot in range(4):\n    follow_portal()",
+                                  "starterProgramSource":  "for shot in range(3):\n    follow_portal()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "portal",
+                                                                        "portal",
+                                                                        "portal",
+                                                                        "portal"
+                                                                    ]
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedFor",
+                                                                              "usedHelperCall"
+                                                                          ],
+                                                     "expectedHelperLaunchAims":  [
+                                                                                      3,
+                                                                                      3,
+                                                                                      3,
+                                                                                      3
+                                                                                  ],
+                                                     "minHelperLaunchCount":  4
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              },
+                              {
+                                  "id":  "loops-mixed-strategy",
+                                  "title":  "Eesmärk 3: Tee tsükkel tulevaste pallide jaoks",
+                                  "instruction":  "Vaata \"Tulevased pallid\" riba ja töötle need 3 palli tsükliga: kasuta `portal_ball` jaoks `follow_portal()`-i, jäta `negative_ball` vahele ja saada `center_ball` sisendisse 2.",
+                                  "boardHint":  "`continue` katkestab praeguse tsüklisammu ja viib järgmise korduse juurde. Kui sa `continue`-d ei kasuta, siis veendu, et `negative_ball`-i haru ei jõuaks sama tsüklisammu jooksul väljalaskeni.",
+                                  "suggestedSnippet":  "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    if next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
+                                  "starterProgramSource":  "for shot in range(4):\n    follow_portal()",
+                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                                  "scenario":  {
+                                                   "portalSide":  3,
+                                                   "previewQueue":  [
+                                                                        "portal",
+                                                                        "negative",
+                                                                        "center"
+                                                                    ],
+                                                   "visiblePreviewCount":  3
+                                               },
+                                  "acceptance":  {
+                                                     "requiredFeatures":  [
+                                                                              "usedFor",
+                                                                              "usedIf",
+                                                                              "usedHelperCall",
+                                                                              "usedChooseInput"
+                                                                          ],
+                                                     "requiredIdentifiers":  [
+                                                                                 "next_ball",
+                                                                                 "negative_ball",
+                                                                                 "center_ball"
+                                                                             ],
+                                                     "previewResponses":  [
+                                                                              {
+                                                                                  "type":  "helper_launch",
+                                                                                  "aim":  "portal_side"
+                                                                              },
+                                                                              {
+                                                                                  "type":  "skip"
+                                                                              },
+                                                                              {
+                                                                                  "type":  "main_launch",
+                                                                                  "aim":  2
+                                                                              }
+                                                                          ],
+                                                     "minSkippedNegativeBallCount":  1,
+                                                     "minHelperLaunchCount":  1,
+                                                     "minMainLaunchCount":  1
+                                                 },
+                                  "requiresCodeChange":  true,
+                                  "changeTarget":  "main"
+                              }
+                          ]
+    }
 ]
