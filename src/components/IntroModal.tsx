@@ -31,6 +31,11 @@ export function IntroModal({ ui, isOpen, onStart }: IntroModalProps) {
 
         <p className="intro-body">{ui.introBody}</p>
 
+        <div className="intro-warning">
+          <span>{ui.introZoomWarningLabel}</span>
+          <p>{ui.introZoomWarning}</p>
+        </div>
+
         <div className="intro-checklist">
           <span>{ui.introChecklistLabel}</span>
           <ul>

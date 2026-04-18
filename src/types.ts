@@ -698,6 +698,8 @@ export type UiText = {
   introEyebrow: string
   introTitle: string
   introBody: string
+  introZoomWarningLabel: string
+  introZoomWarning: string
   introChecklistLabel: string
   introChecklistOne: string
   introChecklistTwo: string

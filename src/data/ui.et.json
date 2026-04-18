@@ -304,6 +304,8 @@
     "introEyebrow": "Sissejuhatus",
     "introTitle": "CodePachinko",
     "introBody": "See prototüüp/mäng õpetab Pythoni algteemasid.\nSinu ülesanne mängijana on jälgida üleval märgitud ülesandeid ning neid proovida lahendada.\n\nMäng töötab nii: Eksisteerib pachinko laud, mida sina saad koodi kirjutamisega mõjutada. Sa saad palle lauale kukutada, palle suunata, ning muid huivtavaid asje teha.\n\nMängides läbid teemad: 1. Muutujad, 2. Tingimuslaused, 3. Funktsioonid, 4. Tsükllid, 5. Järjendid",
+    "introZoomWarningLabel": "Ekraanisoovitus",
+    "introZoomWarning": "Kui mängid sülearvutis või väiksemal ekraanil, võib aidata brauserit natuke välja zoomida, et kogu vaade paremini ära mahuks. Proovi 'Ctrl -' või Macis 'Cmd -'.",
     "introChecklistLabel": "Kuidas alustada",
     "introChecklistOne": "Pärast seda õpetust vajuta nuppu 'Käivita programm'",
     "introChecklistTwo": "Vaata koodi ja proovi aru saada mis juhtus. Pärast igat õpetatud teemat on väike ülesannete kontrollpunkt.",

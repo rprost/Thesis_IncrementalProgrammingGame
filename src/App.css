@@ -2164,6 +2164,31 @@
   white-space: pre-wrap;
 }
 
+.intro-warning {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(216, 102, 47, 0.26);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at top right, rgba(241, 170, 79, 0.16), transparent 46%),
+    rgba(255, 246, 235, 0.92);
+}
+
+.intro-warning span {
+  color: #b45722;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.intro-warning p {
+  margin: 0;
+  color: #5a4839;
+  line-height: 1.6;
+}
+
 .intro-checklist {
   display: grid;
   gap: 0.7rem;
