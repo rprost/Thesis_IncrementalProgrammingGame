@@ -618,8 +618,8 @@
             {
                 "id": "lists-track-best-value",
                 "title": "Goal 2: Find the best multiplier out of all 3",
-                "instruction": "Turn the two-slot comparison into a real search. Use 'for multiplier in bonus_map:' to keep track of both the highest multiplier and its index, then launch one ball from that input.",
-                "boardHint": "Start with 'best_multiplier = bonus_map[0]', 'best_index = 0', and 'index = 0'. When the loop finds a bigger multiplier, store both the value and the index.",
+                "instruction": "Turn the two-slot comparison into a real search with a 'for' loop. This goal specifically expects you to search all 3 multipliers with a loop, keep track of both the highest multiplier and its index, and then launch one ball from that input.",
+                "boardHint": "This goal only counts with a loop. Start with 'best_multiplier = bonus_map[0]', 'best_index = 0', and 'index = 0'. When the loop finds a bigger multiplier, store both the value and the index.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "starterProgramSource": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
@@ -657,7 +657,7 @@
                 "id": "lists-launch-best-lane",
                 "title": "Goal 3: Use the best input",
                 "instruction": "Use the same best-input search and then drop at least 3 balls from that input with a loop.",
-                "boardHint": "Keep the search from Goal 2 and add a second loop that drops at least 3 balls from 'best_index + 1'. 'range(3)' is the smallest loop that works here.",
+                "boardHint": "Keep 'best_index = 0' before the search so input 1 still works when it is already the best. Then add a second loop that drops at least 3 balls from 'best_index + 1'. 'range(3)' is the smallest loop that works here.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nfor shot in range(3):\n    choose_input(best_index + 1)\n    drop_ball()",
                 "starterProgramSource": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {

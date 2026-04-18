@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import {
   autocompletion,
@@ -8,7 +9,10 @@ import { python } from '@codemirror/lang-python'
 import { Decoration, EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import type { UiText } from '../types'
-import type { EditorCompletionItem } from '../game/editorCompletions'
+import {
+  buildSourceNameCompletions,
+  type EditorCompletionItem,
+} from '../game/editorCompletions'
 
 type ProgramEditorProps = {
   code: string
@@ -106,14 +110,26 @@ function filterCompletionOptions(
 }
 
 function createEditableExtensions(completions: EditorCompletionItem[]) {
-  const completionOptions: Completion[] = completions.map((item) => ({
+  const staticCompletionOptions: Completion[] = completions.map((item) => ({
     label: item.label,
     apply: item.apply,
     detail: item.detail,
     type: item.type,
   }))
-  const tokenOptions = completionOptions.filter((item) => item.type !== 'snippet')
   const completionSource: CompletionSource = (context) => {
+    const sourceCompletionOptions: Completion[] = buildSourceNameCompletions(
+      context.state.sliceDoc(0, context.pos),
+    ).map((item) => ({
+      label: item.label,
+      apply: item.apply,
+      detail: item.detail,
+      type: item.type,
+    }))
+    const completionOptions = [
+      ...staticCompletionOptions,
+      ...sourceCompletionOptions,
+    ]
+    const tokenOptions = completionOptions.filter((item) => item.type !== 'snippet')
     const word = context.matchBefore(/[A-Za-z_][A-Za-z0-9_]*/)
 
     if (word !== null && (word.from !== word.to || context.explicit)) {
@@ -197,7 +213,31 @@ const editorTheme = EditorView.theme(
   { dark: false },
 )
 
-export function ProgramEditor({
+function areCompletionItemsEqual(
+  previous: EditorCompletionItem[] | undefined,
+  next: EditorCompletionItem[] | undefined,
+) {
+  const previousItems = previous ?? []
+  const nextItems = next ?? []
+
+  if (previousItems.length !== nextItems.length) {
+    return false
+  }
+
+  return previousItems.every((item, index) => {
+    const nextItem = nextItems[index]
+
+    return (
+      nextItem !== undefined &&
+      item.label === nextItem.label &&
+      item.apply === nextItem.apply &&
+      item.detail === nextItem.detail &&
+      item.type === nextItem.type
+    )
+  })
+}
+
+function ProgramEditorComponent({
   code,
   ui,
   title,
@@ -213,9 +253,21 @@ export function ProgramEditor({
   completions = [],
   onChange,
 }: ProgramEditorProps) {
-  const executionHighlightExtension = createExecutionHighlightExtension(
-    code,
-    activeLineNumber,
+  const executionHighlightExtension = useMemo(
+    () => createExecutionHighlightExtension(code, activeLineNumber),
+    [code, activeLineNumber],
+  )
+  const editableExtensions = useMemo(
+    () => createEditableExtensions(completions),
+    [completions],
+  )
+  const editorExtensions = useMemo(
+    () => [
+      ...(isEditable ? editableExtensions : readOnlyExtensions),
+      editorTheme,
+      ...executionHighlightExtension,
+    ],
+    [editableExtensions, executionHighlightExtension, isEditable],
   )
   const statusLabel =
     status === 'editable'
@@ -271,13 +323,7 @@ export function ProgramEditor({
             highlightActiveLine: isEditable,
             highlightActiveLineGutter: isEditable,
           }}
-          extensions={[
-            ...(isEditable
-              ? createEditableExtensions(completions)
-              : readOnlyExtensions),
-            editorTheme,
-            ...executionHighlightExtension,
-          ]}
+          extensions={editorExtensions}
           className="code-editor"
         />
         {feedbackMessage !== null ? (
@@ -289,3 +335,22 @@ export function ProgramEditor({
     </section>
   )
 }
+
+export const ProgramEditor = memo(
+  ProgramEditorComponent,
+  (previousProps, nextProps) =>
+    previousProps.code === nextProps.code &&
+    previousProps.ui === nextProps.ui &&
+    previousProps.title === nextProps.title &&
+    previousProps.variant === nextProps.variant &&
+    previousProps.status === nextProps.status &&
+    previousProps.isEditable === nextProps.isEditable &&
+    previousProps.isHighlighted === nextProps.isHighlighted &&
+    previousProps.activeLineNumber === nextProps.activeLineNumber &&
+    previousProps.lineUsageText === nextProps.lineUsageText &&
+    previousProps.helperText === nextProps.helperText &&
+    previousProps.feedbackMessage === nextProps.feedbackMessage &&
+    previousProps.feedbackTone === nextProps.feedbackTone &&
+    previousProps.onChange === nextProps.onChange &&
+    areCompletionItemsEqual(previousProps.completions, nextProps.completions),
+)

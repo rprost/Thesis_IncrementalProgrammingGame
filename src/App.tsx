@@ -1,4 +1,11 @@
-import { startTransition, useEffect, useRef, useState } from 'react'
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import './App.css'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
 import { BoardInternalsPanel } from './components/BoardInternalsPanel'
@@ -22,6 +29,7 @@ import {
   applyTaskResult,
   dismissUnlockSpotlight,
   isBluePortalActive,
+  jumpToDeveloperGoal,
   loadPersistedGameState,
   normalizeListsQueue,
   purchaseShopNode,
@@ -52,6 +60,7 @@ import type {
   ReferenceExampleItem,
   ReferenceValueItem,
   SupportUpgradeId,
+  TaskTopicId,
   TopicDefinition,
   UiText,
   UnlockPrimerCard,
@@ -124,6 +133,7 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'aim_range_limit') ??
     validation.issues.find((issue) => issue.code === 'invalid_set_aim') ??
     validation.issues.find((issue) => issue.code === 'continue_outside_loop') ??
+    validation.issues.find((issue) => issue.code === 'unknown_identifier') ??
     validation.issues.find((issue) => issue.code === 'invalid_condition') ??
     validation.issues.find((issue) => issue.code === 'invalid_index_access') ??
     validation.issues.find((issue) => issue.code === 'invalid_expression') ??
@@ -184,6 +194,11 @@ function getProgramValidationMessage(
       return formatText(ui.programErrorStepLimitExceeded, {
         max: String(prioritizedIssue.maxSteps ?? MAX_STEPS_PER_RUN),
       })
+    case 'unknown_identifier':
+      return withHelperPrefix(formatText(ui.programErrorUnknownIdentifier, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+        name: prioritizedIssue.identifierName ?? 'value',
+      }))
     case 'invalid_expression':
       return withHelperPrefix(formatText(ui.programErrorInvalidExpression, {
         line: String(prioritizedIssue.lineNumber ?? 1),
@@ -318,7 +333,7 @@ function sourceMentionsToken(source: string, token: string): boolean {
 function getZeroStepFeedbackMessage(
   gameState: GameState,
   ui: UiText,
-): string {
+): string | null {
   const combinedSource = `${gameState.programSource}\n${gameState.helperProgramSource}`
   const mentionsDrop = combinedSource.includes('drop_ball()')
   const mentionsSkip = combinedSource.includes('skip_ball()')
@@ -342,7 +357,7 @@ function getZeroStepFeedbackMessage(
     mentionsSkip &&
     sourceMentionsToken(combinedSource, 'negative_ball')
   ) {
-    return ui.programReadyMessage
+    return null
   }
 
   const mentionedBallTypes = (['negative', 'portal', 'center'] as const).filter(
@@ -389,6 +404,16 @@ function getHelperNames(helperProgramSource: string): string[] {
   return [...helperProgramSource.matchAll(/^\s*def\s+([A-Za-z_]\w*)\s*\(\s*\)\s*:/gm)]
     .map((match) => match[1])
     .filter((name): name is string => name !== undefined)
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function sourceUsesHelperCall(source: string, helperNames: string[]): boolean {
+  return helperNames.some((name) =>
+    new RegExp(`\\b${escapeRegex(name)}\\s*\\(`).test(source),
+  )
 }
 
 function buildNextStepModel(
@@ -739,11 +764,12 @@ function buildReferencePatterns(
 
 function App() {
   const initialLocale = getInitialLocale()
+  const initialLocaleContent = getLocaleContent(initialLocale)
   const [locale, setLocale] = useState<Locale>(() => initialLocale)
   const [gameState, setGameState] = useState(() =>
     loadPersistedGameState(
-      getLocaleContent(initialLocale).topics,
-      getLocaleContent(initialLocale).tasks,
+      initialLocaleContent.topics,
+      initialLocaleContent.tasks,
     ),
   )
   const [animationNow, setAnimationNow] = useState(() => Date.now())
@@ -756,6 +782,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [copyProgressStatus, setCopyProgressStatus] =
     useState<ProgressCopyStatus>(null)
+  const [isDeveloperMenuOpen, setIsDeveloperMenuOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(
     () => gameState.activeTaskId !== null,
   )
@@ -765,6 +792,8 @@ function App() {
   const settingsRef = useRef<HTMLDivElement | null>(null)
   const helpButtonRef = useRef<HTMLButtonElement | null>(null)
   const referenceCardRef = useRef<HTMLElement | null>(null)
+  const latestGameStateRef = useRef(gameState)
+  const saveTimeoutRef = useRef<number | null>(null)
   const previousAudioSnapshotRef = useRef<{
     activeBallIds: number[]
     portalSplitCount: number
@@ -778,7 +807,10 @@ function App() {
     isReady: isAudioReady,
   } = useGameAudio(gameState.soundEnabled)
 
-  const { ui, tasks, shopNodes, topics } = getLocaleContent(locale)
+  const { ui, tasks, shopNodes, topics } = useMemo(
+    () => getLocaleContent(locale),
+    [locale],
+  )
   const helpCatalog = buildHelpCatalog(ui, topics)
   const helpEntryIds: HelpEntryId[] = [
     'welcome',
@@ -835,6 +867,10 @@ function App() {
     gameState.unlocks.unlockedConstructs.includes('functions')
   const isSpotlight = gameState.topicStage === 'new_unlock_spotlight'
   const helperNames = getHelperNames(gameState.helperProgramSource)
+  const mainUsesHelperCall = sourceUsesHelperCall(
+    gameState.programSource,
+    helperNames,
+  )
   const helperFunctionCalls =
     functionsUnlocked && helperNames.length > 0
       ? helperNames.map((name) => `${name}()`)
@@ -857,9 +893,13 @@ function App() {
     used: String(gameState.helperProgramValidation.executableLineCount),
     limit: String(gameState.unlocks.helperLineCapacity),
   })
+  const isHelperOptional =
+    gameState.currentTopicId === 'lists' && !mainUsesHelperCall
   const isProgramReady =
     gameState.programValidation.isValid &&
-    (!functionsUnlocked || gameState.helperProgramValidation.isValid)
+    (!functionsUnlocked ||
+      isHelperOptional ||
+      gameState.helperProgramValidation.isValid)
   const editorHelperText = !gameState.unlocks.editorEditable
     ? ui.editorLockedDescription
     : isSpotlight
@@ -867,7 +907,9 @@ function App() {
       : null
   const helperHelperText = isSpotlight
     ? ui.helperEditorSpotlightDescription
-    : null
+    : gameState.currentTopicId === 'lists'
+      ? ui.helperEditorOptionalDescription
+      : null
   const editorFeedbackMessage = isSpotlight
     ? null
     : validationMessage
@@ -879,7 +921,7 @@ function App() {
       : null
   const helperFeedbackMessage = isSpotlight
     ? null
-    : helperValidationMessage
+    : helperValidationMessage && !isHelperOptional
       ? helperValidationMessage
     : gameState.goalChangeNoticeTarget === 'helper'
       ? ui.goalEditRequiredHelperMessage
@@ -892,9 +934,9 @@ function App() {
       ? 'warning'
       : 'success'
   const helperFeedbackTone =
-    helperValidationMessage
+    helperValidationMessage && !isHelperOptional
       ? 'error'
-      : gameState.goalChangeNoticeTarget === 'helper'
+    : gameState.goalChangeNoticeTarget === 'helper'
         ? 'warning'
         : 'success'
   const availableFunctions = [
@@ -996,6 +1038,10 @@ function App() {
   }, [locale])
 
   useEffect(() => {
+    latestGameStateRef.current = gameState
+  }, [gameState])
+
+  useEffect(() => {
     if (
       gameState.currentTopicId !== 'lists' ||
       gameState.isRunning ||
@@ -1008,8 +1054,40 @@ function App() {
   }, [gameState.ballQueue, gameState.currentTopicId, gameState.isRunning])
 
   useEffect(() => {
-    savePersistedGameState(gameState)
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      savePersistedGameState(gameState)
+      saveTimeoutRef.current = null
+    }, 250)
+
+    return () => {
+      if (saveTimeoutRef.current !== null) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+    }
   }, [gameState])
+
+  useEffect(() => {
+    const flushSave = () => {
+      if (saveTimeoutRef.current !== null) {
+        window.clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+
+      savePersistedGameState(latestGameStateRef.current)
+    }
+
+    window.addEventListener('pagehide', flushSave)
+
+    return () => {
+      window.removeEventListener('pagehide', flushSave)
+      flushSave()
+    }
+  }, [])
 
   useEffect(() => {
     if (
@@ -1074,6 +1152,31 @@ function App() {
       setCopyProgressStatus(null)
     }
   }, [isSettingsOpen])
+
+  useEffect(() => {
+    const handleDeveloperKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.ctrlKey &&
+        event.altKey &&
+        event.shiftKey &&
+        event.key.toLowerCase() === 'd'
+      ) {
+        event.preventDefault()
+        setIsHelpManuallyOpen(false)
+        setIsSettingsOpen(false)
+        setIsDeveloperMenuOpen((current) => !current)
+        return
+      }
+
+      if (event.key === 'Escape') {
+        setIsDeveloperMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleDeveloperKeyDown)
+
+    return () => window.removeEventListener('keydown', handleDeveloperKeyDown)
+  }, [])
 
   useEffect(() => {
     if (!gameState.isRunning && gameState.activeBalls.length === 0) {
@@ -1222,19 +1325,19 @@ function App() {
     playSound(wasCorrect ? 'task_success' : 'task_failure')
   }
 
-  const handleProgramChange = (value: string) => {
+  const handleProgramChange = useCallback((value: string) => {
     startTransition(() => {
       setGameState((currentState) => updateProgramSource(currentState, value))
     })
-  }
+  }, [])
 
-  const handleHelperProgramChange = (value: string) => {
+  const handleHelperProgramChange = useCallback((value: string) => {
     startTransition(() => {
       setGameState((currentState) =>
         updateHelperProgramSource(currentState, value),
       )
     })
-  }
+  }, [])
 
   const handleChangeView = (view: 'play' | 'shop') => {
     setGameState((currentState) => setCurrentView(currentState, view))
@@ -1247,6 +1350,16 @@ function App() {
   const handleToggleSettings = () => {
     setIsHelpManuallyOpen(false)
     setIsSettingsOpen((current) => !current)
+  }
+
+  const handleDeveloperJump = (topicId: TaskTopicId, goalIndex: number) => {
+    setGameState((currentState) =>
+      jumpToDeveloperGoal(currentState, topicId, goalIndex, topics),
+    )
+    setSessionStartedAt(Date.now())
+    setIsHelpManuallyOpen(false)
+    setIsSettingsOpen(false)
+    setIsDeveloperMenuOpen(false)
   }
 
   const handleCopyProgressSummary = async () => {
@@ -1532,6 +1645,61 @@ function App() {
         </div>
       </section>
 
+      {isDeveloperMenuOpen ? (
+        <div
+          className="modal-backdrop developer-menu-backdrop"
+          onMouseDown={() => setIsDeveloperMenuOpen(false)}
+          role="presentation"
+        >
+          <section
+            className="modal-card developer-menu"
+            aria-labelledby="developer-menu-title"
+            aria-modal="true"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <div className="developer-menu-header">
+              <div>
+                <p className="panel-kicker">Developer</p>
+                <h2 id="developer-menu-title">Jump To Goal</h2>
+                <p className="developer-menu-note">
+                  Press Ctrl+Alt+Shift+D to reopen this menu.
+                </p>
+              </div>
+              <button
+                className="task-close-button"
+                onClick={() => setIsDeveloperMenuOpen(false)}
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="developer-menu-grid">
+              {topics.map((topic) => (
+                <article className="developer-topic-card" key={topic.id}>
+                  <p className="panel-kicker">{topic.id}</p>
+                  <h3>{topic.title}</h3>
+                  <div className="developer-goal-list">
+                    {topic.practiceGoals.map((goal, goalIndex) => (
+                      <button
+                        className="ghost-button developer-goal-button"
+                        key={`${topic.id}-${goal.id}`}
+                        onClick={() => handleDeveloperJump(topic.id, goalIndex)}
+                        type="button"
+                      >
+                        <span>{`Goal ${String(goalIndex + 1)}`}</span>
+                        <strong>{goal.title}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       {gameState.currentView === 'play' ? (
         <section className="play-layout">
           <div className="workspace-grid">
@@ -1625,13 +1793,12 @@ function App() {
                   <button
                     className="run-button compact"
                     onClick={handleRunProgram}
-                    disabled={
-                      activeTask !== null ||
-                      gameState.isRunning ||
-                      !isProgramReady ||
-                      isSpotlight ||
-                      gameState.topicStage === 'checkpoint_ready'
-                    }
+                  disabled={
+                    activeTask !== null ||
+                    gameState.isRunning ||
+                    !isProgramReady ||
+                    isSpotlight
+                  }
                     type="button"
                   >
                     {gameState.isRunning ? ui.runButtonRunning : ui.runButton}

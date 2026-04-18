@@ -380,7 +380,7 @@
         "title": "Kirjuta tulevaste pallide tsükkel",
         "question": "Kirjuta üks tsükkel, mis töötleb reas \"Tulevased pallid\" näidatud 4 palli: suunab 'portal_ball'-i otse portaali, jätab 'negative_ball'-i vahele ja saadab iga 'center_ball'-i sisendisse 2.",
         "code": "",
-        "boardHint": "Selles kontrollpunktis abifunktsiooni ei ole. \u00dcks ts\u00fckkel peab t\u00f6\u00f6tama m\u00f5lema n\u00e4htava j\u00e4rjekorra puhul. 'elif' sobib siin h\u00e4sti ja 'continue' on vabatahtlik, aga 'negative_ball'-i haru ei tohi sama ts\u00fcklisammu jooksul v\u00e4ljalaskeni j\u00f5uda. Lisakordused on lubatud, kui n\u00e4htav eelvaade saab \u00f5igesti t\u00f6\u00f6deldud.",
+        "boardHint": "Selles kontrollpunktis abifunktsiooni ei ole. Üks tsükkel peab töötama mõlema nähtava järjekorra puhul. 'elif' sobib siin hästi ja 'continue' on vabatahtlik, aga 'negative_ball'-i haru ei tohi sama tsüklisammu jooksul väljalaskeni jõuda. Lisakordused on lubatud, kui nähtav eelvaade saab õigesti töödeldud.",
         "unlockConnection": "See on päris ülekandeülesanne: nüüd pead kogu portaali / negatiivse / kesk-palli loogika kirjutama otse tsükli sisse.",
         "writeValidation": {
             "target": "main",
@@ -557,36 +557,33 @@
         "topicId": "lists",
         "topicOrder": 5,
         "taskOrder": 3,
-        "title": "Kirjuta parima sisendi kasutaja",
-        "question": "Kirjuta \u00fcks programm, mis t\u00f6\u00f6tab k\u00f5igi all n\u00e4htavate juhtude puhul: kasuta 'bonus_map'-i, et leida tugevaim sisend, ja lase siis sellest sisendist v\u00e4lja v\u00e4hemalt 3 palli.",
+        "title": "Kirjuta nõrgima sisendi leidja",
+        "question": "Kirjuta üks programm, mis töötab kõigi all nähtavate juhtude puhul: kasuta 'bonus_map'-i, et leida nõrgim sisend, ja lase siis sellest sisendist üks pall välja.",
         "code": "",
-        "boardHint": "Alusta ridadest 'best_multiplier = bonus_map[0]' ja 'best_index = 0'. K\u00e4i 'bonus_map' l\u00e4bi, j\u00e4ta meelde parim indeks ja kasuta siis teist ts\u00fcklit, et lasta 'best_index + 1' kaudu v\u00e4lja v\u00e4hemalt 3 korda. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
-        "unlockConnection": "See on järjendite lõpuülesanne: otsi sisendite kordajate nimekirjast parim koht ja kasuta seda sisendit mitu korda järjest.",
+        "boardHint": "Hoia meeles nõrgimat kordajat ja selle indeksi. 'worst_index = 0' on hea algus, et sisend 1 töötaks ka siis, kui see on juba nõrgim. Seejärel võid kas võrrelda kolme kohta otse või käia 'bonus_map'-i läbi tsükliga ning lõpetada reaga 'choose_input(worst_index + 1)'.",
+        "unlockConnection": "See kontrollib ülekannet: tugevaima raja korduva kasutamise asemel leia 'bonus_map'-ist nõrgim rada ja lase sellest üks kord välja.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",
             "lineLimit": 12,
             "cases": [
                 {
-                    "title": "Tugevaim keskel",
-                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli keskmisest sisendist, kui boonuskaart on [0.5, 5, 1].",
+                    "title": "Nõrgim keskel",
+                    "requirement": "Leia nõrgim kordaja ja lase üks pall välja keskmisest sisendist, kui boonuskaart on [5, 0.5, 1].",
                     "scenario": {
                         "portalSide": 1,
                         "bonusMap": [
-                            0.5,
                             5,
+                            0.5,
                             1
                         ],
                         "previewQueue": [
-                            "plain",
-                            "plain",
                             "plain"
                         ]
                     },
                     "expectation": {
                         "requiredFeatures": [
                             "usedLists",
-                            "usedFor",
                             "usedIf",
                             "usedVariables",
                             "usedChooseInput"
@@ -595,34 +592,60 @@
                             "bonus_map"
                         ],
                         "expectedMainLaunchAims": [
-                            2,
-                            2,
                             2
                         ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
                     }
                 },
                 {
-                    "title": "Tugevaim vasakul",
-                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli vasakust sisendist, kui boonuskaart on [5, 1, 0.5].",
+                    "title": "Nõrgim vasakul",
+                    "requirement": "Leia nõrgim kordaja ja lase üks pall välja vasakust sisendist, kui boonuskaart on [0.5, 5, 1].",
                     "scenario": {
                         "portalSide": 1,
                         "bonusMap": [
+                            0.5,
                             5,
+                            1
+                        ],
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Nõrgim paremal",
+                    "requirement": "Leia nõrgim kordaja ja lase üks pall välja paremast sisendist, kui boonuskaart on [1, 5, 0.5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
                             1,
+                            5,
                             0.5
                         ],
                         "previewQueue": [
-                            "plain",
-                            "plain",
                             "plain"
                         ]
                     },
                     "expectation": {
                         "requiredFeatures": [
                             "usedLists",
-                            "usedFor",
                             "usedIf",
                             "usedVariables",
                             "usedChooseInput"
@@ -631,53 +654,15 @@
                             "bonus_map"
                         ],
                         "expectedMainLaunchAims": [
-                            1,
-                            1,
-                            1
-                        ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
-                    }
-                },
-                {
-                    "title": "Tugevaim paremal",
-                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli paremast sisendist, kui boonuskaart on [1, 0.5, 5].",
-                    "scenario": {
-                        "portalSide": 1,
-                        "bonusMap": [
-                            1,
-                            0.5,
-                            5
-                        ],
-                        "previewQueue": [
-                            "plain",
-                            "plain",
-                            "plain"
-                        ]
-                    },
-                    "expectation": {
-                        "requiredFeatures": [
-                            "usedLists",
-                            "usedFor",
-                            "usedIf",
-                            "usedVariables",
-                            "usedChooseInput"
-                        ],
-                        "requiredIdentifiers": [
-                            "bonus_map"
-                        ],
-                        "expectedMainLaunchAims": [
-                            3,
-                            3,
                             3
                         ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
                     }
                 }
             ]
         },
-        "successMessage": "\u00d5ige. Sinu programm leiab tugevaima sisendi, j\u00e4tab selle indeksi meelde ja kasutab seda v\u00e4hemalt 3 v\u00e4ljalaskeks.",
-        "failureMessage": "Vastus peab k\u00e4ima 'bonus_map'-i l\u00e4bi, j\u00e4tma meelde tugevaima kordaja ja indeksi ning laskma siis sellest sisendist v\u00e4lja v\u00e4hemalt 3 palli."
+        "successMessage": "Õige. Sinu programm leiab nõrgima sisendi, jätab selle indeksi meelde ja laseb sellest ühe palli välja.",
+        "failureMessage": "Vastus peab kasutama 'bonus_map'-i nõrgima sisendi leidmiseks, jätma selle indeksi meelde ja laskma siis sellest sisendist ühe palli välja."
     }
 ]

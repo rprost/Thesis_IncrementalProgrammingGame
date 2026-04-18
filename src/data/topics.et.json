@@ -618,8 +618,8 @@
             {
                 "id": "lists-track-best-value",
                 "title": "Eesmärk 2: Leia parim kordaja kõigi 3 seast",
-                "instruction": "Muuda kahe koha võrdlus päris otsinguks. Kasuta 'for multiplier in bonus_map:', et hoida meeles nii suurim kordaja kui ka selle indeks, ja lase siis vastavast sisendist üks pall välja.",
-                "boardHint": "Alusta ridadest 'best_multiplier = bonus_map[0]', 'best_index = 0' ja 'index = 0'. Kui tsükkel leiab suurema kordaja, salvesta nii väärtus kui ka indeks.",
+                "instruction": "Muuda kahe koha võrdlus päris otsinguks 'for'-tsükliga. See eesmärk eeldabki, et otsid kõik 3 kordajat läbi tsükli abil, jätad meelde nii suurima kordaja kui ka selle indeksi ja lased siis vastavast sisendist ühe palli välja.",
+                "boardHint": "See eesmärk loeb ainult siis, kui kasutad tsüklit. Alusta ridadest 'best_multiplier = bonus_map[0]', 'best_index = 0' ja 'index = 0'. Kui tsükkel leiab suurema kordaja, salvesta nii väärtus kui ka indeks.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "starterProgramSource": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
@@ -657,7 +657,7 @@
                 "id": "lists-launch-best-lane",
                 "title": "Eesmärk 3: Kasuta parimat sisendit tsüklis",
                 "instruction": "Kasuta sama parima sisendi otsingut ja kukuta sellest sisendist ts\u00fckli abil v\u00e4lja v\u00e4hemalt 3 palli.",
-                "boardHint": "Hoia alles Eesm\u00e4rgi 2 otsinguosa ja lisa siis teine ts\u00fckkel, mis laseb 'best_index + 1' kaudu v\u00e4lja v\u00e4hemalt 3 palli. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
+                "boardHint": "Hoia 'best_index = 0' enne otsingut alles, et sisend 1 töötaks ka siis, kui see on juba parim. Seejärel lisa teine ts\u00fckkel, mis laseb 'best_index + 1' kaudu v\u00e4lja v\u00e4hemalt 3 palli. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nfor shot in range(3):\n    choose_input(best_index + 1)\n    drop_ball()",
                 "starterProgramSource": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {

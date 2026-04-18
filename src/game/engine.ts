@@ -525,7 +525,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
 
     queuedSteps = remainingSteps
     activeLineNumber = step.lineNumber
-    if (step.type === 'drop_ball') {
+    if (step.type === 'drop_ball' || step.type === 'skip_ball') {
       ballQueueCursor += 1
     }
 
@@ -2424,6 +2424,74 @@ export function resetProgress(state: GameState): GameState {
   }
 }
 
+export function jumpToDeveloperGoal(
+  state: GameState,
+  topicId: TaskTopicId,
+  goalIndex: number,
+  topics: TopicDefinition[],
+): GameState {
+  const topic = getTopicById(topics, topicId)
+
+  if (topic === null || topic.practiceGoals.length === 0) {
+    return state
+  }
+
+  const topicOrder: TaskTopicId[] = [
+    'variables',
+    'conditions',
+    'functions',
+    'loops',
+    'lists',
+  ]
+  const topicIndex = topicOrder.indexOf(topicId)
+
+  if (topicIndex === -1) {
+    return state
+  }
+
+  const clampedGoalIndex = Math.min(
+    Math.max(goalIndex, 0),
+    topic.practiceGoals.length - 1,
+  )
+  const selectedGoal = topic.practiceGoals[clampedGoalIndex] ?? null
+  const learnedTopicIds = topicOrder.slice(0, topicIndex + 1)
+  const masteredTopicIds = topicOrder.slice(0, topicIndex)
+  const initialState = createInitialGameState()
+  const unlocks = buildUnlockState(learnedTopicIds, [])
+  const helperProgramSource = learnedTopicIds.includes('functions')
+    ? INITIAL_HELPER_SOURCE
+    : ''
+  const autoRunUnlocked =
+    topicId === 'lists' || (topicId === 'loops' && clampedGoalIndex >= 1)
+
+  return revalidatePrograms(
+    applyPracticeGoalState(
+      {
+        ...initialState,
+        soundEnabled: state.soundEnabled,
+        currentView: 'play',
+        introDismissed: true,
+        currentTopicId: topicId,
+        learnedTopicIds,
+        masteredTopicIds,
+        topicStage: 'topic_active',
+        topicMeter: clampedGoalIndex,
+        topicMeterGoal: topic.practiceGoals.length,
+        helperProgramSource,
+        unlocks,
+        autoRunUnlocked,
+        autoRunEnabled: false,
+      },
+      selectedGoal,
+      'topic_active',
+      {
+        seedProgramSource: true,
+        seedHelperSource: true,
+      },
+    ),
+  )
+}
+
 export function setSoundEnabled(state: GameState, soundEnabled: boolean): GameState {
   if (state.soundEnabled === soundEnabled) {
     return state
@@ -2510,7 +2578,6 @@ export function startProgramRun(state: GameState): GameState {
   if (
     state.isRunning ||
     state.activeTaskId !== null ||
-    state.topicStage === 'checkpoint_ready' ||
     state.topicStage === 'new_unlock_spotlight'
   ) {
     return state
@@ -2527,7 +2594,14 @@ export function startProgramRun(state: GameState): GameState {
     state.ballQueue.slice(state.ballQueueCursor),
   )
 
-  if (!parsed.mainValidation.isValid || !parsed.helperValidation.isValid) {
+  const helperValidationRequired =
+    state.unlocks.unlockedConstructs.includes('functions') &&
+    !(state.currentTopicId === 'lists' && !parsed.mainUsesHelperCall)
+
+  if (
+    !parsed.mainValidation.isValid ||
+    (helperValidationRequired && !parsed.helperValidation.isValid)
+  ) {
     return {
       ...state,
       programValidation: parsed.mainValidation,

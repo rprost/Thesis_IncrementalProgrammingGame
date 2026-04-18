@@ -14,6 +14,7 @@ type BuildEditorCompletionsParams = {
   referenceValues: ReferenceValueItem[]
   helperProgramSource: string
 }
+
 function extractHelperNames(source: string): string[] {
   const matches = source.matchAll(/^\s*def\s+([A-Za-z_]\w*)\s*\(\s*\)\s*:/gm)
   const names = new Set<string>()
@@ -44,6 +45,26 @@ function dedupeCompletionItems(items: EditorCompletionItem[]) {
   })
 }
 
+const RESERVED_SOURCE_NAMES = new Set([
+  'drop_ball',
+  'choose_input',
+  'skip_ball',
+  'if',
+  'elif',
+  'else',
+  'for',
+  'in',
+  'range',
+  'continue',
+  'def',
+  'portal_side',
+  'next_ball',
+  'bonus_map',
+  'center_ball',
+  'portal_ball',
+  'negative_ball',
+])
+
 const BUILT_IN_REFERENCE_LABELS = new Set([
   'portal_side',
   'next_ball',
@@ -52,6 +73,35 @@ const BUILT_IN_REFERENCE_LABELS = new Set([
   'portal_ball',
   'negative_ball',
 ])
+
+function extractSourceNames(source: string): string[] {
+  const names = new Set<string>()
+
+  for (const match of source.matchAll(/^\s*([A-Za-z_]\w*)\s*=/gm)) {
+    const name = match[1]
+
+    if (name !== undefined && !RESERVED_SOURCE_NAMES.has(name)) {
+      names.add(name)
+    }
+  }
+
+  for (const match of source.matchAll(/^\s*for\s+([A-Za-z_]\w*)\s+in\s+/gm)) {
+    const name = match[1]
+
+    if (name !== undefined && !RESERVED_SOURCE_NAMES.has(name)) {
+      names.add(name)
+    }
+  }
+
+  return [...names]
+}
+
+export function buildSourceNameCompletions(source: string): EditorCompletionItem[] {
+  return extractSourceNames(source).map((name) => ({
+    label: name,
+    type: 'variable' as const,
+  }))
+}
 
 export function buildEditorCompletions({
   variant,
@@ -82,6 +132,15 @@ export function buildEditorCompletions({
   }
 
   for (const fn of availableFunctions) {
+    if (fn === 'choose_input(2)') {
+      items.push({
+        label: 'choose_input(...)',
+        apply: 'choose_input(',
+        type: 'function',
+      })
+      continue
+    }
+
     items.push({
       label: fn,
       apply: fn,

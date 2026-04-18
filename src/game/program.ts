@@ -62,6 +62,7 @@ type StatementNode =
       type: 'for_range'
       lineNumber: number
       iterations: number
+      useBonusMapLength?: boolean
       loopVariable: string
       body: StatementNode[]
     }
@@ -542,7 +543,7 @@ function evaluateExpression(
       const value = environment[node.name]
 
       if (value === undefined) {
-        throw new Error(`Unknown identifier: ${node.name}`)
+        throw new ProgramEvaluationError('unknown_identifier', node.name)
       }
 
       return value
@@ -964,15 +965,35 @@ function parseStatements(
       }
 
       const rangeMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in range\((\d+)\):$/)
+      const bonusMapRangeMatch = line.trimmed.match(
+        /^for ([A-Za-z_]\w*) in range\(len\(bonus_map\)\):$/,
+      )
 
-      if (rangeMatch !== null) {
-        const loopVariable = rangeMatch[1] ?? '_'
-        const iterations = Number(rangeMatch[2])
+      if (rangeMatch !== null || bonusMapRangeMatch !== null) {
+        const loopVariable = (rangeMatch?.[1] ?? bonusMapRangeMatch?.[1]) ?? '_'
+        const iterations =
+          rangeMatch !== null
+            ? Number(rangeMatch[2])
+            : 0
 
         if (
-          !Number.isInteger(iterations) ||
-          iterations < 1 ||
-          iterations > MAX_FOR_RANGE
+          bonusMapRangeMatch !== null &&
+          !context.unlockedConstructs.includes('lists')
+        ) {
+          issues.push({
+            code: 'locked_construct',
+            lineNumber: line.lineNumber,
+            construct: 'lists',
+          })
+          index += 1
+          continue
+        }
+
+        if (
+          rangeMatch !== null &&
+          (!Number.isInteger(iterations) ||
+            iterations < 1 ||
+            iterations > MAX_FOR_RANGE)
         ) {
           issues.push({
             code: 'for_range_limit',
@@ -1006,6 +1027,7 @@ function parseStatements(
           type: 'for_range',
           lineNumber: line.lineNumber,
           iterations,
+          useBonusMapLength: bonusMapRangeMatch !== null,
           loopVariable,
           body: block.statements,
         })
@@ -1437,6 +1459,25 @@ function parseHelperProgram(
   }
 }
 
+function statementsContainHelperCall(statements: StatementNode[]): boolean {
+  return statements.some((statement) => {
+    switch (statement.type) {
+      case 'helper_call':
+        return true
+      case 'if':
+        return (
+          statementsContainHelperCall(statement.thenBody) ||
+          statementsContainHelperCall(statement.elseBody)
+        )
+      case 'for_range':
+      case 'for_list':
+        return statementsContainHelperCall(statement.body)
+      default:
+        return false
+    }
+  })
+}
+
 function executeStatements(
   statements: StatementNode[],
   environment: EvaluationContext,
@@ -1541,25 +1582,53 @@ function executeStatements(
           break
         case 'for_range':
           featureUsage.usedFor = true
-          for (let iteration = 0; iteration < statement.iterations; iteration += 1) {
-            environment[statement.loopVariable] = iteration
-            const control = executeStatements(
-              statement.body,
-              environment,
-              helperDefinitions,
-              steps,
-              issues,
-              featureUsage,
-              planning,
-              callStack,
-            )
+          {
+            const iterations = statement.useBonusMapLength
+              ? (() => {
+                  const runtimeBonusMap = environment.bonus_map
 
-            if (issues.length > 0) {
+                  if (!Array.isArray(runtimeBonusMap)) {
+                    throw new ProgramEvaluationError('invalid_expression')
+                  }
+
+                  return runtimeBonusMap.length
+                })()
+              : statement.iterations
+
+            if (
+              !Number.isInteger(iterations) ||
+              iterations < 1 ||
+              iterations > MAX_FOR_RANGE
+            ) {
+              issues.push({
+                code: 'for_range_limit',
+                lineNumber: statement.lineNumber,
+                maxRange: MAX_FOR_RANGE,
+                source: callStack.length > 0 ? 'helper' : 'main',
+              })
               return 'none'
             }
 
-            if (control === 'continue') {
-              continue
+            for (let iteration = 0; iteration < iterations; iteration += 1) {
+              environment[statement.loopVariable] = iteration
+              const control = executeStatements(
+                statement.body,
+                environment,
+                helperDefinitions,
+                steps,
+                issues,
+                featureUsage,
+                planning,
+                callStack,
+              )
+
+              if (issues.length > 0) {
+                return 'none'
+              }
+
+              if (control === 'continue') {
+                continue
+              }
             }
           }
           break
@@ -1643,16 +1712,11 @@ function executeStatements(
       }
     } catch (error) {
       const issueSource = callStack.length > 0 ? 'helper' : 'main'
-      const isUnknownIdentifier =
-        error instanceof Error &&
-        error.message.startsWith('Unknown identifier:')
 
       issues.push({
         code:
           error instanceof ProgramEvaluationError
             ? error.issueCode
-            : isUnknownIdentifier
-              ? 'invalid_expression'
             : statement.type === 'if'
               ? 'invalid_condition'
               : statement.type === 'choose_input' ||
@@ -1662,6 +1726,11 @@ function executeStatements(
                 : 'invalid_command',
         lineNumber: statement.lineNumber,
         source: issueSource,
+        identifierName:
+          error instanceof ProgramEvaluationError &&
+          error.issueCode === 'unknown_identifier'
+            ? error.message
+            : undefined,
       })
       return 'none'
     }
@@ -1731,8 +1800,9 @@ export function parseProgram(
   const steps: ExecutionStep[] = []
   const evaluationIssues: ValidationIssue[] = []
   const featureUsage = createFeatureUsage()
+  const mainUsesHelperCall = statementsContainHelperCall(mainStatements.statements)
 
-  if (mainIssues.length === 0 && helperResult.validation.isValid) {
+  if (mainIssues.length === 0 && (!mainUsesHelperCall || helperResult.validation.isValid)) {
     executeStatements(
       mainStatements.statements,
       environment,
@@ -1757,6 +1827,7 @@ export function parseProgram(
   return {
     steps: combinedMainIssues.length === 0 ? steps : [],
     featureUsage,
+    mainUsesHelperCall,
     mainValidation: createValidation(
       combinedMainIssues,
       nonEmptyLineCount,

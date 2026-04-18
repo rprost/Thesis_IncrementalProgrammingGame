@@ -231,6 +231,7 @@ export type ProgramValidationIssueCode =
   | 'nested_block_not_supported'
   | 'unexpected_indentation'
   | 'step_limit_exceeded'
+  | 'unknown_identifier'
   | 'invalid_expression'
   | 'invalid_index_access'
   | 'invalid_condition'
@@ -247,6 +248,7 @@ export type ValidationIssue = {
   code: ProgramValidationIssueCode
   lineNumber?: number
   source?: 'main' | 'helper'
+  identifierName?: string
   limit?: number
   construct?: LockedConstruct
   maxRange?: number
@@ -265,6 +267,7 @@ export type ProgramValidation = {
 export type ParsedProgram = {
   steps: ExecutionStep[]
   featureUsage: ProgramFeatureUsage
+  mainUsesHelperCall: boolean
   mainValidation: ProgramValidation
   helperValidation: ProgramValidation
 }
@@ -431,6 +434,7 @@ export type UiText = {
   helperEditorTitle: string
   helperEditorLockedDescription: string
   helperEditorUnlockedDescription: string
+  helperEditorOptionalDescription: string
   helperEditorSpotlightDescription: string
   helperEditorExpandButton: string
   helperEditorCollapseButton: string
@@ -468,6 +472,7 @@ export type UiText = {
   programErrorNestedBlocks: string
   programErrorUnexpectedIndentation: string
   programErrorStepLimitExceeded: string
+  programErrorUnknownIdentifier: string
   programErrorInvalidExpression: string
   programErrorInvalidIndexAccess: string
   programErrorInvalidCondition: string

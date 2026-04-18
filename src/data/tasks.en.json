@@ -557,36 +557,33 @@
         "topicId": "lists",
         "topicOrder": 5,
         "taskOrder": 3,
-        "title": "Write the best-input farmer",
-        "question": "Write one program that works for every visible case below: use 'bonus_map' to find the strongest input, then launch at least 3 balls from that input.",
+        "title": "Write the weakest-input finder",
+        "question": "Write one program that works for every visible case below: use 'bonus_map' to find the weakest input, then launch one ball from that input.",
         "code": "",
-        "boardHint": "Start with 'best_multiplier = bonus_map[0]' and 'best_index = 0'. Walk through 'bonus_map', remember the best index, then use a second loop to fire at least 3 times from 'best_index + 1'. 'range(3)' is the smallest loop that works here.",
-        "unlockConnection": "This is the lists capstone: search the input-multiplier list, keep the best index, and then exploit that input repeatedly.",
+        "boardHint": "Keep track of the weakest multiplier and the matching index. 'worst_index = 0' is a good start so input 1 still works when it is already the weakest. Then either compare the three slots directly or walk through 'bonus_map' with a loop, and finish with 'choose_input(worst_index + 1)'.",
+        "unlockConnection": "This checks transfer: instead of farming the strongest lane, use 'bonus_map' to find the weakest one and launch from it once.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",
             "lineLimit": 12,
             "cases": [
                 {
-                    "title": "Strongest in the middle",
-                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the middle input when the bonus map is [0.5, 5, 1].",
+                    "title": "Weakest in the middle",
+                    "requirement": "Find the weakest multiplier and launch one ball from the middle input when the bonus map is [5, 0.5, 1].",
                     "scenario": {
                         "portalSide": 1,
                         "bonusMap": [
-                            0.5,
                             5,
+                            0.5,
                             1
                         ],
                         "previewQueue": [
-                            "plain",
-                            "plain",
                             "plain"
                         ]
                     },
                     "expectation": {
                         "requiredFeatures": [
                             "usedLists",
-                            "usedFor",
                             "usedIf",
                             "usedVariables",
                             "usedChooseInput"
@@ -595,34 +592,60 @@
                             "bonus_map"
                         ],
                         "expectedMainLaunchAims": [
-                            2,
-                            2,
                             2
                         ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
                     }
                 },
                 {
-                    "title": "Strongest on the left",
-                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the left input when the bonus map is [5, 1, 0.5].",
+                    "title": "Weakest on the left",
+                    "requirement": "Find the weakest multiplier and launch one ball from the left input when the bonus map is [0.5, 5, 1].",
                     "scenario": {
                         "portalSide": 1,
                         "bonusMap": [
+                            0.5,
                             5,
+                            1
+                        ],
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Weakest on the right",
+                    "requirement": "Find the weakest multiplier and launch one ball from the right input when the bonus map is [1, 5, 0.5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
                             1,
+                            5,
                             0.5
                         ],
                         "previewQueue": [
-                            "plain",
-                            "plain",
                             "plain"
                         ]
                     },
                     "expectation": {
                         "requiredFeatures": [
                             "usedLists",
-                            "usedFor",
                             "usedIf",
                             "usedVariables",
                             "usedChooseInput"
@@ -631,53 +654,15 @@
                             "bonus_map"
                         ],
                         "expectedMainLaunchAims": [
-                            1,
-                            1,
-                            1
-                        ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
-                    }
-                },
-                {
-                    "title": "Strongest on the right",
-                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the right input when the bonus map is [1, 0.5, 5].",
-                    "scenario": {
-                        "portalSide": 1,
-                        "bonusMap": [
-                            1,
-                            0.5,
-                            5
-                        ],
-                        "previewQueue": [
-                            "plain",
-                            "plain",
-                            "plain"
-                        ]
-                    },
-                    "expectation": {
-                        "requiredFeatures": [
-                            "usedLists",
-                            "usedFor",
-                            "usedIf",
-                            "usedVariables",
-                            "usedChooseInput"
-                        ],
-                        "requiredIdentifiers": [
-                            "bonus_map"
-                        ],
-                        "expectedMainLaunchAims": [
-                            3,
-                            3,
                             3
                         ],
-                        "minMainLaunchCount": 3,
-                        "allowExtraMainLaunches": true
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
                     }
                 }
             ]
         },
-        "successMessage": "Correct. Your program finds the strongest input, remembers its index, and farms that input for at least 3 launches.",
-        "failureMessage": "Your answer should walk 'bonus_map', keep the strongest multiplier and index, and then launch at least 3 balls from the matching input."
+        "successMessage": "Correct. Your program finds the weakest input, remembers its index, and launches one ball from it.",
+        "failureMessage": "Your answer should use 'bonus_map' to find the weakest input, remember its index, and then launch one ball from that input."
     }
 ]
