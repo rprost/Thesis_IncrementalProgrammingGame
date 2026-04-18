@@ -178,7 +178,13 @@
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
                     "portalSide": 1,
+                    "queueMode": "pinned",
                     "previewQueue": [
+                        "negative",
+                        "negative",
+                        "negative",
+                        "negative",
+                        "negative",
                         "negative"
                     ]
                 },
@@ -206,7 +212,13 @@
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()",
                 "scenario": {
                     "portalSide": 3,
+                    "queueMode": "pinned",
                     "previewQueue": [
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal",
                         "portal"
                     ]
                 },
@@ -237,7 +249,13 @@
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
+                    "queueMode": "pinned",
                     "previewQueue": [
+                        "center",
+                        "center",
+                        "center",
+                        "center",
+                        "center",
                         "center"
                     ]
                 },
@@ -306,10 +324,14 @@
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 1,
+                    "queueMode": "pinned",
                     "previewQueue": [
                         "portal",
-                        "center",
-                        "center"
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal"
                     ]
                 },
                 "acceptance": {
@@ -334,9 +356,13 @@
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
+                    "queueMode": "pinned",
                     "previewQueue": [
                         "portal",
-                        "center",
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal",
                         "portal"
                     ]
                 },
@@ -362,7 +388,13 @@
                 "starterHelperSource": "def skip_negative():\n    drop_ball()",
                 "scenario": {
                     "portalSide": 1,
+                    "queueMode": "pinned",
                     "previewQueue": [
+                        "negative",
+                        "negative",
+                        "negative",
+                        "negative",
+                        "negative",
                         "negative"
                     ]
                 },
@@ -466,12 +498,7 @@
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
-                    "previewQueue": [
-                        "portal",
-                        "portal",
-                        "portal",
-                        "portal"
-                    ]
+                    "previewQueue": []
                 },
                 "acceptance": {
                     "requiredFeatures": [
@@ -500,10 +527,14 @@
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
+                    "queueMode": "cycle",
                     "previewQueue": [
+                        "center",
                         "portal",
                         "negative",
-                        "center"
+                        "center",
+                        "portal",
+                        "negative"
                     ],
                     "visiblePreviewCount": 3
                 },
@@ -520,15 +551,15 @@
                     ],
                     "previewResponses": [
                         {
+                            "type": "main_launch",
+                            "aim": 2
+                        },
+                        {
                             "type": "helper_launch",
                             "aim": "portal_side"
                         },
                         {
                             "type": "skip"
-                        },
-                        {
-                            "type": "main_launch",
-                            "aim": 2
                         }
                     ],
                     "minSkippedNegativeBallCount": 1,
@@ -587,11 +618,7 @@
                 "starterProgramSource": "best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
                     "portalSide": 1,
-                    "bonusMap": [
-                        1,
-                        0.5,
-                        5
-                    ],
+                    "bonusMapMode": "rotate_edges",
                     "previewQueue": [
                         "plain"
                     ]
@@ -606,9 +633,7 @@
                     "requiredIdentifiers": [
                         "bonus_map"
                     ],
-                    "expectedMainLaunchAims": [
-                        3
-                    ],
+                    "allMainLaunchesUseBestBonusInput": true,
                     "minMainLaunchCount": 1,
                     "maxMainLaunchCount": 1
                 },
@@ -624,11 +649,7 @@
                 "starterProgramSource": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
                     "portalSide": 1,
-                    "bonusMap": [
-                        0.5,
-                        5,
-                        1
-                    ],
+                    "bonusMapMode": "rotate_all",
                     "previewQueue": [
                         "plain"
                     ]
@@ -644,9 +665,7 @@
                     "requiredIdentifiers": [
                         "bonus_map"
                     ],
-                    "expectedMainLaunchAims": [
-                        2
-                    ],
+                    "allMainLaunchesUseBestBonusInput": true,
                     "minMainLaunchCount": 1,
                     "maxMainLaunchCount": 1
                 },
@@ -662,11 +681,7 @@
                 "starterProgramSource": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
                     "portalSide": 1,
-                    "bonusMap": [
-                        1,
-                        0.5,
-                        5
-                    ],
+                    "bonusMapMode": "rotate_all",
                     "previewQueue": []
                 },
                 "acceptance": {
@@ -680,11 +695,7 @@
                     "requiredIdentifiers": [
                         "bonus_map"
                     ],
-                    "expectedMainLaunchAims": [
-                        3,
-                        3,
-                        3
-                    ],
+                    "allMainLaunchesUseBestBonusInput": true,
                     "minMainLaunchCount": 3,
                     "allowExtraMainLaunches": true
                 },

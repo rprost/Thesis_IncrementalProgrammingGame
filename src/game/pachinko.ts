@@ -5,8 +5,6 @@ import type {
   BoardOutcome,
   BoardPathNode,
   PortalSide,
-  TaskTopicId,
-  TopicStage,
 } from '../types'
 
 export const BALL_SPAWN_INTERVAL_MS = 120
@@ -255,11 +253,11 @@ function getPortalTriggerIndex(
 function rollBallType(): BallType {
   const value = Math.random()
 
-  if (value < 0.18) {
+  if (value < 1 / 3) {
     return 'negative'
   }
 
-  if (value < 0.34) {
+  if (value < 2 / 3) {
     return 'portal'
   }
 
@@ -282,23 +280,12 @@ export function getBallTypeValue(ballType: BallType): number {
 
 export function createBallQueue(options: {
   conditionsUnlocked: boolean
-  currentTopicId: TaskTopicId | null
-  topicStage: TopicStage
 }): BallType[] {
   if (!options.conditionsUnlocked) {
     return Array.from({ length: BALL_QUEUE_LENGTH }, () => 'plain' as const)
   }
 
-  const queue = Array.from({ length: BALL_QUEUE_LENGTH }, () => rollBallType())
-
-  if (
-    options.currentTopicId === 'conditions' &&
-    !queue.slice(0, 4).includes('negative')
-  ) {
-    queue[0] = 'negative'
-  }
-
-  return queue
+  return Array.from({ length: BALL_QUEUE_LENGTH }, () => rollBallType())
 }
 
 export function refillBallQueue(

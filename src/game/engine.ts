@@ -1,4 +1,5 @@
 import type {
+  AimLevel,
   BallType,
   ExecutionExpectation,
   FeedEntry,
@@ -19,6 +20,7 @@ import type {
   WriteTaskFeedbackKey,
 } from '../types'
 import {
+  BALL_QUEUE_LENGTH,
   BALL_CANCEL_DURATION_MS,
   BALL_FALL_DURATION_MS,
   BALL_SETTLE_HOLD_MS,
@@ -256,8 +258,6 @@ function createScenarioQueue(state: {
     conditionsUnlocked:
       state.learnedTopicIds.includes('conditions') ||
       state.currentTopicId === 'lists',
-    currentTopicId: state.currentTopicId,
-    topicStage: state.topicStage,
   })
 
   if (state.activeScenario === null) {
@@ -272,10 +272,77 @@ function createScenarioQueue(state: {
     return buildListsScenarioQueue(state.activeScenario.previewQueue, fallbackQueue)
   }
 
-  return [...state.activeScenario.previewQueue, ...fallbackQueue].slice(
-    0,
-    fallbackQueue.length,
-  )
+  if (state.activeScenario.queueMode === 'pinned') {
+    return [...state.activeScenario.previewQueue, ...fallbackQueue].slice(
+      0,
+      fallbackQueue.length,
+    )
+  }
+
+  if (state.activeScenario.queueMode === 'cycle') {
+    return buildRepeatingScenarioQueue(
+      state.activeScenario.previewQueue,
+      fallbackQueue.length,
+    )
+  }
+
+  return fallbackQueue
+}
+
+function rollScenarioQueueBall(state: Pick<
+  GameState,
+  'learnedTopicIds' | 'currentTopicId'
+>): BallType {
+  const conditionsUnlocked =
+    state.learnedTopicIds.includes('conditions') || state.currentTopicId === 'lists'
+
+  return createBallQueue({ conditionsUnlocked })[0] ?? 'plain'
+}
+
+function advanceActiveScenarioQueue(
+  state: Pick<GameState, 'activeScenario' | 'learnedTopicIds' | 'currentTopicId'>,
+  currentQueue: BallType[],
+  currentCursor: number,
+  consumedBallType: BallType,
+): { ballQueue: BallType[]; ballQueueCursor: number } {
+  if (state.activeScenario === null) {
+    return {
+      ballQueue: currentQueue,
+      ballQueueCursor: currentCursor + 1,
+    }
+  }
+
+  if (state.activeScenario.queueMode === 'cycle') {
+    return {
+      ballQueue: buildShiftedCycleQueue(
+        state.activeScenario.previewQueue,
+        consumedBallType,
+      ),
+      ballQueueCursor: 0,
+    }
+  }
+
+  const visibleQueue = currentQueue.slice(Math.max(0, currentCursor))
+  const nextQueue = visibleQueue.slice(1)
+  const replacementBall =
+    state.activeScenario.queueMode === 'pinned'
+      ? consumedBallType
+      : rollScenarioQueueBall(state)
+
+  nextQueue.push(replacementBall)
+
+  while (nextQueue.length < BALL_QUEUE_LENGTH) {
+    nextQueue.push(
+      state.activeScenario.queueMode === 'pinned'
+        ? replacementBall
+        : rollScenarioQueueBall(state),
+    )
+  }
+
+  return {
+    ballQueue: nextQueue.slice(0, BALL_QUEUE_LENGTH),
+    ballQueueCursor: 0,
+  }
 }
 
 export function isBluePortalActive(state: Pick<
@@ -401,8 +468,6 @@ function getRefilledQueue(state: GameState): GameState['ballQueue'] {
     state.currentTopicId === 'lists'
   const fallbackQueue = createBallQueue({
     conditionsUnlocked,
-    currentTopicId: state.currentTopicId,
-    topicStage: state.topicStage,
   })
   const refilledQueue = refillBallQueue(state.ballQueue, state.ballQueueCursor, {
     conditionsUnlocked,
@@ -507,6 +572,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
   let queuedSteps = state.queuedSteps
   let nextBallId = state.nextBallId
   let activeLineNumber = state.activeLineNumber
+  let ballQueue = state.ballQueue
   let ballQueueCursor = state.ballQueueCursor
   let runStats = state.currentRunStats ?? createRunStats(createFeatureUsage())
   const portalEnabled = isBluePortalActive(state)
@@ -526,7 +592,14 @@ function spawnDueBalls(state: GameState, now: number): GameState {
     queuedSteps = remainingSteps
     activeLineNumber = step.lineNumber
     if (step.type === 'drop_ball' || step.type === 'skip_ball') {
-      ballQueueCursor += 1
+      const advancedQueue = advanceActiveScenarioQueue(
+        state,
+        ballQueue,
+        ballQueueCursor,
+        step.ballType,
+      )
+      ballQueue = advancedQueue.ballQueue
+      ballQueueCursor = advancedQueue.ballQueueCursor
     }
 
     if (step.type === 'skip_ball') {
@@ -621,6 +694,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
     queuedSteps,
     activeBalls,
     nextBallId,
+    ballQueue,
     ballQueueCursor,
     nextSpawnAt: queuedSteps.length === 0 ? null : nextSpawnAt,
     activeLineNumber,
@@ -894,6 +968,34 @@ function launchAimsMatch(
   return expectedAims.every((aim, index) => aims[index] === aim)
 }
 
+function getBestBonusInputAim(bonusMap: number[] | undefined): AimLevel | null {
+  if (
+    bonusMap === undefined ||
+    bonusMap.length !== 3 ||
+    !bonusMap.every((value) => Number.isFinite(value))
+  ) {
+    return null
+  }
+
+  let bestIndex = 0
+
+  for (let index = 1; index < bonusMap.length; index += 1) {
+    if ((bonusMap[index] ?? Number.NEGATIVE_INFINITY) > (bonusMap[bestIndex] ?? Number.NEGATIVE_INFINITY)) {
+      bestIndex = index
+    }
+  }
+
+  return (bestIndex + 1) as AimLevel
+}
+
+function launchesUseSingleAim(aims: number[], expectedAim: AimLevel | null): boolean {
+  if (expectedAim === null) {
+    return false
+  }
+
+  return aims.every((aim) => aim === expectedAim)
+}
+
 function previewResponsesMatch(
   actualResponses: RunStats['previewResponses'],
   expectedResponses: ExecutionExpectation['previewResponses'],
@@ -932,8 +1034,12 @@ function matchesExecutionExpectation(
   runStats: RunStats,
   combinedSource: string,
   scenario: PracticeGoalScenario,
+  bonusMap?: number[],
 ): boolean {
   const requiredFeatures = expectation.requiredFeatures ?? []
+  const requiredBestAim = expectation.allMainLaunchesUseBestBonusInput
+    ? getBestBonusInputAim(bonusMap ?? scenario.bonusMap)
+    : null
 
   return (
     requiredFeatures.every((feature) => runStats.featureUsage[feature]) &&
@@ -943,10 +1049,14 @@ function matchesExecutionExpectation(
       expectation.previewResponses,
       scenario,
     ) &&
-    launchAimsMatch(
-      runStats.launchAims,
-      expectation.expectedMainLaunchAims,
-      expectation.allowExtraMainLaunches ?? false,
+    (
+      expectation.allMainLaunchesUseBestBonusInput
+        ? launchesUseSingleAim(runStats.launchAims, requiredBestAim)
+        : launchAimsMatch(
+            runStats.launchAims,
+            expectation.expectedMainLaunchAims,
+            expectation.allowExtraMainLaunches ?? false,
+          )
     ) &&
     launchAimsMatch(
       runStats.helperLaunchAims,
@@ -1005,6 +1115,7 @@ function didCompletePracticeGoal(
     runStats,
     `${state.programSource}\n${state.helperProgramSource}`,
     goal.scenario,
+    state.moduleStates.board.bonusMap,
   )
 
   if (!matchesBehavior) {
@@ -1025,6 +1136,12 @@ function didCompletePracticeGoal(
     completed: true,
     blockedChangeTarget: null,
   }
+}
+
+function shouldRefreshScenarioAfterIncompleteRun(
+  goal: PracticeGoalDefinition,
+): boolean {
+  return goal.scenario.queueMode === 'pinned'
 }
 
 function refreshMachineState(state: GameState): GameState {
@@ -1085,6 +1202,7 @@ function applyPracticeGoalState(
       ? (goal.starterHelperSource ?? '')
       : state.helperProgramSource
   const activeScenario = goal?.scenario ?? null
+  const scenarioBonusMap = createScenarioBonusMap(activeScenario)
   const learnedTopicIds = state.learnedTopicIds
   const currentTopicId = state.currentTopicId
 
@@ -1108,7 +1226,7 @@ function applyPracticeGoalState(
     moduleStates: {
       board: {
         portalSide: activeScenario?.portalSide ?? rollPortalSide(),
-        bonusMap: activeScenario?.bonusMap ?? rollBonusMap(),
+        bonusMap: scenarioBonusMap,
       },
     },
   }
@@ -1243,6 +1361,7 @@ function completeRun(
     goalChangeNoticeTarget:
       goalResult?.blockedChangeTarget ?? null,
   }
+  let shouldRefreshMachineState = true
 
   if (nextState.topicStage === 'onboarding') {
     const nextTaskId = getNextOnboardingTaskId(tasks, nextState.solvedTaskIds)
@@ -1320,10 +1439,30 @@ function completeRun(
           ],
         )
       }
+    } else {
+      if (nextState.activeScenario?.bonusMapMode !== undefined) {
+        nextState = {
+          ...nextState,
+          moduleStates: {
+            ...nextState.moduleStates,
+            board: {
+              ...nextState.moduleStates.board,
+              bonusMap: createScenarioBonusMap(
+                nextState.activeScenario,
+                nextState.moduleStates.board.bonusMap,
+              ),
+            },
+          },
+        }
+      }
+      shouldRefreshMachineState =
+        shouldRefreshScenarioAfterIncompleteRun(currentGoal)
     }
   }
 
-  nextState = refreshMachineState(nextState)
+  if (shouldRefreshMachineState) {
+    nextState = refreshMachineState(nextState)
+  }
   nextState = revalidatePrograms({
     ...nextState,
     currentRunFeatureUsage: null,
@@ -1391,6 +1530,19 @@ function sanitizeScenario(
 
   const portalSide = value.portalSide
   const previewQueue = value.previewQueue
+  const queueMode =
+    'queueMode' in value &&
+    (value.queueMode === 'pinned' ||
+      value.queueMode === 'random' ||
+      value.queueMode === 'cycle')
+      ? value.queueMode
+      : undefined
+  const bonusMapMode =
+    'bonusMapMode' in value &&
+    (value.bonusMapMode === 'rotate_edges' ||
+      value.bonusMapMode === 'rotate_all')
+      ? value.bonusMapMode
+      : undefined
   const visiblePreviewCount =
     'visiblePreviewCount' in value &&
     typeof value.visiblePreviewCount === 'number' &&
@@ -1419,6 +1571,8 @@ function sanitizeScenario(
   return {
     portalSide,
     previewQueue,
+    queueMode,
+    bonusMapMode,
     visiblePreviewCount,
     bonusMap,
   }
@@ -1455,6 +1609,98 @@ function buildListsScenarioQueue(
     0,
     fallbackQueue.length,
   )
+}
+
+function buildRepeatingScenarioQueue(
+  previewQueue: BallType[],
+  queueLength: number,
+): BallType[] {
+  if (previewQueue.length === 0) {
+    return Array.from({ length: queueLength }, () => 'center' as const)
+  }
+
+  return Array.from(
+    { length: queueLength },
+    (_, index) => previewQueue[index % previewQueue.length] ?? 'center',
+  )
+}
+
+function buildShiftedCycleQueue(
+  previewQueue: BallType[],
+  consumedBallType: BallType,
+): BallType[] {
+  if (previewQueue.length === 0) {
+    return Array.from({ length: BALL_QUEUE_LENGTH }, () => 'center' as const)
+  }
+
+  const consumedIndex = previewQueue.indexOf(consumedBallType)
+  const startIndex = consumedIndex === -1 ? 0 : (consumedIndex + 1) % previewQueue.length
+
+  return Array.from(
+    { length: BALL_QUEUE_LENGTH },
+    (_, index) => previewQueue[(startIndex + index) % previewQueue.length] ?? 'center',
+  )
+}
+
+const EDGE_COMPARE_BONUS_MAPS = [
+  [1, 0.5, 5],
+  [5, 0.5, 1],
+] as const
+
+const FULL_ROTATING_BONUS_MAPS = [
+  [0.5, 1, 5],
+  [0.5, 5, 1],
+  [1, 0.5, 5],
+  [1, 5, 0.5],
+  [5, 0.5, 1],
+  [5, 1, 0.5],
+] as const
+
+function bonusMapsEqual(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index])
+}
+
+function pickScenarioBonusMapSet(
+  scenario: PracticeGoalScenario | null,
+): ReadonlyArray<readonly number[]> | null {
+  if (scenario?.bonusMapMode === 'rotate_edges') {
+    return EDGE_COMPARE_BONUS_MAPS
+  }
+
+  if (scenario?.bonusMapMode === 'rotate_all') {
+    return FULL_ROTATING_BONUS_MAPS
+  }
+
+  return null
+}
+
+function createScenarioBonusMap(
+  scenario: PracticeGoalScenario | null,
+  currentBonusMap?: number[],
+): number[] {
+  if (scenario?.bonusMap !== undefined) {
+    return [...scenario.bonusMap]
+  }
+
+  const bonusMapSet = pickScenarioBonusMapSet(scenario)
+
+  if (bonusMapSet === null) {
+    return rollBonusMap()
+  }
+
+  if (
+    currentBonusMap !== undefined &&
+    bonusMapSet.some((candidate) => bonusMapsEqual(candidate, currentBonusMap))
+  ) {
+    const currentIndex = bonusMapSet.findIndex((candidate) =>
+      bonusMapsEqual(candidate, currentBonusMap),
+    )
+    const nextIndex = (currentIndex + 1) % bonusMapSet.length
+    return [...(bonusMapSet[nextIndex] ?? bonusMapSet[0] ?? rollBonusMap())]
+  }
+
+  const randomIndex = Math.floor(Math.random() * bonusMapSet.length)
+  return [...(bonusMapSet[randomIndex] ?? bonusMapSet[0] ?? rollBonusMap())]
 }
 
 function replacePlainBallsInListsQueue(options: {
@@ -1866,8 +2112,6 @@ export function createInitialGameState(): GameState {
     streak: 0,
     ballQueue: createBallQueue({
       conditionsUnlocked: false,
-      currentTopicId: null,
-      topicStage: 'onboarding',
     }),
     ballQueueCursor: 0,
     currentTopicId: null,
@@ -2368,6 +2612,7 @@ export function validateWriteTaskAnswer(
         runStats,
         `${programSource}\n${helperProgramSource}`,
         validationCase.scenario,
+        validationCase.scenario.bonusMap,
       )
     ) {
       return {

@@ -157,6 +157,7 @@ export type ExecutionExpectation = {
   requiredIdentifiers?: string[]
   expectedMainLaunchAims?: AimLevel[]
   expectedHelperLaunchAims?: AimLevel[]
+  allMainLaunchesUseBestBonusInput?: boolean
   allowExtraMainLaunches?: boolean
   allowExtraHelperLaunches?: boolean
   previewResponses?: PreviewResponseExpectation[]
@@ -344,6 +345,8 @@ export type GameTask = {
 export type PracticeGoalScenario = {
   portalSide: PortalSide
   previewQueue: BallType[]
+  queueMode?: 'pinned' | 'random' | 'cycle'
+  bonusMapMode?: 'rotate_edges' | 'rotate_all'
   visiblePreviewCount?: number
   bonusMap?: number[]
   launchPlan?: number[]
