@@ -2210,31 +2210,6 @@
   white-space: pre-wrap;
 }
 
-.intro-warning {
-  display: grid;
-  gap: 0.45rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(216, 102, 47, 0.26);
-  border-radius: 0.8rem;
-  background:
-    radial-gradient(circle at top right, rgba(241, 170, 79, 0.16), transparent 46%),
-    rgba(255, 246, 235, 0.92);
-}
-
-.intro-warning span {
-  color: #b45722;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.intro-warning p {
-  margin: 0;
-  color: #5a4839;
-  line-height: 1.6;
-}
-
 .intro-reminder {
   display: grid;
   gap: 0.45rem;
@@ -2840,6 +2815,326 @@
   .workspace-grid,
   .skill-tree {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1500px),
+  (min-width: 900px) and (max-height: 940px) {
+  @supports (zoom: 0.9) {
+    html {
+      zoom: 0.9;
+    }
+  }
+
+  .app-shell {
+    width: min(1620px, calc(100% - 0.6rem));
+    padding: 0.6rem 0 1.45rem;
+  }
+
+  .app-topbar,
+  .play-layout,
+  .workspace-grid,
+  .board-column,
+  .editor-column,
+  .utility-column {
+    gap: 0.55rem;
+  }
+
+  .app-topbar {
+    margin-bottom: 0.55rem;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    gap: 0.65rem;
+  }
+
+  .view-tab,
+  .settings-button,
+  .settings-toggle,
+  .language-button {
+    padding: 0.36rem 0.78rem;
+    font-size: 0.94rem;
+  }
+
+  .workspace-grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  }
+
+  .objective-bar {
+    gap: 0.45rem;
+    padding: 0.6rem 0.68rem 0.64rem;
+  }
+
+  .objective-main {
+    gap: 0.55rem;
+  }
+
+  .objective-title {
+    font-size: clamp(0.96rem, 1.45vw, 1.14rem);
+  }
+
+  .objective-body {
+    font-size: 0.88rem;
+    line-height: 1.3;
+  }
+
+  .objective-stage,
+  .objective-progress-head {
+    font-size: 0.73rem;
+  }
+
+  .objective-side {
+    min-width: 168px;
+  }
+
+  .objective-primer-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.55rem;
+  }
+
+  .objective-primer-card {
+    gap: 0.4rem;
+    padding: 0.58rem 0.64rem;
+  }
+
+  .objective-primer-card p {
+    font-size: 0.9rem;
+    line-height: 1.38;
+  }
+
+  .objective-primer-syntax code,
+  .reference-inline-example,
+  .reference-example-code,
+  .goal-band-snippet pre,
+  .help-center-snippet,
+  .modal-code,
+  .board-internal-code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .objective-primer-syntax code {
+    padding: 0.34rem 0.44rem;
+    font-size: 0.76rem;
+    line-height: 1.28;
+    tab-size: 2;
+  }
+
+  .panel-kicker,
+  .modal-kicker {
+    font-size: 0.76rem;
+  }
+
+  .editor-header {
+    gap: 0.65rem;
+    padding: 0.58rem 0.72rem 0.56rem;
+  }
+
+  .editor-help {
+    font-size: 0.84rem;
+    line-height: 1.28;
+  }
+
+  .editor-lock-badge,
+  .editor-line-badge {
+    padding: 0.28rem 0.62rem;
+    font-size: 0.8rem;
+  }
+
+  .code-editor .cm-editor {
+    font-size: 0.9rem;
+    min-height: 148px;
+  }
+
+  .editor-shell.helper-editor .code-editor .cm-editor {
+    min-height: 84px;
+  }
+
+  .code-editor .cm-scroller {
+    min-height: 148px;
+  }
+
+  .editor-shell.helper-editor .code-editor .cm-scroller {
+    min-height: 84px;
+    max-height: 84px;
+  }
+
+  .controls,
+  .shop-shell {
+    gap: 0.72rem;
+    padding: 0.78rem 0.86rem;
+  }
+
+  .editor-toolbar {
+    gap: 0.55rem;
+    padding: 0.56rem 0.68rem;
+  }
+
+  .editor-stat,
+  .auto-run-toggle {
+    padding: 0.32rem 0.62rem;
+    font-size: 0.86rem;
+  }
+
+  .run-button,
+  .secondary-button,
+  .ghost-button {
+    padding: 0.72rem 0.94rem;
+    font-size: 0.94rem;
+  }
+
+  .run-button.compact {
+    min-width: 185px;
+  }
+
+  .settings-panel {
+    width: min(392px, calc(100vw - 0.75rem));
+    gap: 0.8rem;
+    padding: 0.86rem;
+  }
+
+  .settings-section {
+    gap: 0.45rem;
+    padding-top: 0.72rem;
+  }
+
+  .settings-section-label,
+  .settings-progress-note,
+  .settings-progress-status {
+    font-size: 0.84rem;
+  }
+
+  .board-shell {
+    gap: 0.55rem;
+    padding: 0.62rem 0.66rem 0.66rem;
+  }
+
+  .board-stage {
+    padding: 0.3rem;
+  }
+
+  .board-preview-pill,
+  .board-bonus-pill {
+    font-size: 0.82rem;
+  }
+
+  .board-internals-panel {
+    gap: 0.48rem;
+    padding: 0.62rem 0.66rem 0.66rem;
+  }
+
+  .board-internals-grid {
+    gap: 0.5rem;
+  }
+
+  .board-internal-card {
+    padding: 0.58rem 0.62rem;
+  }
+
+  .board-internal-value {
+    font-size: 0.92rem;
+  }
+
+  .modal-backdrop {
+    padding: 0.75rem;
+  }
+
+  .modal-card {
+    width: min(700px, calc(100vw - 1.5rem));
+    max-height: calc(100vh - 1.5rem);
+    gap: 0.85rem;
+    padding: 1.08rem 1.12rem 1.14rem;
+    border-radius: 1.2rem;
+  }
+
+  .intro-modal {
+    width: min(660px, calc(100vw - 1.5rem));
+    gap: 0.92rem;
+  }
+
+  .intro-modal h2 {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+  }
+
+  .intro-body {
+    font-size: 0.92rem;
+    line-height: 1.58;
+  }
+
+  .intro-reminder,
+  .intro-checklist {
+    padding: 0.72rem 0.82rem;
+  }
+
+  .intro-checklist ul {
+    gap: 0.42rem;
+  }
+
+  .task-sheet-wrap {
+    top: 0.7rem;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    width: min(800px, calc(100vw - 1.5rem));
+  }
+
+  .task-sheet {
+    gap: 0.72rem;
+    padding: 0.82rem 0.86rem 0.9rem;
+  }
+
+  .task-sheet-sticky {
+    top: -0.82rem;
+    gap: 0.58rem;
+    margin: -0.82rem -0.86rem 0;
+    padding: 0.82rem 0.86rem 0.7rem;
+  }
+
+  .task-modal-badge,
+  .task-close-button {
+    font-size: 0.82rem;
+  }
+
+  .help-center-backdrop {
+    padding: 4.2rem 0.8rem 0.8rem;
+  }
+
+  .help-center {
+    width: min(900px, calc(100vw - 1.5rem));
+    max-height: min(80vh, 720px);
+    padding: 1rem;
+    border-radius: 1.18rem;
+  }
+
+  .help-center-header {
+    margin-bottom: 0.82rem;
+  }
+
+  .help-center-title {
+    font-size: clamp(1.16rem, 1.7vw, 1.6rem);
+  }
+
+  .help-center-layout {
+    gap: 0.8rem;
+  }
+
+  .help-center-sidebar,
+  .help-center-body {
+    padding: 0.84rem;
+  }
+
+  .help-center-body {
+    gap: 0.78rem;
+  }
+
+  .help-entry-button {
+    padding: 0.72rem 0.78rem;
+  }
+
+  .coachmark-bubble {
+    gap: 0.72rem;
+    max-width: min(300px, calc(100vw - 1rem));
+    padding: 0.82rem 0.86rem 0.8rem;
   }
 }
 
