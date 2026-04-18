@@ -78,12 +78,12 @@
         "boardHint": "Omistuslause peaks kopeerima 'portal_side' otse, ilma sellele midagi juurde liitmata.",
         "unlockConnection": "See kontrollib, kas saad aru, et omistuslause peaks 'portal_side'-i otse kasutama.",
         "options": [
-            "target = portal_side",
-            "target = portal_side + 1",
             "target = 4 - portal_side",
+            "target = portal_side + 1",
+            "target = portal_side",
             "target = 2"
         ],
-        "correctOption": 0,
+        "correctOption": 2,
         "successMessage": "Õige. 'portal_side' sisaldab juba vajalikku sisendinumbrit, seega saab seda otse kasutada.",
         "failureMessage": "'portal_side' juba salvestab aktiivse poole. Sellele liitmine võib viia sisendi lubatud vahemikust välja."
     },
@@ -169,12 +169,12 @@
         "boardHint": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga ja jätma teistele pallidele alles päris laskmise.",
         "unlockConnection": "Tingimuslaused on olulised, sest masin saab reageerida eelvaatele enne, kui pall lauale läheb.",
         "options": [
-            "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+            "if next_ball == center_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
             "if next_ball == center_ball:\n    choose_input(2)\nelse:\n    skip_ball()",
             "if portal_side == negative_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-            "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
+            "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()"
         ],
-        "correctOption": 0,
+        "correctOption": 3,
         "successMessage": "Õige. Parandatud versioon jätab vahele ainult 'negative_ball'-i ja laseb teised pallid välja.",
         "failureMessage": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga, jätma selle vahele ja laskma teised pallid siiski välja."
     },
@@ -191,12 +191,12 @@
         "boardHint": "Parandatud programm peab hoidma 3 tulemust lahus: negatiivne -> jäta vahele, portaal -> portal_side, kesk -> sisend 2.",
         "unlockConnection": "See on esimene täielik eelvaatestrateegia, kuid siin piisab sellest, et tunned õige haruloogika ära ega pea seda veel nullist kirjutama.",
         "options": [
-            "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
             "if next_ball == portal_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+            "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
             "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(portal_side)\n    drop_ball()\nelse:\n    choose_input(2)\n    drop_ball()",
             "if next_ball == negative_ball:\n    choose_input(2)\n    drop_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()"
         ],
-        "correctOption": 0,
+        "correctOption": 1,
         "successMessage": "Õige. See versioon hoiab kolm nähtavat juhtu lahus ja suunab igaühe õigesti.",
         "failureMessage": "Õige versioon peaks jätma vahele ainult 'negative_ball'-i, saatma 'portal_ball'-i 'portal_side' väärtuse järgi ja kukutama 'center_ball'-i sisendist 2."
     },
@@ -214,12 +214,12 @@
         "boardHint": "Varasemad teemad on endiselt tähtsad. Eelvaateloogika on kasulik ainult siis, kui loed portaali endiselt õigesti.",
         "unlockConnection": "See on muutujate teema hajutatud kordamine.",
         "options": [
-            "Sisend 1, sest 'portal_side' läheb otse käsu 'choose_input(...)' sisse.",
+            "Sisend 2, sest 'choose_input(...)' valib keskmise, kui väärtust ei tunta.",
             "Sisend 2, sest keskmine sisend on vaikimisi rada.",
             "Sisend 3, sest 'portal_side' tuleks peegeldada vastaspooleks.",
-            "Palli ei lasta välja, sest siin ei ole 'if'-lauset."
+            "Sisend 1, sest 'portal_side' läheb otse käsu 'choose_input(...)' sisse."
         ],
-        "correctOption": 0,
+        "correctOption": 3,
         "successMessage": "Õige. 'portal_side = 1' tähendab vasakut sisendit.",
         "failureMessage": "Kui 'portal_side' on '1', peab pall väljuma vasakust sisendist."
     },
@@ -236,12 +236,12 @@
         "boardHint": "Abiredaktoris on üks abifunktsioon ja põhiprogramm saab selle nime järgi välja kutsuda.",
         "unlockConnection": "Funktsioonid on tähtsad, sest üks nimega taktika saab juhtida korduvat käitumist laual.",
         "options": [
-            "Abifunktsiooni keha käivitatakse selles kohas ühe korra.",
+            "Abifunktsioon muudab enne väljalaset 'portal_side' väärtust.",
             "Alles salvestatakse abifunktsiooni definitsioon ja ühtegi palli välja ei lasta.",
-            "Abifunktsiooni keha kordub seni, kuni eelvaade tühjaks saab.",
-            "Abifunktsioon muudab enne väljalaset 'portal_side' väärtust."
+            "Abifunktsiooni keha käivitub ühe korra, aga 'portal_side' kopeeritakse enne abifunktsiooni enda skoopi.",
+            "Abifunktsiooni keha käivitatakse selles kohas ühe korra."
         ],
-        "correctOption": 0,
+        "correctOption": 3,
         "successMessage": "Õige. 'follow_portal()' käivitab selle abifunktsiooni keha ühe korra.",
         "failureMessage": "Abifunktsiooni kutsumine käivitab selle keha selles kohas ühe korra."
     },
@@ -339,12 +339,12 @@
         "boardHint": "Varasem haruloogika on endiselt oluline, kui tõstad taktika hiljem abifunktsioonidesse.",
         "unlockConnection": "See on tingimuslausete teema hajutatud kordamine.",
         "options": [
-            "next_ball == negative_ball",
+            "next_ball == negative",
             "next_ball == portal_ball",
             "next_ball != negative_ball",
-            "portal_side == 1"
+            "next_ball == negative_ball"
         ],
-        "correctOption": 0,
+        "correctOption": 3,
         "successMessage": "Õige. 'next_ball == negative_ball' jätab vahele ainult negatiivse palli.",
         "failureMessage": "Tingimus peab lugema 'next_ball' väärtust ja võrdlema seda otse 'negative_ball'-iga."
     },
@@ -361,12 +361,12 @@
         "boardHint": "Pärast 'skip_ball()' peab praegune tsüklisamm lõppema enne, kui see jõuab 'follow_portal()'-ini.",
         "unlockConnection": "See on peamine tsüklimuster, mis muudab ühe taktika turvaliseks automaatikaks.",
         "options": [
-            "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
             "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
+            "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
             "for shot in range(3):\n    if portal_side == negative_ball:\n        continue\n    follow_portal()",
-            "for shot in range(3):\n    skip_ball()\n    continue"
+            "for shot in range(3):\n    continue\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()"
         ],
-        "correctOption": 0,
+        "correctOption": 1,
         "successMessage": "Õige. 'continue' lõpetab selle tsüklisammu pärast negatiivse palli vahelejätmist.",
         "failureMessage": "Turvaline versioon jätab negatiivse palli vahele ja kasutab 'continue', et tsükkel seda pärast enam välja ei laseks."
     },
@@ -522,7 +522,7 @@
             "0.5",
             "1",
             "5",
-            "Indeks 2 jääb järjendist välja."
+            "2, sest 'bonus_map[2]' loeb indeksit, mitte salvestatud kordajat."
         ],
         "correctOption": 2,
         "successMessage": "Õige. 'bonus_map[2]' loeb kolmanda kordaja, 5.",
