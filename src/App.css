@@ -2377,7 +2377,7 @@
 
 .task-code-entry {
   width: 100%;
-  min-height: 152px;
+  min-height: clamp(220px, 34vh, 340px);
   resize: vertical;
   border: 1px solid rgba(215, 202, 178, 0.92);
   border-radius: 0.5rem;

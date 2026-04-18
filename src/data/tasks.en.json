@@ -491,20 +491,20 @@
         "topicOrder": 4,
         "taskOrder": 3,
         "reviewOriginTopicId": "functions",
-        "title": "Review: call the helper twice",
-        "question": "How many helper launches does this main program trigger?",
-        "code": "follow_portal()\nfollow_portal()",
-        "boardHint": "A function call runs the stored helper body each time it appears.",
+        "title": "Review: how many balls does this program drop?",
+        "question": "How many balls does this whole program drop?",
+        "code": "def drop_multiple_balls():\n    drop_ball()\n    drop_ball()\n    drop_ball()\n\ndrop_multiple_balls()\ndrop_multiple_balls()",
+        "boardHint": "First trace what one helper call does. Then count what happens when the main program calls that helper twice.",
         "unlockConnection": "This is a spaced review of the functions topic.",
         "options": [
-            "0",
-            "1",
             "2",
-            "3"
+            "3",
+            "5",
+            "6"
         ],
-        "correctOption": 2,
-        "successMessage": "Correct. Two calls trigger two helper launches.",
-        "failureMessage": "Each 'follow_portal()' call runs the helper body once, so two calls mean two helper launches."
+        "correctOption": 3,
+        "successMessage": "Correct. One call drops 3 balls, and two calls drop 6.",
+        "failureMessage": "The helper drops 3 balls each time it is called. Since the main program calls it twice, the whole program drops 6 balls."
     },
     {
         "id": "lists-trace",

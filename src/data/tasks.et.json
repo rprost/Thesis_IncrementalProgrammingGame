@@ -491,20 +491,20 @@
         "topicOrder": 4,
         "taskOrder": 3,
         "reviewOriginTopicId": "functions",
-        "title": "Kordus: kutsu abifunktsiooni 2 korda",
-        "question": "Mitu korda laseb see põhiprogramm palli välja?",
-        "code": "follow_portal()\nfollow_portal()",
-        "boardHint": "Iga 'follow_portal()' kutse käivitab sama abifunktsiooni uuesti.",
+        "title": "Kordus: mitu palli see programm välja laseb?",
+        "question": "Mitu palli laseb see terve programm välja?",
+        "code": "def drop_multiple_balls():\n    drop_ball()\n    drop_ball()\n    drop_ball()\n\ndrop_multiple_balls()\ndrop_multiple_balls()",
+        "boardHint": "Kõigepealt vaata läbi, mida teeb üks abifunktsiooni kutse. Seejärel loe kokku, mis juhtub siis, kui põhiprogramm kutsub sama abifunktsiooni välja kaks korda.",
         "unlockConnection": "See on funktsioonide teema hajutatud kordamine.",
         "options": [
-            "0",
-            "1",
             "2",
-            "3"
+            "3",
+            "5",
+            "6"
         ],
-        "correctOption": 2,
-        "successMessage": "Õige. Kaks kutset tähendavad kahte väljalaset.",
-        "failureMessage": "Iga 'follow_portal()' kutse käivitab abifunktsiooni ühe korra, seega kaks kutset tähendab kahte väljalaset."
+        "correctOption": 3,
+        "successMessage": "Õige. Üks kutse laseb välja 3 palli ja kaks kutset kokku 6 palli.",
+        "failureMessage": "Abifunktsioon laseb igal väljakutsel välja 3 palli. Kuna põhiprogramm kutsub seda välja kaks korda, laseb terve programm välja 6 palli."
     },
     {
         "id": "lists-trace",
