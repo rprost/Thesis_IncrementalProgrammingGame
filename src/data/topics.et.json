@@ -428,7 +428,7 @@
                 "id": "loops-repeat-three",
                 "title": "Eesm\u00e4rk 1: Korda abifunktsiooni v\u00e4hemalt kolm korda",
                 "instruction": "Kasuta p\u00f5hiprogrammis 'for ... in range(3)' ja lisa ts\u00fckli kehasse 'follow_portal()', et abifunktsioon laseks \u00fche k\u00e4ivituse ajal v\u00e4lja v\u00e4hemalt kolm palli.",
-                "boardHint": "Kui see eesm\u00e4rk on tehtud, avaneb automaatk\u00e4ivitus l\u00fchikeste korduvate jooksude jaoks. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
+                "boardHint": "Alusta sellest, et muudad ühe väljakutse tsükliks:\nfor shot in range(3):\n    follow_portal()\nSissetõmmatud rida käivitub igal tsüklisammul ühe korra.",
                 "suggestedSnippet": "for shot in range(3):\n    follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",

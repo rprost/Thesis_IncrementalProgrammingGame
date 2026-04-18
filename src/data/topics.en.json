@@ -428,7 +428,7 @@
                 "id": "loops-repeat-three",
                 "title": "Goal 1: Repeat the helper at least three times",
                 "instruction": "Use 'for ... in range(3)' in the main program and put 'follow_portal()' inside the loop body so the helper launches at least three balls in one run.",
-                "boardHint": "Once this goal is complete, auto-run unlocks for short repeated sessions. 'range(3)' is the smallest loop that works here.",
+                "boardHint": "Start by turning the single call into a loop:\nfor shot in range(3):\n    follow_portal()\nThe indented line runs once on each loop step.",
                 "suggestedSnippet": "for shot in range(3):\n    follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
