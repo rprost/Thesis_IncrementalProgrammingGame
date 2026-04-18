@@ -759,7 +759,6 @@
 .goal-band,
 .editor-shell,
 .controls,
-.activity-feed,
 .shop-shell,
 .syntax-card,
 .board-shell {
@@ -1980,44 +1979,6 @@
   stroke-width: 2.2;
   stroke-dasharray: 3 4;
   filter: drop-shadow(0 0 8px rgba(111, 200, 255, 0.34));
-}
-
-.activity-feed {
-  display: grid;
-  gap: 0.9rem;
-  padding: 1.15rem 1.2rem;
-}
-
-.activity-empty {
-  margin: 0;
-  color: #5a4839;
-}
-
-.activity-list {
-  display: grid;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.activity-entry {
-  padding: 0.9rem 0.95rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.66);
-}
-
-.activity-category {
-  color: #8f6b52;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.activity-message {
-  margin: 0.35rem 0 0;
-  color: #2c2017;
 }
 
 .shop-header {

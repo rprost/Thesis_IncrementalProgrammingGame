@@ -25,7 +25,7 @@
     "editorTitle": "Main program",
     "editorLockedTitle": "Locked",
     "editorUnlockedTitle": "Editable",
-    "editorLockedDescription": "",
+    "editorLockedDescription": "The editor unlocks after you finish the intro checks.",
     "editorUnlockedDescription": "Use the goal above the editor as your target. Run when the code matches it.",
     "helperEditorTitle": "Helper editor",
     "helperEditorLockedDescription": "The helper editor unlocks in the functions topic.",

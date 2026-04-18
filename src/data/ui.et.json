@@ -25,7 +25,7 @@
     "editorTitle": "Põhiprogramm",
     "editorLockedTitle": "Lukus",
     "editorUnlockedTitle": "Muudetav",
-    "editorLockedDescription": "",
+    "editorLockedDescription": "Redaktor avaneb pärast sissejuhatavate ülesannete lahendamist.",
     "editorUnlockedDescription": "Aktiivne eesmärk on kohe redaktori kohal. Kohanda kood selle järgi ja siis käivita programm.",
     "helperEditorTitle": "Abiredaktor",
     "helperEditorLockedDescription": "Abiredaktor avaneb funktsioonide teemas.",
