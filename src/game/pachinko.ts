@@ -29,6 +29,7 @@ const BUCKET_COUNT = 9
 const INPUT_START_Y = 34
 const INPUT_MID_Y = 82
 const INPUT_LOW_Y = 118
+const PEG_RENDER_Y_OFFSET = -7
 
 export const BOARD_VIEWBOX = {
   width: 460,
@@ -154,6 +155,7 @@ function buildPegPath(
       x: firstPin.x,
       y: firstPin.y,
       contact: true,
+      renderYOffset: PEG_RENDER_Y_OFFSET,
     })
   }
 
@@ -181,6 +183,7 @@ function buildPegPath(
       x: pin.x,
       y: pin.y,
       contact: true,
+      renderYOffset: PEG_RENDER_Y_OFFSET,
     })
   })
 
@@ -216,6 +219,17 @@ function appendPortalNodes(path: BoardPathNode[], portalSide: PortalSide): Board
     { x: approachX, y: approachY },
     { x: portal.x, y: portal.y, contact: true },
   ]
+}
+
+function getRenderableNode(node: BoardPathNode | undefined): BoardPathNode {
+  if (node === undefined) {
+    return { x: BOARD_CENTER_X, y: INPUT_START_Y }
+  }
+
+  return {
+    ...node,
+    y: node.y + (node.renderYOffset ?? 0),
+  }
 }
 
 function getPortalTriggerIndex(
@@ -401,8 +415,10 @@ function interpolatePath(
   const scaled = clamped * segmentCount
   const segmentIndex = Math.min(segmentCount - 1, Math.floor(scaled))
   const localProgress = scaled - segmentIndex
-  const start = path[segmentIndex] ?? path[0] ?? { x: BOARD_CENTER_X, y: 18 }
-  const end = path[segmentIndex + 1] ?? start
+  const start = getRenderableNode(
+    path[segmentIndex] ?? path[0] ?? { x: BOARD_CENTER_X, y: 18 },
+  )
+  const end = getRenderableNode(path[segmentIndex + 1] ?? path[segmentIndex] ?? path[0] ?? start)
   const eased = easeInOutSine(localProgress)
   const horizontalDirection = end.x === start.x ? 0 : Math.sign(end.x - start.x)
   const controlX =
@@ -410,7 +426,7 @@ function interpolatePath(
   const controlY =
     horizontalDirection === 0
       ? (start.y + end.y) / 2
-      : (start.y + end.y) / 2 - (end.contact === true ? 12 : 4)
+      : (start.y + end.y) / 2 - (end.contact === true ? 14 : 4)
   const inverse = 1 - eased
   const x =
     inverse * inverse * start.x +
@@ -447,7 +463,7 @@ function getReducedMotionPathPosition(
   const clamped = clamp(progress, 0, 1)
   const maxIndex = path.length - 1
   const stepIndex = Math.min(maxIndex, Math.floor(clamped * maxIndex))
-  const node = path[stepIndex] ?? path[maxIndex] ?? path[0]
+  const node = getRenderableNode(path[stepIndex] ?? path[maxIndex] ?? path[0])
 
   return {
     x: node?.x ?? BOARD_CENTER_X,

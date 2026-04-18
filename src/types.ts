@@ -87,6 +87,7 @@ export type BoardPathNode = {
   x: number
   y: number
   contact?: boolean
+  renderYOffset?: number
 }
 
 export type ScoreBreakdownKind =
