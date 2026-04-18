@@ -2119,23 +2119,30 @@ function getWriteTaskFeedback(
       return null
     }
     case 'functions-write': {
-      if (
-        !runStats.featureUsage.usedHelperCall ||
-        !sourceMentions(combinedSource, 'skip_negative')
-      ) {
-        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
+      if (!sourceMentions(helperProgramSource, 'def follow_portal')) {
+        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
       }
 
-      if (runStats.skippedNegativeBallCount === 0) {
-        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
+      if (!runStats.featureUsage.usedHelperCall) {
+        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
       }
 
-      if (runStats.mainLaunchCount > 0 || runStats.helperLaunchCount > 0) {
-        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
+      if (!runStats.featureUsage.usedChooseInput) {
+        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
       }
 
-      if (runStats.skippedNegativeBallCount !== 1) {
-        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
+      if (runStats.mainLaunchCount > 0 || runStats.helperLaunchCount !== 1) {
+        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
+      }
+
+      const actualAim = runStats.helperLaunchAims[0]
+
+      if (actualAim === undefined || actualAim !== expectedPortalSide) {
+        if (expectedPortalSide === null || actualAim === undefined) {
+          return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
+        }
+
+        return getWrongChuteFeedback(expectedPortalSide, actualAim)
       }
 
       return null
@@ -2178,6 +2185,25 @@ function getWriteTaskFeedback(
 
       if (!runStats.featureUsage.usedChooseInput) {
         return createWriteTaskFeedback('taskFeedbackNeedChooseChute')
+      }
+
+      const expectedPreviewResponses = validationCase.expectation.previewResponses
+      const expectedPreviewCount =
+        validationCase.scenario.visiblePreviewCount ??
+        validationCase.scenario.previewQueue.length
+
+      if (
+        expectedPreviewResponses !== undefined &&
+        runStats.previewResponses.length < expectedPreviewResponses.length &&
+        previewResponsesMatch(
+          runStats.previewResponses,
+          expectedPreviewResponses.slice(0, runStats.previewResponses.length),
+          validationCase.scenario,
+        )
+      ) {
+        return createWriteTaskFeedback('taskFeedbackNeedFullPreviewLoop', {
+          expected: String(expectedPreviewCount),
+        })
       }
 
       if (portalLaunches.length < portalBallCount) {

@@ -16,6 +16,7 @@ import {
   getLocaleContent,
   LANGUAGE_STORAGE_KEY,
 } from './content'
+import { buildEditorCompletions } from './game/editorCompletions'
 import {
   advanceProgramRun,
   applyTaskResult,
@@ -135,6 +136,10 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'invalid_command') ??
     validation.issues.find((issue) => issue.code === 'line_capacity_exceeded') ??
     validation.issues[0]
+  const withHelperPrefix = (message: string) =>
+    prioritizedIssue.source === 'helper'
+      ? `${ui.helperEditorTitle}: ${message}`
+      : message
 
   switch (prioritizedIssue.code) {
     case 'empty_program':
@@ -144,9 +149,9 @@ function getProgramValidationMessage(
         limit: String(prioritizedIssue.limit ?? 0),
       })
     case 'invalid_command':
-      return formatText(ui.programErrorInvalidLine, {
+      return withHelperPrefix(formatText(ui.programErrorInvalidLine, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'locked_construct':
       return formatText(ui.programErrorLockedConstruct, {
         construct: getConstructLabel(
@@ -180,31 +185,31 @@ function getProgramValidationMessage(
         max: String(prioritizedIssue.maxSteps ?? MAX_STEPS_PER_RUN),
       })
     case 'invalid_expression':
-      return formatText(ui.programErrorInvalidExpression, {
+      return withHelperPrefix(formatText(ui.programErrorInvalidExpression, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'invalid_index_access':
-      return formatText(ui.programErrorInvalidIndexAccess, {
+      return withHelperPrefix(formatText(ui.programErrorInvalidIndexAccess, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'invalid_condition':
-      return formatText(ui.programErrorInvalidCondition, {
+      return withHelperPrefix(formatText(ui.programErrorInvalidCondition, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'invalid_set_aim':
-      return formatText(ui.programErrorInvalidSetAim, {
+      return withHelperPrefix(formatText(ui.programErrorInvalidSetAim, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'continue_outside_loop':
-      return ui.programErrorContinueOutsideLoop
+      return withHelperPrefix(ui.programErrorContinueOutsideLoop
         ? formatText(ui.programErrorContinueOutsideLoop, {
             line: String(prioritizedIssue.lineNumber ?? 1),
           })
-        : `Line ${String(prioritizedIssue.lineNumber ?? 1)}: continue can only be used inside a for loop.`
+        : `Line ${String(prioritizedIssue.lineNumber ?? 1)}: continue can only be used inside a for loop.`)
     case 'aim_range_limit':
-      return formatText(ui.programErrorAimRangeLimit, {
+      return withHelperPrefix(formatText(ui.programErrorAimRangeLimit, {
         line: String(prioritizedIssue.lineNumber ?? 1),
-      })
+      }))
     case 'invalid_function_definition':
       return formatText(ui.programErrorInvalidFunctionDefinition, {
         line: String(prioritizedIssue.lineNumber ?? 1),
@@ -378,6 +383,12 @@ function buildBallReferenceValues(ui: UiText): ReferenceValueItem[] {
       description: ui.referenceEvilBallDescription,
     },
   ]
+}
+
+function getHelperNames(helperProgramSource: string): string[] {
+  return [...helperProgramSource.matchAll(/^\s*def\s+([A-Za-z_]\w*)\s*\(\s*\)\s*:/gm)]
+    .map((match) => match[1])
+    .filter((name): name is string => name !== undefined)
 }
 
 function buildNextStepModel(
@@ -602,8 +613,10 @@ function buildReferenceValues(
 function buildReferencePatterns(
   gameState: GameState,
   ui: UiText,
+  helperProgramSource: string,
 ): ReferenceExampleItem[] {
   const portalActive = isBluePortalActive(gameState)
+  const helperName = getHelperNames(helperProgramSource)[0] ?? 'follow_portal'
 
   return [
     ...(portalActive
@@ -649,7 +662,7 @@ function buildReferencePatterns(
             id: 'functions-example-define',
             label: ui.referenceExampleFunctionsLabel,
             code: [
-              'def follow_portal():',
+              `def ${helperName}():`,
               '    choose_input(portal_side)',
               '    drop_ball()',
             ].join('\n'),
@@ -659,7 +672,7 @@ function buildReferencePatterns(
             label: ui.referenceExampleFunctionsLabel,
             code: [
               'if next_ball == portal_ball:',
-              '    follow_portal()',
+              `    ${helperName}()`,
             ].join('\n'),
           },
         ]
@@ -821,6 +834,13 @@ function App() {
   const functionsUnlocked =
     gameState.unlocks.unlockedConstructs.includes('functions')
   const isSpotlight = gameState.topicStage === 'new_unlock_spotlight'
+  const helperNames = getHelperNames(gameState.helperProgramSource)
+  const helperFunctionCalls =
+    functionsUnlocked && helperNames.length > 0
+      ? helperNames.map((name) => `${name}()`)
+      : functionsUnlocked
+        ? ['follow_portal()']
+        : []
   const validationMessage = getProgramValidationMessage(
     gameState.programValidation,
     ui,
@@ -885,7 +905,7 @@ function App() {
     ...(gameState.unlocks.allowedCommands.includes('skip_ball')
       ? ['skip_ball()']
       : []),
-    ...(functionsUnlocked ? ['follow_portal()'] : []),
+    ...helperFunctionCalls,
   ]
   const portalActive = isBluePortalActive(gameState)
   const availableStructures = [
@@ -899,7 +919,9 @@ function App() {
           'else:',
         ]
       : []),
-    ...(functionsUnlocked ? ['def follow_portal():'] : []),
+    ...(functionsUnlocked
+      ? [`def ${helperNames[0] ?? 'follow_portal'}():`]
+      : []),
     ...(gameState.unlocks.unlockedConstructs.includes('for')
       ? ['for ball in range(3):', 'continue']
       : []),
@@ -908,7 +930,27 @@ function App() {
       : []),
   ]
   const referenceValues = buildReferenceValues(gameState, ui, topics)
-  const referencePatterns = buildReferencePatterns(gameState, ui)
+  const referencePatterns = buildReferencePatterns(
+    gameState,
+    ui,
+    gameState.helperProgramSource,
+  )
+  const mainEditorCompletions = buildEditorCompletions({
+    variant: 'main',
+    availableFunctions,
+    availableStructures: availableStructures.filter(
+      (entry) => !entry.startsWith('def '),
+    ),
+    referenceValues,
+    helperProgramSource: gameState.helperProgramSource,
+  })
+  const helperEditorCompletions = buildEditorCompletions({
+    variant: 'helper',
+    availableFunctions,
+    availableStructures,
+    referenceValues,
+    helperProgramSource: gameState.helperProgramSource,
+  })
   const nextStep = buildNextStepModel(gameState, topics, tasks, ui)
   const previewCount = Math.max(
     supportEffects.previewCount,
@@ -1048,7 +1090,7 @@ function App() {
   }, [gameState.isRunning, gameState.activeBalls.length, tasks, topics])
 
   useEffect(() => {
-    if (gameState.activeBalls.length === 0 || prefersReducedMotion) {
+    if (gameState.activeBalls.length === 0) {
       return
     }
 
@@ -1057,7 +1099,7 @@ function App() {
     }, 16)
 
     return () => window.clearInterval(intervalId)
-  }, [gameState.activeBalls.length, prefersReducedMotion])
+  }, [gameState.activeBalls.length])
 
   useEffect(() => {
     if (!gameState.soundEnabled || isAudioReady) {
@@ -1535,6 +1577,7 @@ function App() {
                 helperText={editorHelperText}
                 feedbackMessage={editorFeedbackMessage}
                 feedbackTone={editorFeedbackTone}
+                completions={mainEditorCompletions}
                 onChange={handleProgramChange}
               />
 
@@ -1552,6 +1595,7 @@ function App() {
                   helperText={helperHelperText}
                   feedbackMessage={helperFeedbackMessage}
                   feedbackTone={helperFeedbackTone}
+                  completions={helperEditorCompletions}
                   onChange={handleHelperProgramChange}
                 />
               ) : null}

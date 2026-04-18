@@ -432,12 +432,47 @@ function interpolatePath(
   }
 }
 
+function getReducedMotionPathPosition(
+  path: BoardPathNode[],
+  progress: number,
+): { x: number; y: number; scale: number } {
+  if (path.length === 0) {
+    return {
+      x: BOARD_CENTER_X,
+      y: INPUT_START_Y,
+      scale: 1,
+    }
+  }
+
+  const clamped = clamp(progress, 0, 1)
+  const maxIndex = path.length - 1
+  const stepIndex = Math.min(maxIndex, Math.floor(clamped * maxIndex))
+  const node = path[stepIndex] ?? path[maxIndex] ?? path[0]
+
+  return {
+    x: node?.x ?? BOARD_CENTER_X,
+    y: node?.y ?? INPUT_START_Y,
+    scale: 1,
+  }
+}
+
 export function getBallRenderState(
   ball: ActiveBall,
   now: number,
   reducedMotion = false,
 ): { x: number; y: number; opacity: number; scale: number } {
   if (reducedMotion) {
+    const startNode = ball.path[0] ?? { x: BOARD_CENTER_X, y: INPUT_START_Y }
+
+    if (now < ball.spawnedAt) {
+      return {
+        x: startNode.x,
+        y: startNode.y,
+        opacity: 1,
+        scale: 1,
+      }
+    }
+
     if (
       ball.state === 'canceled' &&
       ball.cancelX !== undefined &&
@@ -451,13 +486,18 @@ export function getBallRenderState(
       }
     }
 
-    if (now < ball.spawnedAt) {
-      const startNode = ball.path[0] ?? { x: BOARD_CENTER_X, y: INPUT_START_Y }
+    if (ball.state === 'falling') {
+      const progress = clamp(
+        (now - ball.spawnedAt) / Math.max(1, ball.settleAt - ball.spawnedAt),
+        0,
+        1,
+      )
+      const position = getReducedMotionPathPosition(ball.path, progress)
 
       return {
-        x: startNode.x,
-        y: startNode.y,
-        opacity: 0,
+        x: position.x,
+        y: position.y,
+        opacity: 1,
         scale: 1,
       }
     }

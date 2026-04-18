@@ -1,8 +1,14 @@
 import CodeMirror from '@uiw/react-codemirror'
+import {
+  autocompletion,
+  type Completion,
+  type CompletionSource,
+} from '@codemirror/autocomplete'
 import { python } from '@codemirror/lang-python'
 import { Decoration, EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import type { UiText } from '../types'
+import type { EditorCompletionItem } from '../game/editorCompletions'
 
 type ProgramEditorProps = {
   code: string
@@ -17,6 +23,7 @@ type ProgramEditorProps = {
   helperText: string | null
   feedbackMessage: string | null
   feedbackTone: 'neutral' | 'success' | 'warning' | 'error'
+  completions?: EditorCompletionItem[]
   onChange: (value: string) => void
 }
 
@@ -69,7 +76,97 @@ const readOnlyExtensions = [
   EditorView.editable.of(false),
 ]
 
-const editableExtensions = [python(), EditorView.lineWrapping]
+function filterCompletionOptions(
+  options: Completion[],
+  prefix: string,
+  includeSnippets: boolean,
+) {
+  const normalizedPrefix = prefix.toLowerCase()
+
+  return options.filter((option) => {
+    if (!includeSnippets && option.type === 'snippet') {
+      return false
+    }
+
+    if (normalizedPrefix === '') {
+      return true
+    }
+
+    const primary = option.label.toLowerCase()
+    const applyText =
+      typeof option.apply === 'string'
+        ? option.apply.split('\n')[0]?.toLowerCase() ?? ''
+        : ''
+
+    return (
+      primary.startsWith(normalizedPrefix) ||
+      applyText.startsWith(normalizedPrefix)
+    )
+  })
+}
+
+function createEditableExtensions(completions: EditorCompletionItem[]) {
+  const completionOptions: Completion[] = completions.map((item) => ({
+    label: item.label,
+    apply: item.apply,
+    detail: item.detail,
+    type: item.type,
+  }))
+  const tokenOptions = completionOptions.filter((item) => item.type !== 'snippet')
+  const completionSource: CompletionSource = (context) => {
+    const word = context.matchBefore(/[A-Za-z_][A-Za-z0-9_]*/)
+
+    if (word !== null && (word.from !== word.to || context.explicit)) {
+      const options = filterCompletionOptions(
+        completionOptions,
+        word.text,
+        true,
+      )
+
+      if (options.length === 0 && !context.explicit) {
+        return null
+      }
+
+      return {
+        from: word.from,
+        options,
+      }
+    }
+
+    const line = context.state.doc.lineAt(context.pos)
+    const lineBeforeCursor = line.text.slice(0, context.pos - line.from)
+    const shouldSuggestTokens =
+      /(?:^|\s)(if|elif)\s+$/.test(lineBeforeCursor) ||
+      /(==|!=|<=|>=|<|>)\s*$/.test(lineBeforeCursor) ||
+      /\(\s*$/.test(lineBeforeCursor) ||
+      /=\s*$/.test(lineBeforeCursor)
+
+    if (!shouldSuggestTokens) {
+      return context.explicit
+        ? {
+            from: context.pos,
+            options: completionOptions,
+          }
+        : null
+    }
+
+    return {
+      from: context.pos,
+      options: tokenOptions,
+    }
+  }
+
+  return [
+    python(),
+    EditorView.lineWrapping,
+    autocompletion({
+      override: [completionSource],
+      activateOnTyping: true,
+      icons: false,
+    }),
+  ]
+}
+
 const editorTheme = EditorView.theme(
   {
     '&': {
@@ -113,6 +210,7 @@ export function ProgramEditor({
   helperText,
   feedbackMessage,
   feedbackTone,
+  completions = [],
   onChange,
 }: ProgramEditorProps) {
   const executionHighlightExtension = createExecutionHighlightExtension(
@@ -167,13 +265,16 @@ export function ProgramEditor({
             foldGutter: false,
             dropCursor: false,
             allowMultipleSelections: false,
+            autocompletion: false,
             indentOnInput: false,
             lineNumbers: true,
             highlightActiveLine: isEditable,
             highlightActiveLineGutter: isEditable,
           }}
           extensions={[
-            ...(isEditable ? editableExtensions : readOnlyExtensions),
+            ...(isEditable
+              ? createEditableExtensions(completions)
+              : readOnlyExtensions),
             editorTheme,
             ...executionHighlightExtension,
           ]}

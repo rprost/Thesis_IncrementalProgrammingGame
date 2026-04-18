@@ -279,6 +279,7 @@
     "taskFeedbackNeedIf": "This task needs an 'if' statement.",
     "taskFeedbackNeedBestTracker": "Track the current best multiplier and the input index it belongs to in your own variables before you choose an input.",
     "taskFeedbackNeedContinue": "After 'skip_ball()' or the center-ball launch, use 'continue' so that loop step stops at the right time.",
+    "taskFeedbackNeedFullPreviewLoop": "This task shows {expected} upcoming balls. Increase the loop count so your program handles all {expected} preview balls.",
     "taskFeedbackWrongLaunchCount": "This answer launches {actual} time(s), but this task needs {expected}.",
     "activityFeedTitle": "Progress log",
     "activityFeedEmpty": "Unlocks, solved tasks, and support upgrades will appear here.",

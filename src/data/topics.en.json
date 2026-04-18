@@ -172,8 +172,8 @@
             {
                 "id": "conditions-skip-negative",
                 "title": "Goal 1: Skip 'negative_ball'",
-                "instruction": "The next ball is 'negative_ball'.\nUsing an 'if' statement, write a program that checks the next ball and skips it with 'skip_ball()'.",
-                "boardHint": "In this situation there is only one negative ball. If you skip it, nothing should launch. Make sure you use an 'if' statement.",
+                "instruction": "The next ball is 'negative_ball'.\nUse an 'if' statement to check it and skip it with 'skip_ball()'.\nThis goal is correct only if no ball launches. Press 'Run program' anyway, but do not add 'drop_ball()' after the 'if'. We add 'else' in the next goal.",
+                "boardHint": "'skip_ball()' removes this bad ball from the queue. The run should still happen, but this goal should launch no balls.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -231,9 +231,9 @@
             {
                 "id": "conditions-center-rule",
                 "title": "Goal 3: Launch 'center_ball' from input 2",
-                "instruction": "In this situation the next ball is 'center_ball'.\nDelete the current code and write an 'if' program that launches it from input 2.",
-                "boardHint": "In this one-ball situation, you only need the center-ball launch branch.",
-                "suggestedSnippet": "if next_ball == center_ball:\n    choose_input(2)\n    drop_ball()",
+                "instruction": "In this situation the next ball is 'center_ball'.\nDelete the current code and launch it from input 2.",
+                "boardHint": "This one-ball setup is already known to be a center ball, so a direct launch is enough.",
+                "suggestedSnippet": "choose_input(2)\ndrop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
@@ -243,12 +243,7 @@
                 },
                 "acceptance": {
                     "requiredFeatures": [
-                        "usedIf",
                         "usedChooseInput"
-                    ],
-                    "requiredIdentifiers": [
-                        "next_ball",
-                        "center_ball"
                     ],
                     "expectedMainLaunchAims": [
                         2
@@ -304,8 +299,8 @@
             {
                 "id": "functions-call-helper-left",
                 "title": "Goal 1: Call the helper",
-                "instruction": "Call 'follow_portal()' so the helper launches once through the left side.",
-                "boardHint": "The helper editor already stores the tactic. The main editor only needs the helper call.",
+                "instruction": "Call 'follow_portal()' once.\nThe helper reads 'portal_side' from the board, so you do not choose the side yourself.",
+                "boardHint": "The helper editor already stores the tactic. In the main editor you only need the call 'follow_portal()'.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "drop_ball()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -332,8 +327,8 @@
             {
                 "id": "functions-call-helper-right",
                 "title": "Goal 2: Reuse the helper",
-                "instruction": "Use the same helper again. This time the portal is on the right, so the helper should aim there.",
-                "boardHint": "If your helper already reads 'portal_side', you can reuse it without rewriting the helper body.",
+                "instruction": "Use the same helper again.\nThe portal is on the other side this time, but the helper still reads 'portal_side' dynamically, so the same call should still work.",
+                "boardHint": "If your helper already reads 'portal_side', you do not need to rewrite the helper body or the main call.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -360,8 +355,8 @@
             {
                 "id": "functions-write-skip-helper",
                 "title": "Goal 3: Write 'skip_negative()'",
-                "instruction": "Edit the helper function.\nRename it to 'skip_negative()'.\nIt should check the next ball, and if that ball is 'negative_ball', it should skip it.\nDo not forget to call it from the main program under the new name.",
-                "boardHint": "This helper function should call 'skip_ball()' once. You do not need to choose an input or launch a ball here.",
+                "instruction": "Edit the helper function.\nRename it to 'skip_negative()'.\nIt should check the next ball, and if that ball is 'negative_ball', it should skip it.\nIn this setup the visible next ball is negative, so a correct run should launch no balls. Still click 'Run program' so that bad ball gets removed from the queue.\nDo not forget to call it from the main program under the new name.",
+                "boardHint": "This helper function should call 'skip_ball()' once. Do not choose an input and do not launch a ball here.",
                 "suggestedSnippet": "def skip_negative():\n    skip_ball()",
                 "starterProgramSource": "skip_negative()",
                 "starterHelperSource": "def skip_negative():\n    drop_ball()",
@@ -498,8 +493,8 @@
             {
                 "id": "loops-mixed-strategy",
                 "title": "Goal 3: Handle every possible ball with a loop",
-                "instruction": "Look at the 'Upcoming balls' row and handle those 3 balls in a loop:\nuse 'follow_portal()' for 'portal_ball'\nskip 'negative_ball'\nsend 'center_ball' to input 2.",
-                "boardHint": "'continue' stops the current loop step and moves to the next repetition. 'elif' is also useful here, because it keeps the ball checks in one clean chain.",
+                "instruction": "Look at the 3 visible upcoming balls and handle them inside one loop.\nOn each repetition, check 'next_ball':\nif it is 'portal_ball', call 'follow_portal()'\nif it is 'negative_ball', skip it\nif it is 'center_ball', send it to input 2.",
+                "boardHint": "A clear shape is: portal branch -> helper call, negative branch -> skip + continue, center branch -> choose_input(2) + drop_ball(). 'elif' helps keep those checks in one chain.",
                 "suggestedSnippet": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    elif next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
                 "starterProgramSource": "for shot in range(4):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",

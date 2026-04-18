@@ -186,6 +186,7 @@ export type WriteTaskFeedbackKey =
   | 'taskFeedbackNeedIf'
   | 'taskFeedbackNeedBestTracker'
   | 'taskFeedbackNeedContinue'
+  | 'taskFeedbackNeedFullPreviewLoop'
   | 'taskFeedbackNeedList'
   | 'taskFeedbackWrongLaunchCount'
 
@@ -244,6 +245,7 @@ export type ProgramValidationIssueCode =
 export type ValidationIssue = {
   code: ProgramValidationIssueCode
   lineNumber?: number
+  source?: 'main' | 'helper'
   limit?: number
   construct?: LockedConstruct
   maxRange?: number
@@ -676,6 +678,7 @@ export type UiText = {
   taskFeedbackNeedIf: string
   taskFeedbackNeedBestTracker: string
   taskFeedbackNeedContinue: string
+  taskFeedbackNeedFullPreviewLoop: string
   taskFeedbackNeedList: string
   taskFeedbackWrongLaunchCount: string
   activityFeedTitle: string

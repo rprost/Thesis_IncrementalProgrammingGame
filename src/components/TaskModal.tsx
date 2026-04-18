@@ -75,15 +75,36 @@ export function TaskModal({
   }
 
   const handleCodeKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = event.currentTarget
+    const selectionStart = textarea.selectionStart
+    const selectionEnd = textarea.selectionEnd
+    const value = codeAnswer
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+
+      const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+      const currentLine = value.slice(lineStart, selectionStart)
+      const currentIndent = currentLine.match(/^\s*/)?.[0] ?? ''
+      const extraIndent = currentLine.trimEnd().endsWith(':') ? '    ' : ''
+      const indent = `${currentIndent}${extraIndent}`
+      const nextValue =
+        value.slice(0, selectionStart) + `\n${indent}` + value.slice(selectionEnd)
+
+      setCodeAnswer(nextValue)
+      requestAnimationFrame(() => {
+        const nextCaret = selectionStart + 1 + indent.length
+        textarea.selectionStart = nextCaret
+        textarea.selectionEnd = nextCaret
+      })
+      return
+    }
+
     if (event.key !== 'Tab') {
       return
     }
 
     event.preventDefault()
-    const textarea = event.currentTarget
-    const selectionStart = textarea.selectionStart
-    const selectionEnd = textarea.selectionEnd
-    const value = codeAnswer
 
     if (selectionStart === selectionEnd) {
       const indent = event.shiftKey ? '' : '    '

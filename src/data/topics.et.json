@@ -172,8 +172,8 @@
             {
                 "id": "conditions-skip-negative",
                 "title": "Eesmärk 1: Jäta 'negative_ball' vahele",
-                "instruction": "Järgmine pall on 'negative_ball'.\nKasutades 'if'-lauset kirjuta programm, mis kontrollib järgmist palli ning kui see on negatiivne pall, siis jätame ta vahele kasutades 'skip_ball()'.",
-                "boardHint": "Selles olukorras on ainult üks negatiivne pall. Palli vahele jättes ei tohiks midagi kukkuda. Kindlasti kasuta 'if'-lauset",
+                "instruction": "Järgmine pall on 'negative_ball'.\nKasuta 'if'-lauset, et seda kontrollida ja jätta vahele käsuga 'skip_ball()'.\nSee eesmärk on õige ainult siis, kui ühtegi palli välja ei lasta. Vajuta siiski 'Käivita programm', aga ära lisa 'if'-i järele 'drop_ball()'. 'else' tuleb järgmises eesmärgis.",
+                "boardHint": "'skip_ball()' eemaldab selle halva palli järjekorrast. Jooks peab ikkagi toimuma, aga selles eesmärgis ei tohi ükski pall välja lennata.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -231,9 +231,9 @@
             {
                 "id": "conditions-center-rule",
                 "title": "Eesmärk 3: Kukuta 'center_ball' sisendist 2",
-                "instruction": "Selles olukorras on järgmine pall 'center_ball'.\nKustuta praegune kood ära ja kirjuta 'if'-programm, mis laseb selle sisendist 2 välja.",
-                "boardHint": "Selles ühe palli olukorras vajad ainult kesk-palli väljalaskeharu.",
-                "suggestedSnippet": "if next_ball == center_ball:\n    choose_input(2)\n    drop_ball()",
+                "instruction": "Selles olukorras on järgmine pall 'center_ball'.\nKustuta praegune kood ära ja lase see sisendist 2 välja.",
+                "boardHint": "Selles ühe palli olukorras on juba ette teada, et tegemist on kesk-palliga, seega piisab otsesest väljalaskest.",
+                "suggestedSnippet": "choose_input(2)\ndrop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
                     "portalSide": 3,
@@ -243,12 +243,7 @@
                 },
                 "acceptance": {
                     "requiredFeatures": [
-                        "usedIf",
                         "usedChooseInput"
-                    ],
-                    "requiredIdentifiers": [
-                        "next_ball",
-                        "center_ball"
                     ],
                     "expectedMainLaunchAims": [
                         2
@@ -304,8 +299,8 @@
             {
                 "id": "functions-call-helper-left",
                 "title": "Eesmärk 1: Kasuta abifunktsiooni",
-                "instruction": "Kutsu põhiprogrammis välja juba abiredaktoris ette valmistatud 'follow_portal()' abifunktsioon\nEtteantud abifunktsioon kukutab palli portaali kohal olevast sisendist.",
-                "boardHint": "Abiredaktoris on abifunktsioon juba olemas. Põhiprogrammis on vaja ainult rida 'follow_portal()'.",
+                "instruction": "Kutsu 'follow_portal()' üks kord välja.\nAbifunktsioon loeb ise laualt 'portal_side' väärtuse, seega sina ei pea külge eraldi valima.",
+                "boardHint": "Abiredaktoris on taktika juba olemas. Põhiprogrammis on vaja ainult rida 'follow_portal()'.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "drop_ball()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -332,8 +327,8 @@
             {
                 "id": "functions-call-helper-right",
                 "title": "Eesmärk 2: Kasuta sama abifunktsiooni uuesti",
-                "instruction": "Kasuta sama abifunktsiooni uuesti. Seekord on portaal paremal, nii et abifunktsioon peaks sinna sihtima.",
-                "boardHint": "Kui su abifunktsioon loeb juba 'portal_side' väärtust, saad seda uuesti kasutada ilma keha ümber kirjutamata.",
+                "instruction": "Kasuta sama abifunktsiooni uuesti.\nSeekord on portaal teisel pool, aga abifunktsioon loeb 'portal_side' väärtust dünaamiliselt, nii et sama väljakutse peaks endiselt töötama.",
+                "boardHint": "Kui su abifunktsioon loeb juba 'portal_side' väärtust, ei pea sa abifunktsiooni keha ega põhiprogrammi väljakutset ümber kirjutama.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -360,7 +355,7 @@
             {
                 "id": "functions-write-skip-helper",
                 "title": "Eesmärk 3: Kirjuta 'skip_negative()'",
-                "instruction": "Muuda abifunktsiooni.\nPane ta nimeks 'skip_negative()'\nTa peaks kontrollima järmist palli ning kui see pall on 'negative_ball' siis jätab selle palli vahele.\nÄra unusta siis põhiprogrammis teda uue nime alt välja kutsuda.",
+                "instruction": "Muuda abifunktsiooni.\nPane ta nimeks 'skip_negative()'.\nTa peaks kontrollima järgmist palli ning kui see pall on 'negative_ball', siis jätma selle palli vahele.\nSelles olukorras on nähtav järgmine pall negatiivne, seega õige jooks ei tohiks ühtegi palli välja lasta. Vajuta siiski 'Käivita programm', et halb pall järjekorrast eemaldada.\nÄra unusta siis põhiprogrammis teda uue nime alt välja kutsuda.",
                 "boardHint": "See abifunktsioon peaks kutsuma ühe korra 'skip_ball()'. Sisendit valida ega palli välja lasta siin vaja ei ole.",
                 "suggestedSnippet": "def skip_negative():\n    skip_ball()",
                 "starterProgramSource": "skip_negative()",
@@ -498,8 +493,8 @@
             {
                 "id": "loops-mixed-strategy",
                 "title": "Eesmärk 3: Töötle tsükliga kõik võimalikud pallid",
-                "instruction": "Vaata \"Tulevased pallid\" riba ja töötle need 3 palli tsüklis:\nkasuta 'portal_ball' jaoks 'follow_portal()'-i\njäta 'negative_ball' vahele\nsaada 'center_ball' sisendisse 2.",
-                "boardHint": "'continue' katkestab praeguse tsüklisammu ja viib järgmise korduse juurde. 'elif' on siin ka kasulik, sest nii saad kõik pallikontrollid hoida ühes puhtas harus.",
+                "instruction": "Vaata 3 nähtavat tulevast palli ja töötle need ühe tsükli sees.\nIga korduse ajal kontrolli 'next_ball' väärtust:\nkui see on 'portal_ball', kutsu 'follow_portal()'\nkui see on 'negative_ball', jäta see vahele\nkui see on 'center_ball', saada see sisendisse 2.",
+                "boardHint": "Selge kuju on selline: portaali haru -> abifunktsiooni väljakutse, negatiivse palli haru -> skip + continue, kesk-palli haru -> choose_input(2) + drop_ball(). 'elif' aitab need kontrollid ühte ahelasse hoida.",
                 "suggestedSnippet": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    elif next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
                 "starterProgramSource": "for shot in range(4):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",

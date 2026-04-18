@@ -14,7 +14,7 @@ import type {
   UiText,
 } from './types'
 
-export const DEFAULT_LOCALE: Locale = 'et'
+export const DEFAULT_LOCALE: Locale = 'en'
 export const LANGUAGE_STORAGE_KEY = 'incremental-programming-game.locale'
 
 const localeContent: Record<
@@ -51,6 +51,12 @@ export function getLocaleContent(locale: Locale) {
 export function getInitialLocale(): Locale {
   if (typeof window === 'undefined') {
     return DEFAULT_LOCALE
+  }
+
+  const queryLocale = new URLSearchParams(window.location.search).get('lang')
+
+  if (isLocale(queryLocale)) {
+    return queryLocale
   }
 
   const storedLocale = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)

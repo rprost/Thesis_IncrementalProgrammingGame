@@ -279,6 +279,7 @@
     "taskFeedbackNeedIf": "Selles ülesandes on vaja 'if'-lauset.",
     "taskFeedbackNeedBestTracker": "Hoia parimat kordajat ja selle sisendiindeksit enne sisendi valimist oma muutujates meeles.",
     "taskFeedbackNeedContinue": "Pärast 'skip_ball()' käsku või keskpalli käsitlemist peab see haru lõppema enne, kui sama tsüklisamm jõuab järgmise väljalaskeni. Selleks võid kasutada 'continue'.",
+    "taskFeedbackNeedFullPreviewLoop": "Selles ülesandes on nähtaval {expected} tulevast palli. Suurenda tsükli korduste arvu nii, et programm käsitleks kõik {expected} eelvaate palli.",
     "taskFeedbackWrongLaunchCount": "See vastus laseb välja {actual} korda, aga selles ülesandes on vaja {expected}.",
     "activityFeedTitle": "Edenemislogi",
     "activityFeedEmpty": "Siia ilmuvad avangud, lahendatud ülesanded ja tugiuuendused.",

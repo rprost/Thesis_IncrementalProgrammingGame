@@ -1642,10 +1642,17 @@ function executeStatements(
           break
       }
     } catch (error) {
+      const issueSource = callStack.length > 0 ? 'helper' : 'main'
+      const isUnknownIdentifier =
+        error instanceof Error &&
+        error.message.startsWith('Unknown identifier:')
+
       issues.push({
         code:
           error instanceof ProgramEvaluationError
             ? error.issueCode
+            : isUnknownIdentifier
+              ? 'invalid_expression'
             : statement.type === 'if'
               ? 'invalid_condition'
               : statement.type === 'choose_input' ||
@@ -1654,6 +1661,7 @@ function executeStatements(
                 ? 'invalid_expression'
                 : 'invalid_command',
         lineNumber: statement.lineNumber,
+        source: issueSource,
       })
       return 'none'
     }
