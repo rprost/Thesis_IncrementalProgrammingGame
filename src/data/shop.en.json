@@ -1,32 +1,32 @@
 [
     {
-        "id":  "extra_line",
-        "title":  "Extra line",
-        "description":  "Add one more main-program line so short strategies fit more comfortably."
+        "id": "extra_line",
+        "title": "Main program extra line",
+        "description": "Add +1 max line to the main program."
     },
     {
-        "id":  "extra_portal_split",
-        "title":  "Extra portal split",
-        "description":  "Every portal split creates one extra child ball on top of the usual result."
+        "id": "extra_portal_split",
+        "title": "Stronger portal",
+        "description": "Balls split into +1 extra child ball in the portal."
     },
     {
-        "id":  "queue_peek",
-        "title":  "Queue peek",
-        "description":  "Preview the next 3 ball types instead of only the next 1."
+        "id": "queue_peek",
+        "title": "Upcoming-ball preview boost",
+        "description": "You can now see the next 3 balls at once."
     },
     {
-        "id":  "center_bin_bonus",
-        "title":  "Center bin bonus",
-        "description":  "If a `center_ball` lands in the middle bucket, it earns an extra +5 points."
+        "id": "center_bin_bonus",
+        "title": "Center bucket bonus",
+        "description": "If a 'center_ball' lands in the center bucket, that ball gets +5 extra points."
     },
     {
-        "id":  "helper_line_capacity",
-        "title":  "Helper buffer",
-        "description":  "Give the helper editor two extra lines for a longer reusable tactic."
+        "id": "helper_line_capacity",
+        "title": "Helper editor extra line",
+        "description": "Add +2 max lines to the helper editor."
     },
     {
-        "id":  "portal_chain_once",
-        "title":  "Portal chain",
-        "description":  "Balls created by a portal split may trigger one more portal split if they reach a portal again."
+        "id": "portal_chain_once",
+        "title": "Portal chain",
+        "description": "Balls created by a portal split can split one more time if they hit a portal."
     }
 ]

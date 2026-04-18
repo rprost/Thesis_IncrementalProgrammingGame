@@ -5,6 +5,7 @@ export type TaskTopicId =
   | 'conditions'
   | 'functions'
   | 'loops'
+  | 'lists'
 
 export type TopicStage =
   | 'onboarding'
@@ -26,6 +27,7 @@ export type LockedConstruct =
   | 'variables'
   | 'if'
   | 'functions'
+  | 'lists'
 
 export type SupportUpgradeId =
   | 'extra_line'
@@ -77,7 +79,7 @@ export type AimLevel = 1 | 2 | 3
 
 export type PortalSide = 1 | 3
 
-export type ActiveBallSource = 'main' | 'helper' | 'loader' | 'ambient'
+export type ActiveBallSource = 'main' | 'helper' | 'ambient'
 export type BallSpawnKind = 'direct' | 'portal'
 export type BallType = 'plain' | 'center' | 'portal' | 'negative'
 
@@ -91,6 +93,7 @@ export type ScoreBreakdownKind =
   | 'bucket'
   | 'center_bonus'
   | 'negative_penalty'
+  | 'lane_multiplier'
   | 'total'
 
 export type ScoreBreakdownLine = {
@@ -102,6 +105,7 @@ export type BoardOutcome = {
   bucketIndex: number
   basePoints: number
   points: number
+  laneMultiplier: number
   ballType: BallType
   centerBonusValue: number
   usedCenterBonus: boolean
@@ -131,6 +135,7 @@ export type ProgramFeatureUsage = {
   usedHelperCall: boolean
   usedFor: boolean
   usedContinue: boolean
+  usedLists: boolean
 }
 
 export type PreviewResponseKind = 'skip' | 'main_launch' | 'helper_launch'
@@ -151,6 +156,8 @@ export type ExecutionExpectation = {
   requiredIdentifiers?: string[]
   expectedMainLaunchAims?: AimLevel[]
   expectedHelperLaunchAims?: AimLevel[]
+  allowExtraMainLaunches?: boolean
+  allowExtraHelperLaunches?: boolean
   previewResponses?: PreviewResponseExpectation[]
   minMainLaunchCount?: number
   maxMainLaunchCount?: number
@@ -169,6 +176,7 @@ export type WriteTaskFeedbackKey =
   | 'taskFeedbackNeedDropBall'
   | 'taskFeedbackNeedVariableStore'
   | 'taskFeedbackNeedSkipEvil'
+  | 'taskFeedbackNeedSkipNegativeHelper'
   | 'taskFeedbackNeedElseLaunch'
   | 'taskFeedbackNeedPortalLaunch'
   | 'taskFeedbackNeedCenterLaunch'
@@ -176,7 +184,9 @@ export type WriteTaskFeedbackKey =
   | 'taskFeedbackNeedHelperGateLogic'
   | 'taskFeedbackNeedLoop'
   | 'taskFeedbackNeedIf'
+  | 'taskFeedbackNeedBestTracker'
   | 'taskFeedbackNeedContinue'
+  | 'taskFeedbackNeedList'
   | 'taskFeedbackWrongLaunchCount'
 
 export type ActiveBallState = 'falling' | 'settled' | 'canceled'
@@ -187,6 +197,7 @@ export type ActiveBall = {
   aim: AimLevel
   source: ActiveBallSource
   ballType: BallType
+  laneMultiplier: number
   spawnKind: BallSpawnKind
   portalDepth: number
   bucketIndex: number
@@ -219,6 +230,7 @@ export type ProgramValidationIssueCode =
   | 'unexpected_indentation'
   | 'step_limit_exceeded'
   | 'invalid_expression'
+  | 'invalid_index_access'
   | 'invalid_condition'
   | 'invalid_set_aim'
   | 'continue_outside_loop'
@@ -327,6 +339,7 @@ export type PracticeGoalScenario = {
   portalSide: PortalSide
   previewQueue: BallType[]
   visiblePreviewCount?: number
+  bonusMap?: number[]
   launchPlan?: number[]
   planFocusIndex?: number | null
 }
@@ -448,6 +461,7 @@ export type UiText = {
   programErrorUnexpectedIndentation: string
   programErrorStepLimitExceeded: string
   programErrorInvalidExpression: string
+  programErrorInvalidIndexAccess: string
   programErrorInvalidCondition: string
   programErrorInvalidSetAim: string
   programErrorContinueOutsideLoop: string
@@ -461,6 +475,7 @@ export type UiText = {
   constructVariablesLabel: string
   constructIfLabel: string
   constructFunctionsLabel: string
+  constructListsLabel: string
   availableSyntaxTitle: string
   availableFunctionsLabel: string
   availableStructuresLabel: string
@@ -479,6 +494,7 @@ export type UiText = {
   referenceBonusLaneDescription: string
   referencePortalSideDescription: string
   referenceNextBallDescription: string
+  referenceBonusMapDescription: string
   referenceNormalBallDescription: string
   referenceLuckyBallDescription: string
   referenceEvilBallDescription: string
@@ -486,6 +502,10 @@ export type UiText = {
   referenceExampleConditionsLabel: string
   referenceExampleFunctionsLabel: string
   referenceExampleLoopsLabel: string
+  referenceExampleListsLabel: string
+  coachmarkDismissButton: string
+  helpCoachmarkBody: string
+  referenceCoachmarkBody: string
   nextStepLabel: string
   nextStepProgressLabel: string
   nextStepProgressValue: string
@@ -514,14 +534,6 @@ export type UiText = {
   helpCenterEmpty: string
   guideWelcomeTitle: string
   guideWelcomeBody: string
-  guideVariablesUnlockTitle: string
-  guideVariablesUnlockBody: string
-  guideConditionsUnlockTitle: string
-  guideConditionsUnlockBody: string
-  guideFunctionsUnlockTitle: string
-  guideFunctionsUnlockBody: string
-  guideLoopsUnlockTitle: string
-  guideLoopsUnlockBody: string
   currentGoalTitle: string
   currentGoalModuleLabel: string
   currentGoalStageLabel: string
@@ -557,8 +569,10 @@ export type UiText = {
   boardTitle: string
   boardSubtitle: string
   boardLaunchPlanLabel: string
+  boardInternalsTitle: string
+  boardMultipliersLabel: string
+  boardBonusMapCodeValue: string
   boardSubtitleOnboarding: string
-  boardSubtitleCompleted: string
   boardBonusLaneLabel: string
   boardActivePortalLabel: string
   boardActivePortalValue: string
@@ -568,11 +582,13 @@ export type UiText = {
   boardBallTypeNormal: string
   boardBallTypeLucky: string
   boardBallTypeEvil: string
+  boardNeutralPreviewCountValue: string
   boardSkipLabel: string
   boardMainLauncherLabel: string
   boardScoreBucketLabel: string
   boardScoreLuckyBonusLabel: string
   boardScoreEvilPenaltyLabel: string
+  boardScoreMultiplierLabel: string
   boardScoreTotalLabel: string
   boardPortalSplitLabel: string
   boardGateExplanation: string
@@ -625,6 +641,8 @@ export type UiText = {
   submitButton: string
   continueButton: string
   retryButton: string
+  taskCloseButton: string
+  taskResumeButton: string
   correctTitle: string
   incorrectTitle: string
   taskBoardHintLabel: string
@@ -643,6 +661,7 @@ export type UiText = {
   taskFeedbackNeedDropBall: string
   taskFeedbackNeedVariableStore: string
   taskFeedbackNeedSkipEvil: string
+  taskFeedbackNeedSkipNegativeHelper: string
   taskFeedbackNeedElseLaunch: string
   taskFeedbackNeedPortalLaunch: string
   taskFeedbackNeedCenterLaunch: string
@@ -650,7 +669,9 @@ export type UiText = {
   taskFeedbackNeedHelperGateLogic: string
   taskFeedbackNeedLoop: string
   taskFeedbackNeedIf: string
+  taskFeedbackNeedBestTracker: string
   taskFeedbackNeedContinue: string
+  taskFeedbackNeedList: string
   taskFeedbackWrongLaunchCount: string
   activityFeedTitle: string
   activityFeedEmpty: string
@@ -696,16 +717,6 @@ export type UiText = {
   objectiveHideExampleButton: string
   goalEditRequiredMainMessage: string
   goalEditRequiredHelperMessage: string
-  topicGuideChooseInputDescription: string
-  topicGuideBluePortalDescription: string
-  topicGuideVariablesDescription: string
-  topicGuidePortalSideDescription: string
-  topicGuideConditionsNextBallDescription: string
-  topicGuideConditionsIfDescription: string
-  topicGuideConditionsSkipDescription: string
-  topicGuideFunctionsDescription: string
-  topicGuideLoopsForDescription: string
-  topicGuideLoopsContinueDescription: string
   boardPreviewMeaningNormal: string
   boardPreviewMeaningLucky: string
   boardPreviewMeaningEvil: string
@@ -729,6 +740,7 @@ export type UnlockState = {
 
 export type BoardModuleState = {
   portalSide: PortalSide
+  bonusMap: number[]
 }
 
 export type MachineModuleState = {

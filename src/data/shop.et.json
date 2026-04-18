@@ -1,32 +1,32 @@
 [
     {
-        "id":  "extra_line",
-        "title":  "Lisarida",
-        "description":  "Lisa põhiprogrammile üks rida juurde, et lühikesed strateegiad paremini ära mahuksid."
+        "id": "extra_line",
+        "title": "Põhiprogrammi lisarida",
+        "description": "Lisa põhiprogrammile +1 max rida"
     },
     {
-        "id":  "extra_portal_split",
-        "title":  "Lisajagunemine portaalis",
-        "description":  "Iga portaali jagunemine tekitab tavapärase tulemuse peale ühe lisapalli."
+        "id": "extra_portal_split",
+        "title": "Võimsam portaal",
+        "description": "Pallid jagunevad portaalis +1 lisapalliks"
     },
     {
-        "id":  "queue_peek",
-        "title":  "Järjekorra eelvaade",
-        "description":  "Näita ühe järgmise palli asemel korraga 3 tulevat palli."
+        "id": "queue_peek",
+        "title": "Tulevaste pallide järjekorra võimendus",
+        "description": "Näed nüüd korraga 3 järgmist palli"
     },
     {
-        "id":  "center_bin_bonus",
-        "title":  "Keskmise kasti boonus",
-        "description":  "Kui `center_ball` maandub keskmisse kasti, saab see lisaks 5 punkti."
+        "id": "center_bin_bonus",
+        "title": "Keskmise kasti boonus",
+        "description": "Kui 'center_ball' maandub keskmisse kasti, saab see pall +5 lisapunkti"
     },
     {
-        "id":  "helper_line_capacity",
-        "title":  "Abipuhver",
-        "description":  "Anna abiredaktorile kaks lisarida pikema abifunktsiooni jaoks."
+        "id": "helper_line_capacity",
+        "title": "Abiredaktori lisarida",
+        "description": "Lisa abiredaktorile +2 max rida"
     },
     {
-        "id":  "portal_chain_once",
-        "title":  "Portaaliahel",
-        "description":  "Portaalist tekkinud pallid võivad ühe korra veel portaalis jaguneda, kui nad sinna uuesti jõuavad."
+        "id": "portal_chain_once",
+        "title": "Portaaliahel",
+        "description": "Portaalist tekkinud lisapallid saavad portaali sattudes +1 korra jaguneda"
     }
 ]

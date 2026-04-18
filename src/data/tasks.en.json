@@ -1,602 +1,770 @@
 [
     {
-        "id":  "onboarding-trace-demo",
-        "kind":  "onboarding",
-        "archetype":  "trace",
-        "topicId":  "onboarding",
-        "topicOrder":  0,
-        "taskOrder":  1,
-        "title":  "Starter run",
-        "question":  "What does the starter line `drop_ball()` do?",
-        "code":  "drop_ball()",
-        "boardHint":  "The first run is only a demo. One ball enters the board through the current input.",
-        "unlockConnection":  "You watch one run first, then clear two quick checks before the editor unlocks.",
-        "options":  [
-                        "It launches one ball through the current input.",
-                        "It skips the next ball.",
-                        "It changes the portal.",
-                        "It opens the shop."
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. `drop_ball()` launches one ball.",
-        "failureMessage":  "The starter line only launches one ball. It does not skip, reroute, or open anything."
+        "id": "onboarding-trace-demo",
+        "kind": "onboarding",
+        "archetype": "trace",
+        "topicId": "onboarding",
+        "topicOrder": 0,
+        "taskOrder": 1,
+        "title": "Starter run",
+        "question": "What does the line 'drop_ball()' do in the demo program?",
+        "code": "drop_ball()",
+        "boardHint": "The first run is only a demo. One ball enters the board through the current input.",
+        "unlockConnection": "You watch one run first, then clear two quick checks before the editor unlocks.",
+        "options": [
+            "It launches one ball through the current input.",
+            "It skips the next ball.",
+            "It changes the portal.",
+            "It opens the shop."
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. It launches one ball from the default input.",
+        "failureMessage": "The starter line only launches one ball. It does not skip, reroute, or open anything."
     },
     {
-        "id":  "onboarding-choose-lane",
-        "kind":  "onboarding",
-        "archetype":  "choose",
-        "topicId":  "onboarding",
-        "topicOrder":  0,
-        "taskOrder":  2,
-        "title":  "Input numbers",
-        "question":  "Which input number is the center input?",
-        "code":  "1 = Left\n2 = Center\n3 = Right",
-        "boardHint":  "The same numbers appear later in `choose_input(...)`.",
-        "unlockConnection":  "Knowing the input numbers makes the first editable programs easier to read.",
-        "options":  [
-                        "1",
-                        "2",
-                        "3",
-                        "There is no center input."
-                    ],
-        "correctOption":  1,
-        "successMessage":  "Correct. Input 2 is the center input.",
-        "failureMessage":  "The board uses 1 = Left, 2 = Center, 3 = Right."
+        "id": "onboarding-choose-lane",
+        "kind": "onboarding",
+        "archetype": "choose",
+        "topicId": "onboarding",
+        "topicOrder": 0,
+        "taskOrder": 2,
+        "title": "Input numbers",
+        "question": "Which input number is the center input?",
+        "code": "1 = Left\n2 = Center\n3 = Right",
+        "boardHint": "The same numbers appear later in 'choose_input(...)'.",
+        "unlockConnection": "Knowing the input numbers makes the first editable programs easier to read.",
+        "options": [
+            "1",
+            "2",
+            "3",
+            "There is no center input."
+        ],
+        "correctOption": 1,
+        "successMessage": "Correct. Input 2 is the center input.",
+        "failureMessage": "The board uses 1 = Left, 2 = Center, 3 = Right."
     },
     {
-        "id":  "variables-trace",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  1,
-        "title":  "Trace `portal_side`",
-        "question":  "If `portal_side` is `3`, which input does this program use?",
-        "code":  "target = portal_side\nchoose_input(target)\ndrop_ball()",
-        "boardHint":  "The portal label shows both the side name and the code value.",
-        "unlockConnection":  "A variable can copy the visible `portal_side` value and reuse it for input choice.",
-        "options":  [
-                        "Left input",
-                        "Center input",
-                        "Right input",
-                        "No input"
-                    ],
-        "correctOption":  2,
-        "successMessage":  "Correct. `target` becomes `3`, so the ball launches from the right input.",
-        "failureMessage":  "`target` copies `portal_side`. If `portal_side` is `3`, the program chooses the right input."
+        "id": "variables-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 1,
+        "title": "Trace 'portal_side'",
+        "question": "If the assignment 'target = portal_side' runs while 'portal_side' is '3', which input does this program use?",
+        "code": "target = portal_side\nchoose_input(target)\ndrop_ball()",
+        "boardHint": "The portal label shows both the side name and the code value.",
+        "unlockConnection": "An assignment can copy the visible 'portal_side' value into your own variable so you can reuse it for input choice.",
+        "options": [
+            "Left input",
+            "Center input",
+            "Right input",
+            "No input"
+        ],
+        "correctOption": 2,
+        "successMessage": "Correct. 'target' becomes '3', so the ball launches from the right input.",
+        "failureMessage": "The assignment makes 'target' copy 'portal_side'. If 'portal_side' is '3', the program chooses the right input."
     },
     {
-        "id":  "variables-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  2,
-        "title":  "Repair the input value",
-        "question":  "Which replacement fixes the program so it follows the portal safely?",
-        "code":  "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
-        "boardHint":  "`choose_input(...)` must stay between input 1 and input 3.",
-        "unlockConnection":  "This checks whether you understand that `portal_side` already stores the input you need.",
-        "options":  [
-                        "target = portal_side",
-                        "target = portal_side + 2",
-                        "target = 0",
-                        "target = 4"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. `portal_side` already has the input value, so the program can use it directly.",
-        "failureMessage":  "`portal_side` already stores the active side. Adding to it can push the input choice out of range."
+        "id": "variables-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 2,
+        "title": "Repair the input value",
+        "question": "Which assignment replacement fixes the program so it follows the portal safely?",
+        "code": "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
+        "boardHint": "The assignment should copy 'portal_side' directly, without adding to it.",
+        "unlockConnection": "This checks whether you understand that the assignment should reuse 'portal_side' directly.",
+        "options": [
+            "target = portal_side",
+            "target = portal_side + 2",
+            "target = 0",
+            "target = 4"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. 'portal_side' already has the input value, so the program can use it directly.",
+        "failureMessage": "'portal_side' already stores the active side. Adding to it in the assignment can push the input choice out of range."
     },
     {
-        "id":  "variables-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  3,
-        "title":  "Write one opposite-side launch",
-        "question":  "Write one short program that works for every visible case below: store `portal_side` in your own variable, then launch exactly one ball through the opposite side.",
-        "code":  "",
-        "boardHint":  "Copy `portal_side` into your own variable first. Then use `4 - portal_side` to switch left \u003c-\u003e right.",
-        "unlockConnection":  "This checks whether you can use a stored value in a small expression instead of only copying it directly.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "drop_ball()",
-                                "cases":  [
-                                              {
-                                                  "title":  "Portal left",
-                                                  "requirement":  "Store `portal_side` in your own variable, then launch exactly one ball through the right side.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "plain"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedVariables",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     3
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1,
-                                                                      "maxMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portal right",
-                                                  "requirement":  "Store `portal_side` in your own variable, then launch exactly one ball through the left side.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "plain"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedVariables",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     1
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1,
-                                                                      "maxMainLaunchCount":  1
-                                                                  }
-                                              }
-                                          ]
+        "id": "variables-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 3,
+        "title": "Write one opposite-side launch",
+        "question": "Write one short program that works for every visible case below: use an assignment to store 'portal_side' in your own variable, then launch exactly one ball through the opposite side.",
+        "code": "",
+        "boardHint": "Start with an assignment such as 'target = portal_side'. Then use '4 - target' to switch left <-> right.",
+        "unlockConnection": "This checks whether you can write an assignment first and then use the stored value inside an expression.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "drop_ball()",
+            "cases": [
+                {
+                    "title": "Portal left",
+                    "requirement": "Store 'portal_side' in your own variable, then launch exactly one ball through the right side.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Portal right",
+                    "requirement": "Store 'portal_side' in your own variable, then launch exactly one ball through the left side.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                }
+            ]
+        },
+        "successMessage": "Correct. That code stores the visible value and uses it to flip to the opposite side.",
+        "failureMessage": "Your answer should use an assignment to store 'portal_side' in your own variable and launch exactly one ball through the opposite side."
+    },
+    {
+        "id": "conditions-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 1,
+        "title": "Repair the preview rule",
+        "question": "Which version skips only 'negative_ball' and still launches the others?",
+        "code": "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
+        "boardHint": "The fix should compare 'next_ball' to 'negative_ball', then keep a real launch for the safe balls.",
+        "unlockConnection": "Conditionals matter because the machine can react to the preview before the ball enters the board.",
+        "options": [
+            "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+            "if next_ball == center_ball:\n    choose_input(2)\nelse:\n    skip_ball()",
+            "if portal_side == negative_ball:\n    skip_ball()\nelse:\n    drop_ball()",
+            "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. The repaired version skips only 'negative_ball' and still launches the others.",
+        "failureMessage": "The fix must compare 'next_ball' to 'negative_ball', skip that case, and still launch the other balls."
+    },
+    {
+        "id": "conditions-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 2,
+        "title": "Write the preview strategy",
+        "question": "Write one program that handles every visible case below: skip 'negative_ball', send 'portal_ball' to the portal, and send 'center_ball' to input 2.",
+        "code": "Use 'next_ball', 'negative_ball', 'center_ball', 'portal_side', 'choose_input(...)', 'skip_ball()', and 'drop_ball()'. ",
+        "boardHint": "Any one-program solution is fine. You can use 'if' / 'elif' / 'else' or another clear branching structure. Skip 'negative_ball', send 'portal_ball' to the portal, and launch 'center_ball' from input 2.",
+        "unlockConnection": "This makes the preview mechanic meaningful: different ball types now call for different code decisions.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "if next_ball == negative_ball:\n    skip_ball()",
+            "lineLimit": 8,
+            "cases": [
+                {
+                    "title": "Negative ball",
+                    "requirement": "When 'next_ball' is 'negative_ball', skip it and launch nothing.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball"
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1,
+                        "maxMainLaunchCount": 0
+                    }
+                },
+                {
+                    "title": "Portal ball left",
+                    "requirement": "When 'next_ball' is 'portal_ball' and the portal is left, aim left and launch it.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "portal"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Portal ball right",
+                    "requirement": "When 'next_ball' is 'portal_ball' and the portal is right, aim right and launch it.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "portal"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Center ball",
+                    "requirement": "When 'next_ball' is 'center_ball', launch it from input 2.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "center"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball"
+                        ],
+                        "expectedMainLaunchAims": [
+                            2
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                }
+            ]
+        },
+        "successMessage": "Correct. Your program reacts differently to negative, portal, and center balls.",
+        "failureMessage": "Your answer should skip 'negative_ball', send 'portal_ball' to the portal, and send 'center_ball' to input 2."
+    },
+    {
+        "id": "conditions-review-variables",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "variables",
+        "title": "Review: read the portal",
+        "question": "If 'portal_side' is '1', where does this program launch the ball?",
+        "code": "choose_input(portal_side)\ndrop_ball()",
+        "boardHint": "Earlier topics still matter. Preview logic only helps if you still read the portal correctly.",
+        "unlockConnection": "This is a spaced review of the variables topic.",
+        "options": [
+            "Left input",
+            "Center input",
+            "Right input",
+            "No input"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. 'portal_side = 1' means the left input.",
+        "failureMessage": "When 'portal_side' is '1', the ball should launch from the left input."
+    },
+    {
+        "id": "functions-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 1,
+        "title": "Trace the helper call",
+        "question": "What happens when the main program calls 'follow_portal()'?",
+        "code": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
+        "boardHint": "The helper editor stores one tactic, and the main editor can call it by name.",
+        "unlockConnection": "Functions matter because one named tactic can control repeated board behavior.",
+        "options": [
+            "The helper body runs once.",
+            "The helper body is ignored.",
+            "The helper body runs forever.",
+            "The shop opens."
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. Calling 'follow_portal()' runs that helper body once.",
+        "failureMessage": "A helper call executes the helper body once at the call site."
+    },
+    {
+        "id": "functions-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 2,
+        "title": "Write 'skip_negative()'",
+        "question": "Write 'skip_negative()' so it skips one 'negative_ball'.",
+        "code": "Main program:\nskip_negative()",
+        "boardHint": "This checkpoint helper is different from 'follow_portal()'. Its job is to call 'skip_ball()' for the visible 'negative_ball'.",
+        "unlockConnection": "This near-transfer task checks whether you can write a new helper that skips a bad ball instead of launching one.",
+        "writeValidation": {
+            "target": "helper",
+            "starterSource": "def skip_negative():\n    drop_ball()",
+            "presentation": {
+                "mode": "none"
+            },
+            "cases": [
+                {
+                    "title": "Portal left",
+                    "requirement": "When the portal is left, 'skip_negative()' should skip the visible 'negative_ball' and launch nothing.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "programContextSource": "skip_negative()",
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedHelperCall"
+                        ],
+                        "requiredIdentifiers": [
+                            "skip_negative"
+                        ],
+                        "maxMainLaunchCount": 0,
+                        "maxHelperLaunchCount": 0,
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1
+                    },
+                    "hiddenFromPrompt": true
+                },
+                {
+                    "title": "Portal right",
+                    "requirement": "When the portal is right, 'skip_negative()' should skip the visible 'negative_ball' and launch nothing.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "programContextSource": "skip_negative()",
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedHelperCall"
+                        ],
+                        "requiredIdentifiers": [
+                            "skip_negative"
+                        ],
+                        "maxMainLaunchCount": 0,
+                        "maxHelperLaunchCount": 0,
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1
+                    },
+                    "hiddenFromPrompt": true
+                }
+            ]
+        },
+        "successMessage": "Correct. Your helper skips the negative ball without launching anything.",
+        "failureMessage": "Your helper should define 'skip_negative()' and use 'skip_ball()' once for the visible 'negative_ball'."
+    },
+    {
+        "id": "functions-review-conditions",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "conditions",
+        "title": "Review: repair the negative-ball check",
+        "question": "Which condition skips only 'negative_ball'?",
+        "code": "if ???:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+        "boardHint": "Earlier branch logic still matters when you move tactics into helpers later.",
+        "unlockConnection": "This is a spaced review of the conditions topic.",
+        "options": [
+            "next_ball == negative_ball",
+            "portal_side == negative_ball",
+            "next_ball == portal_side",
+            "next_ball == 4"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. 'next_ball == negative_ball' skips only the negative ball.",
+        "failureMessage": "The condition should read 'next_ball' and compare it directly to 'negative_ball'."
+    },
+    {
+        "id": "loops-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 1,
+        "title": "Repair the loop body",
+        "question": "Which version skips a 'negative_ball' and continues safely with the loop?",
+        "code": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
+        "boardHint": "After 'skip_ball()', the current loop step should stop before it reaches 'follow_portal()'.",
+        "unlockConnection": "This is the key loop pattern that turns one tactic into safe automation.",
+        "options": [
+            "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
+            "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
+            "for shot in range(3):\n    if portal_side == negative_ball:\n        continue\n    follow_portal()",
+            "for shot in range(3):\n    skip_ball()\n    continue"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. 'continue' stops that loop step after the negative ball is skipped.",
+        "failureMessage": "The safe version skips the negative ball and uses 'continue' so the loop does not launch it afterward."
+    },
+    {
+        "id": "loops-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 2,
+        "title": "Write the repeated preview loop",
+        "question": "Write one loop that handles the 4 upcoming balls shown in the preview: send 'portal_ball' to the portal directly, skip 'negative_ball', and send every 'center_ball' to input 2.",
+        "code": "",
+        "boardHint": "This checkpoint removes the helper. One loop should still work for both visible queues. 'elif' is a good fit here, and 'continue' is optional, but the negative-ball branch must not fall through into a launch. Extra repetitions are okay as long as the visible preview is handled correctly.",
+        "unlockConnection": "This checks real transfer: you now have to write the full portal / negative / center strategy directly inside the loop.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "for shot in range(4):\n    drop_ball()",
+            "cases": [
+                {
+                    "title": "Portal, negative, center, portal",
+                    "requirement": "Send each 'portal_ball' to the portal directly, skip 'negative_ball', send 'center_ball' to input 2, and still handle the final 'portal_ball' correctly.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "portal",
+                            "negative",
+                            "center",
+                            "portal"
+                        ],
+                        "visiblePreviewCount": 4
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedFor",
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "previewResponses": [
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
                             },
-        "successMessage":  "Correct. That code stores the visible value and uses it to flip to the opposite side.",
-        "failureMessage":  "Your answer should store `portal_side` in your own variable and launch exactly one ball through the opposite side."
-    },
-    {
-        "id":  "conditions-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  1,
-        "title":  "Repair the preview rule",
-        "question":  "Which version skips only `negative_ball` and still launches the others?",
-        "code":  "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-        "boardHint":  "The fix should compare `next_ball` to `negative_ball`, then keep a real launch for the safe balls.",
-        "unlockConnection":  "Conditionals matter because the machine can react to the preview before the ball enters the board.",
-        "options":  [
-                        "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-                        "if next_ball == center_ball:\n    choose_input(2)\nelse:\n    skip_ball()",
-                        "if portal_side == negative_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-                        "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. The repaired version skips only `negative_ball` and still launches the others.",
-        "failureMessage":  "The fix must compare `next_ball` to `negative_ball`, skip that case, and still launch the other balls."
-    },
-    {
-        "id":  "conditions-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  2,
-        "title":  "Write the preview strategy",
-        "question":  "Write one program that handles every visible case below: skip `negative_ball`, send `portal_ball` to the portal, and send `center_ball` to input 2.",
-        "code":  "Use `next_ball`, `negative_ball`, `center_ball`, `portal_side`, `choose_input(...)`, `skip_ball()`, and `drop_ball()`. ",
-        "boardHint":  "Any one-program solution is fine. Skip `negative_ball`, send `portal_ball` to the portal, and launch `center_ball` from input 2.",
-        "unlockConnection":  "This makes the preview mechanic meaningful: different ball types now call for different code decisions.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "if next_ball == negative_ball:\n    skip_ball()",
-                                "lineLimit":  8,
-                                "cases":  [
-                                              {
-                                                  "title":  "Negative ball",
-                                                  "requirement":  "When `next_ball` is `negative_ball`, skip it and launch nothing.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "negative"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball"
-                                                                                              ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "maxSkippedNegativeBallCount":  1,
-                                                                      "maxMainLaunchCount":  0
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portal ball left",
-                                                  "requirement":  "When `next_ball` is `portal_ball` and the portal is left, aim left and launch it.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "portal"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     1
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portal ball right",
-                                                  "requirement":  "When `next_ball` is `portal_ball` and the portal is right, aim right and launch it.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "portal"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     3
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Center ball",
-                                                  "requirement":  "When `next_ball` is `center_ball`, launch it from input 2.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     2
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              }
-                                          ]
+                            {
+                                "type": "skip"
                             },
-        "successMessage":  "Correct. Your program reacts differently to negative, portal, and center balls.",
-        "failureMessage":  "Your answer should skip `negative_ball`, send `portal_ball` to the portal, and send `center_ball` to input 2."
-    },
-    {
-        "id":  "conditions-review-variables",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "variables",
-        "title":  "Review: read the portal",
-        "question":  "If `portal_side` is `1`, where does this program launch the ball?",
-        "code":  "choose_input(portal_side)\ndrop_ball()",
-        "boardHint":  "Earlier topics still matter. Preview logic only helps if you still read the portal correctly.",
-        "unlockConnection":  "This is a spaced review of the variables topic.",
-        "options":  [
-                        "Left input",
-                        "Center input",
-                        "Right input",
-                        "No input"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. `portal_side = 1` means the left input.",
-        "failureMessage":  "When `portal_side` is `1`, the ball should launch from the left input."
-    },
-    {
-        "id":  "functions-trace",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  1,
-        "title":  "Trace the helper call",
-        "question":  "What happens when the main program calls `follow_portal()`?",
-        "code":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
-        "boardHint":  "The helper editor stores one tactic, and the main editor can call it by name.",
-        "unlockConnection":  "Functions matter because one named tactic can control repeated board behavior.",
-        "options":  [
-                        "The helper body runs once.",
-                        "The helper body is ignored.",
-                        "The helper body runs forever.",
-                        "The shop opens."
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. Calling `follow_portal()` runs that helper body once.",
-        "failureMessage":  "A helper call executes the helper body once at the call site."
-    },
-    {
-        "id":  "functions-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  2,
-        "title":  "Write a different helper",
-        "question":  "Write `send_center()` so it chooses input 2 and launches once.",
-        "code":  "Main program:\nsend_center()",
-        "boardHint":  "This checkpoint helper is different from `follow_portal()`. It should always use input 2.",
-        "unlockConnection":  "This near-transfer task checks whether you can write a new helper instead of repeating the same portal tactic.",
-        "writeValidation":  {
-                                "target":  "helper",
-                                "starterSource":  "def send_center():\n    drop_ball()",
-                                "presentation":  {
-                                                     "mode":  "none"
-                                                 },
-                                "cases":  [
-                                              {
-                                                  "title":  "Portal left",
-                                                  "requirement":  "When the portal is left, `send_center()` should still use input 2 and launch one helper shot.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "programContextSource":  "send_center()",
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedHelperCall",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "send_center"
-                                                                                              ],
-                                                                      "expectedHelperLaunchAims":  [
-                                                                                                       2
-                                                                                                   ],
-                                                                      "minHelperLaunchCount":  1
-                                                                  },
-                                                  "hiddenFromPrompt":  true
-                                              },
-                                              {
-                                                  "title":  "Portal right",
-                                                  "requirement":  "When the portal is right, `send_center()` should still use input 2 and launch one helper shot.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "programContextSource":  "send_center()",
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedHelperCall",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "send_center"
-                                                                                              ],
-                                                                      "expectedHelperLaunchAims":  [
-                                                                                                       2
-                                                                                                   ],
-                                                                      "minHelperLaunchCount":  1
-                                                                  },
-                                                  "hiddenFromPrompt":  true
-                                              }
-                                          ]
+                            {
+                                "type": "main_launch",
+                                "aim": 2
                             },
-        "successMessage":  "Correct. Your helper always sends the ball through input 2.",
-        "failureMessage":  "Your helper should define `send_center()`, choose input 2, and launch once."
-    },
-    {
-        "id":  "functions-review-conditions",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "conditions",
-        "title":  "Review: repair the negative-ball check",
-        "question":  "Which condition skips only `negative_ball`?",
-        "code":  "if ???:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-        "boardHint":  "Earlier branch logic still matters when you move tactics into helpers later.",
-        "unlockConnection":  "This is a spaced review of the conditions topic.",
-        "options":  [
-                        "next_ball == negative_ball",
-                        "portal_side == negative_ball",
-                        "next_ball == portal_side",
-                        "next_ball == 4"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. `next_ball == negative_ball` skips only the negative ball.",
-        "failureMessage":  "The condition should read `next_ball` and compare it directly to `negative_ball`."
-    },
-    {
-        "id":  "loops-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  1,
-        "title":  "Repair the loop body",
-        "question":  "Which version skips a `negative_ball` and continues safely with the loop?",
-        "code":  "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
-        "boardHint":  "After `skip_ball()`, the current loop step should stop before it reaches `follow_portal()`.",
-        "unlockConnection":  "This is the key loop pattern that turns one tactic into safe automation.",
-        "options":  [
-                        "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
-                        "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
-                        "for shot in range(3):\n    if portal_side == negative_ball:\n        continue\n    follow_portal()",
-                        "for shot in range(3):\n    skip_ball()\n    continue"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Correct. `continue` stops that loop step after the negative ball is skipped.",
-        "failureMessage":  "The safe version skips the negative ball and uses `continue` so the loop does not launch it afterward."
-    },
-    {
-        "id":  "loops-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  2,
-        "title":  "Write the repeated preview loop",
-        "question":  "Write one loop that handles the 4 upcoming balls shown in the preview: send `portal_ball` to the portal directly, skip `negative_ball`, and send every `center_ball` to input 2.",
-        "code":  "",
-        "boardHint":  "This checkpoint removes the helper. One loop should still work for both visible queues. `continue` is optional, but the negative-ball branch must not fall through into a launch.",
-        "unlockConnection":  "This checks real transfer: you now have to write the full portal / negative / center strategy directly inside the loop.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "for shot in range(4):\n    drop_ball()",
-                                "cases":  [
-                                              {
-                                                  "title":  "Portal, negative, center, portal",
-                                                  "requirement":  "Send each `portal_ball` to the portal directly, skip `negative_ball`, send `center_ball` to input 2, and still handle the final `portal_ball` correctly.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "portal",
-                                                                                        "negative",
-                                                                                        "center",
-                                                                                        "portal"
-                                                                                    ],
-                                                                   "visiblePreviewCount":  4
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedFor",
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "center_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "previewResponses":  [
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "skip"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               }
-                                                                                           ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "minMainLaunchCount":  3,
-                                                                      "maxMainLaunchCount":  3,
-                                                                      "maxHelperLaunchCount":  0
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Negative, center, center, portal",
-                                                  "requirement":  "Skip `negative_ball`, send both `center_ball`s to input 2, and send the final `portal_ball` to the portal directly.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "negative",
-                                                                                        "center",
-                                                                                        "center",
-                                                                                        "portal"
-                                                                                    ],
-                                                                   "visiblePreviewCount":  4
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedFor",
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "center_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "previewResponses":  [
-                                                                                               {
-                                                                                                   "type":  "skip"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               }
-                                                                                           ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "minMainLaunchCount":  3,
-                                                                      "maxMainLaunchCount":  3,
-                                                                      "maxHelperLaunchCount":  0
-                                                                  }
-                                              }
-                                          ]
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
+                            }
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "minMainLaunchCount": 3,
+                        "maxHelperLaunchCount": 0
+                    }
+                },
+                {
+                    "title": "Negative, center, center, portal",
+                    "requirement": "Skip 'negative_ball', send both 'center_ball's to input 2, and send the final 'portal_ball' to the portal directly.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative",
+                            "center",
+                            "center",
+                            "portal"
+                        ],
+                        "visiblePreviewCount": 4
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedFor",
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "previewResponses": [
+                            {
+                                "type": "skip"
                             },
-        "successMessage":  "Correct. Your loop handles the longer mixed preview directly, without leaning on a helper call.",
-        "failureMessage":  "Your loop should skip `negative_ball`, send every `center_ball` to input 2, and send every `portal_ball` to the portal directly."
+                            {
+                                "type": "main_launch",
+                                "aim": 2
+                            },
+                            {
+                                "type": "main_launch",
+                                "aim": 2
+                            },
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
+                            }
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "minMainLaunchCount": 3,
+                        "maxHelperLaunchCount": 0
+                    }
+                }
+            ]
+        },
+        "successMessage": "Correct. Your loop handles the longer mixed preview directly, without leaning on a helper call.",
+        "failureMessage": "Your loop should skip 'negative_ball', send every 'center_ball' to input 2, and send every 'portal_ball' to the portal directly."
     },
     {
-        "id":  "loops-review-functions",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "functions",
-        "title":  "Review: call the helper twice",
-        "question":  "How many helper launches does this main program trigger?",
-        "code":  "follow_portal()\nfollow_portal()",
-        "boardHint":  "A function call runs the stored helper body each time it appears.",
-        "unlockConnection":  "This is a spaced review of the functions topic.",
-        "options":  [
-                        "0",
-                        "1",
-                        "2",
-                        "3"
-                    ],
-        "correctOption":  2,
-        "successMessage":  "Correct. Two calls trigger two helper launches.",
-        "failureMessage":  "Each `follow_portal()` call runs the helper body once, so two calls mean two helper launches."
+        "id": "loops-review-functions",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "functions",
+        "title": "Review: call the helper twice",
+        "question": "How many helper launches does this main program trigger?",
+        "code": "follow_portal()\nfollow_portal()",
+        "boardHint": "A function call runs the stored helper body each time it appears.",
+        "unlockConnection": "This is a spaced review of the functions topic.",
+        "options": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ],
+        "correctOption": 2,
+        "successMessage": "Correct. Two calls trigger two helper launches.",
+        "failureMessage": "Each 'follow_portal()' call runs the helper body once, so two calls mean two helper launches."
+    },
+    {
+        "id": "lists-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 1,
+        "title": "Trace the bonus map",
+        "question": "If 'bonus_map = [0.5, 1, 5]', what multiplier does 'bonus_map[2]' read?",
+        "code": "bonus_map = [0.5, 1, 5]\nbonus_map[2]",
+        "boardHint": "Index 0 is the first item, so index 2 is the third multiplier, which belongs to input 3.",
+        "unlockConnection": "This checks whether you can read one input multiplier directly out of 'bonus_map'.",
+        "options": [
+            "0.5",
+            "1",
+            "5",
+            "0"
+        ],
+        "correctOption": 2,
+        "successMessage": "Correct. 'bonus_map[2]' reads the third multiplier, 5.",
+        "failureMessage": "Remember that list indexing starts at 0, so index 2 is the third item."
+    },
+    {
+        "id": "lists-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 2,
+        "title": "Repair the best-input tracker",
+        "question": "Which version checks every multiplier, remembers the strongest input, and launches that input?",
+        "code": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index)\ndrop_ball()",
+        "boardHint": "Walk through 'bonus_map' directly. Keep the best multiplier and the matching zero-based index, then add 1 before 'choose_input(...)'.",
+        "unlockConnection": "Index access and direct iteration work together here: read each multiplier, remember the best one, and convert its index into input 1, 2, or 3.",
+        "options": [
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in range(3):\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = multiplier\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_index = multiplier\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()"
+        ],
+        "correctOption": 0,
+        "successMessage": "Correct. The repaired version loops directly over 'bonus_map', keeps the best multiplier, and launches the matching lane.",
+        "failureMessage": "The fixed version should walk 'bonus_map', remember the strongest multiplier and its index, and then choose that input."
+    },
+    {
+        "id": "lists-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 3,
+        "title": "Write the best-input farmer",
+        "question": "Write one program that works for every visible case below: use 'bonus_map' to find the strongest input, then launch at least 3 balls from that input.",
+        "code": "",
+        "boardHint": "Start with 'best_multiplier = bonus_map[0]' and 'best_index = 0'. Walk through 'bonus_map', remember the best index, then use a second loop to fire at least 3 times from 'best_index + 1'. 'range(3)' is the smallest loop that works here.",
+        "unlockConnection": "This is the lists capstone: search the input-multiplier list, keep the best index, and then exploit that input repeatedly.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "drop_ball()",
+            "lineLimit": 12,
+            "cases": [
+                {
+                    "title": "Strongest in the middle",
+                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the middle input when the bonus map is [0.5, 5, 1].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            0.5,
+                            5,
+                            1
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                },
+                {
+                    "title": "Strongest on the left",
+                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the left input when the bonus map is [5, 1, 0.5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            5,
+                            1,
+                            0.5
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1,
+                            1,
+                            1
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                },
+                {
+                    "title": "Strongest on the right",
+                    "requirement": "Find the strongest multiplier and launch at least 3 balls from the right input when the bonus map is [1, 0.5, 5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            1,
+                            0.5,
+                            5
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3,
+                            3,
+                            3
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                }
+            ]
+        },
+        "successMessage": "Correct. Your program finds the strongest input, remembers its index, and farms that input for at least 3 launches.",
+        "failureMessage": "Your answer should walk 'bonus_map', keep the strongest multiplier and index, and then launch at least 3 balls from the matching input."
     }
 ]

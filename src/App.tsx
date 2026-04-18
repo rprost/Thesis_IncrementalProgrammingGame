@@ -1,6 +1,8 @@
 import { startTransition, useEffect, useRef, useState } from 'react'
 import './App.css'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
+import { BoardInternalsPanel } from './components/BoardInternalsPanel'
+import { CoachmarkBubble } from './components/CoachmarkBubble'
 import { HelpCenter, type HelpEntry } from './components/HelpCenter'
 import { IntroModal } from './components/IntroModal'
 import { NextStepCard } from './components/NextStepCard'
@@ -20,6 +22,7 @@ import {
   dismissUnlockSpotlight,
   isBluePortalActive,
   loadPersistedGameState,
+  normalizeListsQueue,
   purchaseShopNode,
   resetProgress,
   savePersistedGameState,
@@ -71,6 +74,7 @@ type HelpEntryId =
   | 'unlock-conditions'
   | 'unlock-functions'
   | 'unlock-loops'
+  | 'unlock-lists'
 
 function getCurrentTopic(
   gameState: GameState,
@@ -93,6 +97,8 @@ function getConstructLabel(construct: LockedConstruct, ui: UiText): string {
       return ui.constructIfLabel
     case 'functions':
       return ui.constructFunctionsLabel
+    case 'lists':
+      return ui.constructListsLabel
     default:
       return ui.constructFunctionsLabel
   }
@@ -116,6 +122,7 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'invalid_set_aim') ??
     validation.issues.find((issue) => issue.code === 'continue_outside_loop') ??
     validation.issues.find((issue) => issue.code === 'invalid_condition') ??
+    validation.issues.find((issue) => issue.code === 'invalid_index_access') ??
     validation.issues.find((issue) => issue.code === 'invalid_expression') ??
     validation.issues.find((issue) => issue.code === 'locked_construct') ??
     validation.issues.find((issue) => issue.code === 'for_range_limit') ??
@@ -172,6 +179,10 @@ function getProgramValidationMessage(
       })
     case 'invalid_expression':
       return formatText(ui.programErrorInvalidExpression, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      })
+    case 'invalid_index_access':
+      return formatText(ui.programErrorInvalidIndexAccess, {
         line: String(prioritizedIssue.lineNumber ?? 1),
       })
     case 'invalid_condition':
@@ -246,19 +257,12 @@ function getBallTypeConstant(ballType: BallType): string {
   }
 }
 
-function getPreviewMeaning(upcomingBalls: BallType[], ui: UiText): string | null {
-  const nextBall = upcomingBalls[0]
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(value)
+}
 
-  switch (nextBall) {
-    case 'negative':
-      return ui.boardPreviewMeaningEvil
-    case 'portal':
-      return ui.boardPreviewMeaningLucky
-    case 'center':
-      return ui.boardPreviewMeaningNormal
-    default:
-      return null
-  }
+function formatBonusMapValue(values: number[]): string {
+  return `[${values.map((value) => formatNumber(value)).join(', ')}]`
 }
 
 function sourceMentionsToken(source: string, token: string): boolean {
@@ -286,6 +290,14 @@ function getZeroStepFeedbackMessage(
 
   if (nextBall === null || nextBall === 'plain') {
     return ui.programZeroStepMessage
+  }
+
+  if (
+    nextBall === 'negative' &&
+    mentionsSkip &&
+    sourceMentionsToken(combinedSource, 'negative_ball')
+  ) {
+    return ui.programReadyMessage
   }
 
   const mentionedBallTypes = (['negative', 'portal', 'center'] as const).filter(
@@ -450,41 +462,53 @@ function buildNextStepModel(
 
 function buildHelpCatalog(
   ui: UiText,
+  topics: TopicDefinition[],
 ): Record<HelpEntryId, HelpEntry> {
+  const buildTopicEntry = (
+    id: Exclude<HelpEntryId, 'welcome'>,
+    topicId: TopicDefinition['id'],
+  ): HelpEntry => {
+    const topic = topics.find((candidate) => candidate.id === topicId)
+
+    return {
+      id,
+      title: topic?.title ?? ui.nextStepLearningTitle,
+      body: topic?.unlockSpotlightText ?? '',
+      stageLabel: ui.nextStepStageUnlocked,
+      primerCards: topic?.unlockPrimerCards ?? [],
+    }
+  }
+
   return {
     welcome: {
       id: 'welcome',
       title: ui.guideWelcomeTitle,
       body: ui.guideWelcomeBody,
+      stageLabel: ui.nextStepStageOnboarding,
+      primerCards: [],
     },
-    'unlock-variables': {
-      id: 'unlock-variables',
-      title: ui.guideVariablesUnlockTitle,
-      body: ui.guideVariablesUnlockBody,
-    },
-    'unlock-conditions': {
-      id: 'unlock-conditions',
-      title: ui.guideConditionsUnlockTitle,
-      body: ui.guideConditionsUnlockBody,
-    },
-    'unlock-functions': {
-      id: 'unlock-functions',
-      title: ui.guideFunctionsUnlockTitle,
-      body: ui.guideFunctionsUnlockBody,
-    },
-    'unlock-loops': {
-      id: 'unlock-loops',
-      title: ui.guideLoopsUnlockTitle,
-      body: ui.guideLoopsUnlockBody,
-    },
+    'unlock-variables': buildTopicEntry('unlock-variables', 'variables'),
+    'unlock-conditions': buildTopicEntry('unlock-conditions', 'conditions'),
+    'unlock-functions': buildTopicEntry('unlock-functions', 'functions'),
+    'unlock-loops': buildTopicEntry('unlock-loops', 'loops'),
+    'unlock-lists': buildTopicEntry('unlock-lists', 'lists'),
   }
 }
 
 function buildReferenceValues(
   gameState: GameState,
   ui: UiText,
+  topics: TopicDefinition[],
 ): ReferenceValueItem[] {
   const portalActive = isBluePortalActive(gameState)
+  const variablesTopic = topics.find((topic) => topic.id === 'variables')
+  const portalGoal = variablesTopic?.practiceGoals.find(
+    (goal) => goal.id === 'variables-store-target',
+  )
+  const portalDescription =
+    portalGoal?.instruction.split('\n\n')[0] ??
+    ui.boardGateExplanationAdvanced ??
+    ui.boardGateExplanation
 
   return [
     {
@@ -497,7 +521,7 @@ function buildReferenceValues(
           {
             id: 'blue_portal',
             label: ui.boardActivePortalLabel,
-            description: ui.topicGuideBluePortalDescription,
+            description: portalDescription,
           },
           {
             id: 'portal_side',
@@ -520,6 +544,18 @@ function buildReferenceValues(
           ...buildBallReferenceValues(ui),
         ]
       : []),
+    ...(gameState.learnedTopicIds.includes('lists')
+      ? [
+          {
+            id: 'bonus_map',
+            label: 'bonus_map',
+            description: ui.referenceBonusMapDescription,
+            example: formatText(ui.boardBonusMapCodeValue, {
+              value: formatBonusMapValue(gameState.moduleStates.board.bonusMap),
+            }),
+          },
+        ]
+      : []),
   ]
 }
 
@@ -533,36 +569,115 @@ function buildReferencePatterns(
     ...(portalActive
       ? [
           {
-            id: 'variables-example',
+            id: 'variables-example-store',
             label: ui.referenceExampleVariablesLabel,
-            code: 'target = portal_side',
+            code: 'target = portal_side\nchoose_input(target)',
+          },
+          {
+            id: 'variables-example-fixed',
+            label: ui.referenceExampleVariablesLabel,
+            code: 'target = 2\nchoose_input(target)\ndrop_ball()',
           },
         ]
       : []),
     ...(gameState.learnedTopicIds.includes('conditions')
       ? [
           {
-            id: 'conditions-example',
+            id: 'conditions-example-skip',
             label: ui.referenceExampleConditionsLabel,
             code: 'if next_ball == negative_ball:\n    skip_ball()',
+          },
+          {
+            id: 'conditions-example-branch',
+            label: ui.referenceExampleConditionsLabel,
+            code: [
+              'if next_ball == negative_ball:',
+              '    skip_ball()',
+              'elif next_ball == center_ball:',
+              '    choose_input(2)',
+              '    drop_ball()',
+              'else:',
+              '    choose_input(portal_side)',
+              '    drop_ball()',
+            ].join('\n'),
           },
         ]
       : []),
     ...(gameState.learnedTopicIds.includes('functions')
       ? [
           {
-            id: 'functions-example',
+            id: 'functions-example-define',
             label: ui.referenceExampleFunctionsLabel,
-            code: 'def follow_portal():\n    ...',
+            code: [
+              'def follow_portal():',
+              '    choose_input(portal_side)',
+              '    drop_ball()',
+            ].join('\n'),
+          },
+          {
+            id: 'functions-example-call',
+            label: ui.referenceExampleFunctionsLabel,
+            code: [
+              'if next_ball == portal_ball:',
+              '    follow_portal()',
+            ].join('\n'),
           },
         ]
       : []),
     ...(gameState.learnedTopicIds.includes('loops')
       ? [
           {
-            id: 'loops-example',
+            id: 'loops-example-repeat',
             label: ui.referenceExampleLoopsLabel,
-            code: 'for i in range(3):\n    ...',
+            code: 'for shot in range(3):\n    drop_ball()',
+          },
+          {
+            id: 'loops-example-preview',
+            label: ui.referenceExampleLoopsLabel,
+            code: [
+              'for shot in range(3):',
+              '    if next_ball == negative_ball:',
+              '        skip_ball()',
+              '        continue',
+              '    elif next_ball == center_ball:',
+              '        choose_input(2)',
+              '        drop_ball()',
+              '    else:',
+              '        follow_portal()',
+            ].join('\n'),
+          },
+        ]
+      : []),
+    ...(gameState.learnedTopicIds.includes('lists')
+      ? [
+          {
+            id: 'lists-example-index',
+            label: ui.referenceExampleListsLabel,
+            code: [
+              'left_bonus = bonus_map[0]',
+              'right_bonus = bonus_map[2]',
+              'if right_bonus > left_bonus:',
+              '    choose_input(3)',
+              'else:',
+              '    choose_input(1)',
+              'drop_ball()',
+            ].join('\n'),
+          },
+          {
+            id: 'lists-example-search',
+            label: ui.referenceExampleListsLabel,
+            code: [
+              'best_multiplier = bonus_map[0]',
+              'best_index = 0',
+              'index = 0',
+              'for multiplier in bonus_map:',
+              '    if multiplier > best_multiplier:',
+              '        best_multiplier = multiplier',
+              '        best_index = index',
+              '    index = index + 1',
+              'choose_input(best_index + 1)',
+              'drop_ball()',
+            ].join('\n'),
           },
         ]
       : []),
@@ -583,7 +698,15 @@ function App() {
     useState<HelpEntryId | null>(null)
   const [isHelpManuallyOpen, setIsHelpManuallyOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(
+    () => gameState.activeTaskId !== null,
+  )
+  const [isHelpCoachmarkDismissed, setIsHelpCoachmarkDismissed] = useState(false)
+  const [isReferenceCoachmarkDismissed, setIsReferenceCoachmarkDismissed] =
+    useState(false)
   const settingsRef = useRef<HTMLDivElement | null>(null)
+  const helpButtonRef = useRef<HTMLButtonElement | null>(null)
+  const referenceCardRef = useRef<HTMLElement | null>(null)
   const previousAudioSnapshotRef = useRef<{
     activeBallIds: number[]
     portalSplitCount: number
@@ -591,10 +714,14 @@ function App() {
     supportUpgradeCount: number
   } | null>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
-  const { play: playSound, unlock: unlockAudio } = useGameAudio(gameState.soundEnabled)
+  const {
+    play: playSound,
+    unlock: unlockAudio,
+    isReady: isAudioReady,
+  } = useGameAudio(gameState.soundEnabled)
 
   const { ui, tasks, shopNodes, topics } = getLocaleContent(locale)
-  const helpCatalog = buildHelpCatalog(ui)
+  const helpCatalog = buildHelpCatalog(ui, topics)
   const helpEntryIds: HelpEntryId[] = [
     'welcome',
     ...(gameState.learnedTopicIds.includes('variables')
@@ -609,6 +736,9 @@ function App() {
     ...(gameState.learnedTopicIds.includes('loops')
       ? (['unlock-loops'] as const)
       : []),
+    ...(gameState.learnedTopicIds.includes('lists')
+      ? (['unlock-lists'] as const)
+      : []),
   ]
   const activeHelpEntryId =
     selectedHelpEntryId ?? helpEntryIds[helpEntryIds.length - 1] ?? null
@@ -620,6 +750,21 @@ function App() {
     gameState.activeTaskId === null
       ? null
       : tasks.find((task) => task.id === gameState.activeTaskId) ?? null
+  const activeTaskId = activeTask?.id ?? null
+  const canShowSupportCoachmarks =
+    gameState.introDismissed &&
+    gameState.currentView === 'play' &&
+    gameState.learnedTopicIds.includes('variables') &&
+    gameState.topicStage !== 'new_unlock_spotlight' &&
+    activeTask === null &&
+    !isHelpOpen &&
+    !isSettingsOpen
+  const showHelpCoachmark =
+    canShowSupportCoachmarks && !isHelpCoachmarkDismissed
+  const showReferenceCoachmark =
+    canShowSupportCoachmarks &&
+    isHelpCoachmarkDismissed &&
+    !isReferenceCoachmarkDismissed
   const shopIsAvailable = canOpenShop(gameState)
   const supportEffects = getSupportUpgradeEffects(gameState.supportUpgradeIds)
   const functionsUnlocked =
@@ -648,10 +793,10 @@ function App() {
     ? ui.editorLockedDescription
     : isSpotlight
       ? ui.editorSpotlightDescription
-      : ui.editorUnlockedDescription
+      : null
   const helperHelperText = isSpotlight
     ? ui.helperEditorSpotlightDescription
-    : ui.helperEditorUnlockedDescription
+    : null
   const editorFeedbackMessage = isSpotlight
     ? null
     : validationMessage
@@ -660,17 +805,13 @@ function App() {
       ? ui.goalEditRequiredMainMessage
     : gameState.programValidation.executionStepCount === 0
       ? getZeroStepFeedbackMessage(gameState, ui)
-      : formatText(ui.programReadyMessage, {
-          count: String(gameState.programValidation.executionStepCount),
-        })
+      : null
   const helperFeedbackMessage = isSpotlight
     ? null
     : helperValidationMessage
       ? helperValidationMessage
     : gameState.goalChangeNoticeTarget === 'helper'
       ? ui.goalEditRequiredHelperMessage
-    : functionsUnlocked
-      ? ui.helperProgramReadyMessage
       : null
   const editorFeedbackTone = validationMessage
     ? 'error'
@@ -701,28 +842,34 @@ function App() {
       ? ['target = portal_side']
       : []),
     ...(gameState.unlocks.unlockedConstructs.includes('if')
-      ? ['if next_ball == negative_ball:']
+      ? [
+          'if next_ball == negative_ball:',
+          'elif next_ball == center_ball:',
+          'else:',
+        ]
       : []),
     ...(functionsUnlocked ? ['def follow_portal():'] : []),
     ...(gameState.unlocks.unlockedConstructs.includes('for')
       ? ['for ball in range(3):', 'continue']
       : []),
+    ...(gameState.unlocks.unlockedConstructs.includes('lists')
+      ? ['best_multiplier = bonus_map[0]', 'for multiplier in bonus_map:']
+      : []),
   ]
-  const referenceValues = buildReferenceValues(gameState, ui)
+  const referenceValues = buildReferenceValues(gameState, ui, topics)
   const referencePatterns = buildReferencePatterns(gameState, ui)
   const nextStep = buildNextStepModel(gameState, topics, tasks, ui)
   const previewCount = Math.max(
     supportEffects.previewCount,
     gameState.activeScenario?.visiblePreviewCount ?? 0,
   )
-  const upcomingBallPreview = gameState.learnedTopicIds.includes('conditions')
+  const upcomingBallPreview =
+    gameState.learnedTopicIds.includes('conditions')
       ? gameState.ballQueue.slice(
           gameState.ballQueueCursor,
           gameState.ballQueueCursor + previewCount,
         )
       : []
-  const previewMeaning = getPreviewMeaning(upcomingBallPreview, ui)
-  const showQueuePreview = true
   const checkpointTasks = tasks.filter(
     (task) =>
       activeTask !== null &&
@@ -748,8 +895,24 @@ function App() {
       : null
 
   useEffect(() => {
+    setIsTaskModalOpen(activeTaskId !== null)
+  }, [activeTaskId])
+
+  useEffect(() => {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
   }, [locale])
+
+  useEffect(() => {
+    if (
+      gameState.currentTopicId !== 'lists' ||
+      gameState.isRunning ||
+      !gameState.ballQueue.some((ballType) => ballType === 'plain')
+    ) {
+      return
+    }
+
+    setGameState((currentState) => normalizeListsQueue(currentState))
+  }, [gameState.ballQueue, gameState.currentTopicId, gameState.isRunning])
 
   useEffect(() => {
     savePersistedGameState(gameState)
@@ -838,6 +1001,24 @@ function App() {
 
     return () => window.clearInterval(intervalId)
   }, [gameState.activeBalls.length, prefersReducedMotion])
+
+  useEffect(() => {
+    if (!gameState.soundEnabled || isAudioReady) {
+      return
+    }
+
+    const handleGestureUnlock = () => {
+      unlockAudio()
+    }
+
+    window.addEventListener('pointerdown', handleGestureUnlock)
+    window.addEventListener('keydown', handleGestureUnlock)
+
+    return () => {
+      window.removeEventListener('pointerdown', handleGestureUnlock)
+      window.removeEventListener('keydown', handleGestureUnlock)
+    }
+  }, [gameState.soundEnabled, isAudioReady, unlockAudio])
 
   useEffect(() => {
     const snapshot = {
@@ -965,6 +1146,7 @@ function App() {
   }
 
   const handleToggleSettings = () => {
+    setIsHelpManuallyOpen(false)
     setIsSettingsOpen((current) => !current)
   }
 
@@ -983,11 +1165,22 @@ function App() {
     setGameState((currentState) => startCheckpoint(currentState))
   }
 
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false)
+  }
+
+  const handleResumeTaskModal = () => {
+    setIsTaskModalOpen(true)
+  }
+
   const handleCloseHelp = () => {
     setIsHelpManuallyOpen(false)
   }
 
   const handleToggleHelp = () => {
+    setIsSettingsOpen(false)
+    setIsHelpCoachmarkDismissed(true)
+
     if (isHelpOpen) {
       handleCloseHelp()
       return
@@ -1031,6 +1224,8 @@ function App() {
     setIsHelpManuallyOpen(false)
     setSelectedHelpEntryId(null)
     setIsSettingsOpen(false)
+    setIsHelpCoachmarkDismissed(false)
+    setIsReferenceCoachmarkDismissed(false)
   }
 
   const handleValidateWriteAnswer = (task: GameTask, answer: string) => {
@@ -1060,11 +1255,17 @@ function App() {
   }
 
   const nextStepAction =
-    nextStep.actionKind === 'checkpoint'
-      ? handleStartCheckpoint
-      : nextStep.actionKind === 'dismiss_unlock'
-        ? handleDismissSpotlight
-        : null
+    activeTask !== null && !isTaskModalOpen
+      ? handleResumeTaskModal
+      : nextStep.actionKind === 'checkpoint'
+        ? handleStartCheckpoint
+        : nextStep.actionKind === 'dismiss_unlock'
+          ? handleDismissSpotlight
+          : null
+  const nextStepActionLabel =
+    activeTask !== null && !isTaskModalOpen
+      ? ui.taskResumeButton
+      : nextStep.actionLabel
 
   return (
     <main className="app-shell">
@@ -1101,6 +1302,19 @@ function App() {
         </div>
 
         <div className="topbar-right" ref={settingsRef}>
+          <HelpCenter
+            ui={ui}
+            entries={helpEntries}
+            activeEntryId={activeHelpEntryId}
+            isOpen={isHelpOpen}
+            hasUnread={false}
+            onToggle={handleToggleHelp}
+            onClose={handleCloseHelp}
+            onSelect={handleSelectHelpEntry}
+            buttonRef={helpButtonRef}
+            isHighlighted={showHelpCoachmark}
+          />
+
           <button
             className={`settings-button${isSettingsOpen ? ' active' : ''}`}
             onClick={handleToggleSettings}
@@ -1180,65 +1394,69 @@ function App() {
 
       {gameState.currentView === 'play' ? (
         <section className="play-layout">
-          <NextStepCard
-            key={`${nextStep.stageLabel}-${nextStep.title}-${nextStep.body}`}
-            ui={ui}
-            title={nextStep.title}
-            body={nextStep.body}
-            stageLabel={nextStep.stageLabel}
-            progressText={nextStep.progressText}
-            progressValue={nextStep.progressValue}
-            hintText={nextStep.hintText}
-            primerCards={nextStep.primerCards}
-            actionLabel={nextStep.actionLabel}
-            onAction={nextStepAction}
-          />
-
           <div className="workspace-grid">
             <div className="editor-column">
-            <ProgramEditor
-              code={gameState.programSource}
-              title={ui.editorTitle}
-              variant="main"
-              ui={ui}
-              status={
-                !gameState.unlocks.editorEditable
-                  ? 'locked'
-                  : isSpotlight
-                    ? 'read-only'
-                    : 'editable'
-              }
-              isEditable={
-                gameState.unlocks.editorEditable &&
-                !gameState.isRunning &&
-                !isSpotlight
-              }
-              isHighlighted={false}
-              activeLineNumber={gameState.activeLineNumber}
-              lineUsageText={lineUsageText}
-              helperText={editorHelperText}
-              feedbackMessage={editorFeedbackMessage}
-              feedbackTone={editorFeedbackTone}
-              onChange={handleProgramChange}
-            />
-
-            {functionsUnlocked ? (
-              <ProgramEditor
-                code={gameState.helperProgramSource}
-                title={ui.helperEditorTitle}
-                variant="helper"
+              <NextStepCard
+                key={`${nextStep.stageLabel}-${nextStep.title}-${nextStep.body}`}
                 ui={ui}
-                status={isSpotlight ? 'read-only' : 'editable'}
-                isEditable={!gameState.isRunning && !isSpotlight}
-                isHighlighted={false}
-                activeLineNumber={null}
-                lineUsageText={helperUsageText}
-                helperText={helperHelperText}
-                feedbackMessage={helperFeedbackMessage}
-                feedbackTone={helperFeedbackTone}
-                onChange={handleHelperProgramChange}
+                title={nextStep.title}
+                body={nextStep.body}
+                stageLabel={nextStep.stageLabel}
+                progressText={nextStep.progressText}
+                progressValue={nextStep.progressValue}
+                hintText={nextStep.hintText}
+                primerCards={nextStep.primerCards}
+                actionLabel={nextStepActionLabel}
+                onAction={nextStepAction}
+                highlightAction={
+                  nextStep.actionKind === 'checkpoint' ||
+                  (activeTask !== null && !isTaskModalOpen)
+                }
               />
-            ) : null}
+
+              <ProgramEditor
+                code={gameState.programSource}
+                title={ui.editorTitle}
+                variant="main"
+                ui={ui}
+                status={
+                  !gameState.unlocks.editorEditable
+                    ? 'locked'
+                    : isSpotlight
+                      ? 'read-only'
+                      : 'editable'
+                }
+                isEditable={
+                  gameState.unlocks.editorEditable &&
+                  !gameState.isRunning &&
+                  !isSpotlight
+                }
+                isHighlighted={false}
+                activeLineNumber={gameState.activeLineNumber}
+                lineUsageText={lineUsageText}
+                helperText={editorHelperText}
+                feedbackMessage={editorFeedbackMessage}
+                feedbackTone={editorFeedbackTone}
+                onChange={handleProgramChange}
+              />
+
+              {functionsUnlocked ? (
+                <ProgramEditor
+                  code={gameState.helperProgramSource}
+                  title={ui.helperEditorTitle}
+                  variant="helper"
+                  ui={ui}
+                  status={isSpotlight ? 'read-only' : 'editable'}
+                  isEditable={!gameState.isRunning && !isSpotlight}
+                  isHighlighted={false}
+                  activeLineNumber={null}
+                  lineUsageText={helperUsageText}
+                  helperText={helperHelperText}
+                  feedbackMessage={helperFeedbackMessage}
+                  feedbackTone={helperFeedbackTone}
+                  onChange={handleHelperProgramChange}
+                />
+              ) : null}
               <aside className="editor-toolbar">
                 <div className="editor-toolbar-main">
                   <p className="panel-kicker">{ui.runPanelTitle}</p>
@@ -1286,28 +1504,41 @@ function App() {
                 activeBalls={gameState.activeBalls}
                 portalSide={gameState.moduleStates.board.portalSide}
                 portalActive={portalActive}
-                learnedTopicIds={gameState.learnedTopicIds}
-                upcomingBalls={upcomingBallPreview}
-                previewMeaning={previewMeaning}
-                showQueuePreview={showQueuePreview}
-                portalChildCount={
-                  (upcomingBallPreview[0] === 'portal' ? 4 : 2) +
-                  supportEffects.extraPortalChildren
+                extraPortalChildren={supportEffects.extraPortalChildren}
+                bonusMap={
+                  gameState.learnedTopicIds.includes('lists')
+                    ? gameState.moduleStates.board.bonusMap
+                    : null
                 }
                 now={animationNow}
                 reducedMotion={prefersReducedMotion}
               />
-            </div>
-          </div>
 
-          <AvailableSyntaxCard
-            ui={ui}
-            functions={availableFunctions}
-            structures={availableStructures}
-            referenceValues={referenceValues}
-            patterns={referencePatterns}
-          />
-        </section>
+              <BoardInternalsPanel
+                ui={ui}
+                portalActive={portalActive}
+                portalSide={gameState.moduleStates.board.portalSide}
+                upcomingBalls={upcomingBallPreview}
+                scenarioPreviewCount={gameState.activeScenario?.visiblePreviewCount ?? null}
+                bonusMap={
+                  gameState.learnedTopicIds.includes('lists')
+                    ? gameState.moduleStates.board.bonusMap
+                    : null
+                }
+              />
+
+                <AvailableSyntaxCard
+                  ui={ui}
+                  functions={availableFunctions}
+                  structures={availableStructures}
+                  referenceValues={referenceValues}
+                  patterns={referencePatterns}
+                  containerRef={referenceCardRef}
+                  isHighlighted={showReferenceCoachmark}
+                />
+              </div>
+            </div>
+          </section>
       ) : (
         <ShopTree
           gameState={gameState}
@@ -1324,11 +1555,13 @@ function App() {
       />
 
       <TaskModal
-        key={activeTask?.id ?? 'no-task'}
+        key={activeTaskId ?? 'no-task'}
         task={activeTask}
+        isOpen={isTaskModalOpen}
         ui={ui}
         progressText={taskProgressText}
         onResolved={handleTaskResolved}
+        onClose={handleCloseTaskModal}
         onEvaluated={handleTaskEvaluated}
         validateWriteAnswer={handleValidateWriteAnswer}
         getValidationMessage={(validation) =>
@@ -1336,16 +1569,25 @@ function App() {
         }
       />
 
-      <HelpCenter
-        ui={ui}
-        entries={helpEntries}
-        activeEntryId={activeHelpEntryId}
-        isOpen={isHelpOpen}
-        hasUnread={false}
-        onToggle={handleToggleHelp}
-        onClose={handleCloseHelp}
-        onSelect={handleSelectHelpEntry}
-      />
+      {showHelpCoachmark ? (
+        <CoachmarkBubble
+          targetRef={helpButtonRef}
+          message={ui.helpCoachmarkBody}
+          dismissLabel={ui.coachmarkDismissButton}
+          onDismiss={() => setIsHelpCoachmarkDismissed(true)}
+          placement="below-end"
+        />
+      ) : null}
+
+      {showReferenceCoachmark ? (
+        <CoachmarkBubble
+          targetRef={referenceCardRef}
+          message={ui.referenceCoachmarkBody}
+          dismissLabel={ui.coachmarkDismissButton}
+          onDismiss={() => setIsReferenceCoachmarkDismissed(true)}
+          placement="above-end"
+        />
+      ) : null}
     </main>
   )
 }

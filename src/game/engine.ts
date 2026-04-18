@@ -28,6 +28,7 @@ import {
   createBallOutcome,
   getBallTypeValue,
   refillBallQueue,
+  rollBonusMap,
   rollPortalSide,
 } from './pachinko'
 import {
@@ -44,7 +45,7 @@ import {
 } from './shop'
 
 const FEED_LIMIT = 8
-const SAVE_VERSION = 6
+const SAVE_VERSION = 8
 export const SAVE_STORAGE_KEY = 'incremental-programming-game.save'
 
 type FeedEntryInput = {
@@ -206,6 +207,14 @@ function applyTopicUnlocks(
           ? unlocks.unlockedConstructs
           : [...unlocks.unlockedConstructs, 'for'],
       }
+    case 'lists':
+      return {
+        ...unlocks,
+        lineCapacity: Math.max(unlocks.lineCapacity, 12),
+        unlockedConstructs: unlocks.unlockedConstructs.includes('lists')
+          ? unlocks.unlockedConstructs
+          : [...unlocks.unlockedConstructs, 'lists'],
+      }
     default:
       return unlocks
   }
@@ -244,13 +253,23 @@ function createScenarioQueue(state: {
   topicStage: GameState['topicStage']
 }): BallType[] {
   const fallbackQueue = createBallQueue({
-    conditionsUnlocked: state.learnedTopicIds.includes('conditions'),
+    conditionsUnlocked:
+      state.learnedTopicIds.includes('conditions') ||
+      state.currentTopicId === 'lists',
     currentTopicId: state.currentTopicId,
     topicStage: state.topicStage,
   })
 
   if (state.activeScenario === null) {
-    return fallbackQueue
+    return replacePlainBallsInListsQueue({
+      currentTopicId: state.currentTopicId,
+      queue: fallbackQueue,
+      fallbackQueue,
+    })
+  }
+
+  if (state.currentTopicId === 'lists') {
+    return buildListsScenarioQueue(state.activeScenario.previewQueue, fallbackQueue)
   }
 
   return [...state.activeScenario.previewQueue, ...fallbackQueue].slice(
@@ -305,6 +324,11 @@ function getEvaluationContext(state: GameState) {
           negative_ball: 3,
         }
       : {}),
+    ...(state.learnedTopicIds.includes('lists')
+      ? {
+          bonus_map: state.moduleStates.board.bonusMap,
+        }
+      : {}),
   }
 }
 
@@ -316,6 +340,7 @@ function createFeatureUsage(): ProgramFeatureUsage {
     usedHelperCall: false,
     usedFor: false,
     usedContinue: false,
+    usedLists: false,
   }
 }
 
@@ -345,8 +370,20 @@ function createInitialModuleState(): GameState['moduleStates'] {
   return {
     board: {
       portalSide: rollPortalSide(),
+      bonusMap: rollBonusMap(),
     },
   }
+}
+
+function getLaneMultiplier(
+  state: Pick<GameState, 'learnedTopicIds' | 'moduleStates'>,
+  aim: 1 | 2 | 3,
+): number {
+  if (!state.learnedTopicIds.includes('lists')) {
+    return 1
+  }
+
+  return state.moduleStates.board.bonusMap[aim - 1] ?? 1
 }
 
 function getPortalChildCount(
@@ -359,8 +396,22 @@ function getPortalChildCount(
 }
 
 function getRefilledQueue(state: GameState): GameState['ballQueue'] {
-  return refillBallQueue(state.ballQueue, state.ballQueueCursor, {
-    conditionsUnlocked: state.learnedTopicIds.includes('conditions'),
+  const conditionsUnlocked =
+    state.learnedTopicIds.includes('conditions') ||
+    state.currentTopicId === 'lists'
+  const fallbackQueue = createBallQueue({
+    conditionsUnlocked,
+    currentTopicId: state.currentTopicId,
+    topicStage: state.topicStage,
+  })
+  const refilledQueue = refillBallQueue(state.ballQueue, state.ballQueueCursor, {
+    conditionsUnlocked,
+  })
+
+  return replacePlainBallsInListsQueue({
+    currentTopicId: state.currentTopicId,
+    queue: refilledQueue,
+    fallbackQueue,
   })
 }
 
@@ -431,6 +482,13 @@ function createScoreBreakdown(
     })
   }
 
+  if (ball.laneMultiplier !== 1) {
+    lines.push({
+      kind: 'lane_multiplier',
+      value: ball.laneMultiplier,
+    })
+  }
+
   lines.push({
     kind: 'total',
     value: total,
@@ -467,7 +525,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
 
     queuedSteps = remainingSteps
     activeLineNumber = step.lineNumber
-    if (step.type === 'drop_ball' && step.source !== 'loader') {
+    if (step.type === 'drop_ball') {
       ballQueueCursor += 1
     }
 
@@ -500,6 +558,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
         portalDepth: 0,
         maxPortalDepth: supportEffects.maxPortalDepth,
         extraCenterBinBonus: supportEffects.extraCenterBinBonus,
+        laneMultiplier: getLaneMultiplier(state, step.aim),
       },
     )
     const activeBall = {
@@ -508,6 +567,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
       aim: step.aim,
       source: step.source,
       ballType: step.ballType,
+      laneMultiplier: outcome.laneMultiplier,
       spawnKind: 'direct' as const,
       portalDepth: 0,
       bucketIndex: outcome.bucketIndex,
@@ -587,6 +647,7 @@ function createPortalChildBall(
       portalDepth: parentBall.portalDepth + 1,
       maxPortalDepth: supportEffects.maxPortalDepth,
       extraCenterBinBonus: supportEffects.extraCenterBinBonus,
+      laneMultiplier: parentBall.laneMultiplier,
     },
   )
 
@@ -596,6 +657,7 @@ function createPortalChildBall(
     aim: parentBall.aim,
     source: parentBall.source,
     ballType: parentBall.ballType,
+    laneMultiplier: outcome.laneMultiplier,
     spawnKind: 'portal' as const,
     portalDepth: parentBall.portalDepth + 1,
     bucketIndex: outcome.bucketIndex,
@@ -815,12 +877,17 @@ function mentionsAllIdentifiers(
 function launchAimsMatch(
   aims: number[],
   expectedAims: number[] | undefined,
+  allowExtraLaunches = false,
 ): boolean {
   if (expectedAims === undefined || expectedAims.length === 0) {
     return true
   }
 
-  if (aims.length !== expectedAims.length) {
+  if (allowExtraLaunches) {
+    if (aims.length < expectedAims.length) {
+      return false
+    }
+  } else if (aims.length !== expectedAims.length) {
     return false
   }
 
@@ -876,10 +943,15 @@ function matchesExecutionExpectation(
       expectation.previewResponses,
       scenario,
     ) &&
-    launchAimsMatch(runStats.launchAims, expectation.expectedMainLaunchAims) &&
+    launchAimsMatch(
+      runStats.launchAims,
+      expectation.expectedMainLaunchAims,
+      expectation.allowExtraMainLaunches ?? false,
+    ) &&
     launchAimsMatch(
       runStats.helperLaunchAims,
       expectation.expectedHelperLaunchAims,
+      expectation.allowExtraHelperLaunches ?? false,
     ) &&
     runStats.mainLaunchCount >= (expectation.minMainLaunchCount ?? 0) &&
     runStats.mainLaunchCount <=
@@ -964,6 +1036,7 @@ function refreshMachineState(state: GameState): GameState {
       moduleStates: {
         board: {
           portalSide: state.activeScenario.portalSide,
+          bonusMap: state.activeScenario.bonusMap ?? state.moduleStates.board.bonusMap,
         },
       },
     }
@@ -976,6 +1049,7 @@ function refreshMachineState(state: GameState): GameState {
     moduleStates: {
       board: {
         portalSide: rollPortalSide(),
+        bonusMap: rollBonusMap(),
       },
     },
   }
@@ -1034,6 +1108,7 @@ function applyPracticeGoalState(
     moduleStates: {
       board: {
         portalSide: activeScenario?.portalSide ?? rollPortalSide(),
+        bonusMap: activeScenario?.bonusMap ?? rollBonusMap(),
       },
     },
   }
@@ -1323,6 +1398,15 @@ function sanitizeScenario(
     value.visiblePreviewCount >= 1
       ? Math.floor(value.visiblePreviewCount)
       : undefined
+  const bonusMap =
+    'bonusMap' in value &&
+    Array.isArray(value.bonusMap) &&
+    value.bonusMap.length === 3 &&
+    value.bonusMap.every(
+      (entry) => typeof entry === 'number' && Number.isFinite(entry),
+    )
+      ? value.bonusMap
+      : undefined
 
   if (
     (portalSide !== 1 && portalSide !== 3) ||
@@ -1336,7 +1420,60 @@ function sanitizeScenario(
     portalSide,
     previewQueue,
     visiblePreviewCount,
+    bonusMap,
   }
+}
+
+function sanitizeBonusMap(value: unknown, fallback: number[]): number[] {
+  if (
+    Array.isArray(value) &&
+    value.length === 3 &&
+    value.every((entry) => typeof entry === 'number' && Number.isFinite(entry))
+  ) {
+    return value
+  }
+
+  return fallback
+}
+
+function buildListsScenarioQueue(
+  previewQueue: BallType[],
+  fallbackQueue: BallType[],
+): BallType[] {
+  let fallbackIndex = 0
+  const filledPreview = previewQueue.map((ballType) => {
+    if (ballType !== 'plain') {
+      return ballType
+    }
+
+    const replacement = fallbackQueue[fallbackIndex] ?? 'center'
+    fallbackIndex += 1
+    return replacement
+  })
+
+  return [...filledPreview, ...fallbackQueue.slice(fallbackIndex)].slice(
+    0,
+    fallbackQueue.length,
+  )
+}
+
+function replacePlainBallsInListsQueue(options: {
+  currentTopicId: TaskTopicId | null
+  queue: BallType[]
+  fallbackQueue: BallType[]
+}): BallType[] {
+  if (
+    options.currentTopicId !== 'lists' ||
+    !options.queue.some((ballType) => ballType === 'plain')
+  ) {
+    return options.queue
+  }
+
+  return options.queue.map((ballType, index) =>
+    ballType === 'plain'
+      ? (options.fallbackQueue[index] ?? 'center')
+      : ballType,
+  )
 }
 
 function sanitizeRunSummary(value: unknown): RunSummary | null {
@@ -1402,34 +1539,53 @@ export function loadPersistedGameState(
   try {
     const parsed = JSON.parse(raw) as PersistedGameState
 
-    if (parsed.version !== SAVE_VERSION && parsed.version !== 5) {
+    if (
+      parsed.version !== SAVE_VERSION &&
+      parsed.version !== 7 &&
+      parsed.version !== 6 &&
+      parsed.version !== 5
+    ) {
       return initialState
     }
 
     const validTaskIds = new Set(tasks.map((task) => task.id))
     const validTopicIds = new Set<string>(topics.map((topic) => topic.id))
     const validUpgradeIds = new Set<string>(SHOP_NODES.map((node) => node.id))
+    const isLegacySave = parsed.version < SAVE_VERSION
     const persistedCurrentTopicId = parsed.state.currentTopicId as string | null
     const persistedLearnedTopicIds = (parsed.state.learnedTopicIds ?? []) as string[]
     const persistedMasteredTopicIds = (parsed.state.masteredTopicIds ?? []) as string[]
     const persistedSupportUpgradeIds = (parsed.state.supportUpgradeIds ?? []) as string[]
-    const hadRemovedListsProgress =
-      persistedLearnedTopicIds.includes('lists') ||
-      persistedMasteredTopicIds.includes('lists') ||
-      persistedCurrentTopicId === 'lists' ||
-      persistedSupportUpgradeIds.includes('fourth_loader_slot')
+    const hadLegacyListsProgress =
+      isLegacySave &&
+      (
+        persistedLearnedTopicIds.includes('lists') ||
+        persistedMasteredTopicIds.includes('lists') ||
+        persistedCurrentTopicId === 'lists' ||
+        persistedSupportUpgradeIds.includes('fourth_loader_slot')
+      )
+    const hadLegacyLoopsCompletion =
+      isLegacySave &&
+      parsed.state.topicStage === 'completed' &&
+      (persistedLearnedTopicIds.includes('loops') ||
+        persistedMasteredTopicIds.includes('loops') ||
+        persistedCurrentTopicId === 'loops')
+    const shouldUnlockListsFromMigration =
+      validTopicIds.has('lists') &&
+      (hadLegacyListsProgress || hadLegacyLoopsCompletion)
     const learnedTopicIdsBase = persistedLearnedTopicIds.filter((topicId): topicId is TaskTopicId =>
       validTopicIds.has(topicId),
     )
     const masteredTopicIdsBase = persistedMasteredTopicIds.filter((topicId): topicId is TaskTopicId =>
       validTopicIds.has(topicId),
     )
+    const needsLoopsMastered = hadLegacyListsProgress || hadLegacyLoopsCompletion
     const learnedTopicIds: TaskTopicId[] =
-      hadRemovedListsProgress && !learnedTopicIdsBase.includes('loops')
+      needsLoopsMastered && !learnedTopicIdsBase.includes('loops')
         ? [...learnedTopicIdsBase, 'loops']
         : learnedTopicIdsBase
     const masteredTopicIds: TaskTopicId[] =
-      hadRemovedListsProgress && !masteredTopicIdsBase.includes('loops')
+      needsLoopsMastered && !masteredTopicIdsBase.includes('loops')
         ? [...masteredTopicIdsBase, 'loops']
         : masteredTopicIdsBase
     const supportUpgradeIds = (parsed.state.supportUpgradeIds ?? []).filter((upgradeId) =>
@@ -1437,43 +1593,47 @@ export function loadPersistedGameState(
     )
     const parsedCurrentTopicId = persistedCurrentTopicId
     const currentTopicId =
-      hadRemovedListsProgress
-        ? 'loops'
-        : typeof parsedCurrentTopicId === 'string' &&
-            validTopicIds.has(parsedCurrentTopicId as TaskTopicId)
-          ? (parsedCurrentTopicId as TaskTopicId)
-          : null
+      typeof parsedCurrentTopicId === 'string' &&
+      validTopicIds.has(parsedCurrentTopicId as TaskTopicId)
+        ? (parsedCurrentTopicId as TaskTopicId)
+        : null
     const currentTopic = getTopicById(topics, currentTopicId)
     const topicMeterGoal = currentTopic?.practiceGoals.length ?? 0
-    const topicMeter = hadRemovedListsProgress
-      ? topicMeterGoal
-      : Math.min(parsed.state.topicMeter ?? 0, topicMeterGoal)
-    const topicStage = hadRemovedListsProgress
-      ? 'completed'
-      : isValidTopicStage(parsed.state.topicStage)
-        ? parsed.state.topicStage
-        : currentTopicId === null
-          ? 'onboarding'
-          : 'topic_active'
+    const topicMeter = Math.min(parsed.state.topicMeter ?? 0, topicMeterGoal)
+    const topicStage = isValidTopicStage(parsed.state.topicStage)
+      ? parsed.state.topicStage
+      : currentTopicId === null
+        ? 'onboarding'
+        : 'topic_active'
     const derivedScenario =
       currentTopic !== null &&
       (topicStage === 'topic_active' || topicStage === 'new_unlock_spotlight') &&
       topicMeter < currentTopic.practiceGoals.length
         ? currentTopic.practiceGoals[topicMeter]?.scenario ?? null
         : null
-    const activeScenario = hadRemovedListsProgress
-      ? null
-      : derivedScenario ?? sanitizeScenario(parsed.state.activeScenario, derivedScenario)
+    const activeScenario =
+      derivedScenario ?? sanitizeScenario(parsed.state.activeScenario, derivedScenario)
     const fallbackQueue = createScenarioQueue({
       activeScenario,
       learnedTopicIds,
       currentTopicId,
       topicStage,
     })
-    const ballQueue = Array.isArray(parsed.state.ballQueue)
+    const persistedBallQueue = Array.isArray(parsed.state.ballQueue)
       ? parsed.state.ballQueue.filter(isValidBallType)
       : fallbackQueue
-    const filteredBallQueue = ballQueue.length > 0 ? ballQueue : fallbackQueue
+    const ballQueue =
+      persistedBallQueue.length > 0 ? persistedBallQueue : fallbackQueue
+    const filteredBallQueue =
+      currentTopicId === 'lists' &&
+      activeScenario !== null &&
+      ballQueue.some((ballType) => ballType === 'plain')
+        ? buildListsScenarioQueue(activeScenario.previewQueue, fallbackQueue)
+        : replacePlainBallsInListsQueue({
+            currentTopicId,
+            queue: ballQueue,
+            fallbackQueue,
+          })
     const ballQueueCursor = Math.min(
       Math.max(0, parsed.state.ballQueueCursor ?? 0),
       Math.max(0, filteredBallQueue.length - 1),
@@ -1494,13 +1654,16 @@ export function loadPersistedGameState(
       parsed.state.moduleStates?.board?.portalSide === 3
         ? parsed.state.moduleStates.board.portalSide
         : activeScenario?.portalSide ?? initialState.moduleStates.board.portalSide
+    const moduleBonusMap = sanitizeBonusMap(
+      parsed.state.moduleStates?.board?.bonusMap,
+      activeScenario?.bonusMap ?? initialState.moduleStates.board.bonusMap,
+    )
     const helperProgramSource =
       learnedTopicIds.includes('functions') &&
       (parsed.state.helperProgramSource ?? '').trim() === ''
         ? INITIAL_HELPER_SOURCE
         : parsed.state.helperProgramSource ?? ''
-
-    return revalidatePrograms({
+    const loadedState = revalidatePrograms({
       ...initialState,
       score: parsed.state.score ?? initialState.score,
       resolvedDropCount:
@@ -1526,16 +1689,12 @@ export function loadPersistedGameState(
       goalBaselineHelperSource:
         parsed.state.goalBaselineHelperSource ??
         initialState.goalBaselineHelperSource,
-      activeCheckpointTaskIds: hadRemovedListsProgress
-        ? []
-        : (parsed.state.activeCheckpointTaskIds ?? []).filter((taskId) =>
-            validTaskIds.has(taskId),
-          ),
-      checkpointIndex: hadRemovedListsProgress
-        ? 0
-        : Math.max(0, parsed.state.checkpointIndex ?? 0),
+      activeCheckpointTaskIds: (parsed.state.activeCheckpointTaskIds ?? []).filter((taskId) =>
+        validTaskIds.has(taskId),
+      ),
+      checkpointIndex: Math.max(0, parsed.state.checkpointIndex ?? 0),
       activeTaskId:
-        !hadRemovedListsProgress && validTaskIds.has(parsed.state.activeTaskId ?? '')
+        validTaskIds.has(parsed.state.activeTaskId ?? '')
           ? parsed.state.activeTaskId
           : null,
       solvedTaskIds: (parsed.state.solvedTaskIds ?? []).filter((taskId) =>
@@ -1544,6 +1703,7 @@ export function loadPersistedGameState(
       moduleStates: {
         board: {
           portalSide: modulePortalSide,
+          bonusMap: moduleBonusMap,
         },
       },
       activeScenario,
@@ -1559,9 +1719,70 @@ export function loadPersistedGameState(
         (parsed.state.autoRunEnabled ?? false),
       goalChangeNoticeTarget: null,
     })
+
+    if (!shouldUnlockListsFromMigration) {
+      return loadedState
+    }
+
+    const migratedLearnedTopicIds: TaskTopicId[] =
+      loadedState.learnedTopicIds.includes('loops')
+        ? loadedState.learnedTopicIds
+        : [...loadedState.learnedTopicIds, 'loops']
+    const migratedMasteredTopicIds: TaskTopicId[] =
+      loadedState.masteredTopicIds.includes('loops')
+        ? loadedState.masteredTopicIds
+        : [...loadedState.masteredTopicIds, 'loops']
+    const migratedState = revalidatePrograms({
+      ...loadedState,
+      learnedTopicIds: migratedLearnedTopicIds,
+      masteredTopicIds: migratedMasteredTopicIds,
+      topicStage: 'completed',
+      activeCheckpointTaskIds: [],
+      checkpointIndex: 0,
+      activeTaskId: null,
+      activeScenario: null,
+      currentRunFeatureUsage: null,
+      currentRunStats: null,
+      unlocks: buildUnlockState(migratedLearnedTopicIds, supportUpgradeIds),
+    })
+
+    return unlockTopic(migratedState, 'lists', topics)
   } catch {
     return initialState
   }
+}
+
+export function normalizeListsQueue(state: GameState): GameState {
+  if (
+    state.currentTopicId !== 'lists' ||
+    !state.ballQueue.some((ballType) => ballType === 'plain')
+  ) {
+    return state
+  }
+
+  const fallbackQueue = createScenarioQueue({
+    activeScenario: state.activeScenario,
+    learnedTopicIds: state.learnedTopicIds,
+    currentTopicId: state.currentTopicId,
+    topicStage: state.topicStage,
+  })
+  const ballQueue =
+    state.activeScenario !== null
+      ? buildListsScenarioQueue(state.activeScenario.previewQueue, fallbackQueue)
+      : replacePlainBallsInListsQueue({
+          currentTopicId: state.currentTopicId,
+          queue: state.ballQueue,
+          fallbackQueue,
+        })
+
+  return revalidatePrograms({
+    ...state,
+    ballQueue,
+    ballQueueCursor: Math.min(
+      Math.max(0, state.ballQueueCursor),
+      Math.max(0, ballQueue.length - 1),
+    ),
+  })
 }
 
 export function savePersistedGameState(state: GameState): void {
@@ -1691,6 +1912,7 @@ function getLearnedTopicsForTask(
     'conditions',
     'functions',
     'loops',
+    'lists',
   ]
   const topicIndex = topicOrder.indexOf(topicId)
 
@@ -1716,6 +1938,11 @@ function getEvaluationContextForScenario(
           center_ball: 1,
           portal_ball: 2,
           negative_ball: 3,
+        }
+      : {}),
+    ...(learnedTopicIds.includes('lists')
+      ? {
+          bonus_map: scenario.bonusMap ?? [1, 1, 1],
         }
       : {}),
   }
@@ -1893,24 +2120,22 @@ function getWriteTaskFeedback(
     }
     case 'functions-write': {
       if (
-        !runStats.featureUsage.usedChooseInput ||
-        !sourceMentions(combinedSource, 'send_center')
+        !runStats.featureUsage.usedHelperCall ||
+        !sourceMentions(combinedSource, 'skip_negative')
       ) {
-        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
+        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
       }
 
-      if (runStats.helperLaunchCount === 0) {
-        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
+      if (runStats.skippedNegativeBallCount === 0) {
+        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
       }
 
-      if (runStats.helperLaunchCount !== 1) {
-        return getWrongLaunchCountFeedback(1, runStats.helperLaunchCount)
+      if (runStats.mainLaunchCount > 0 || runStats.helperLaunchCount > 0) {
+        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
       }
 
-      const actualAim = runStats.helperLaunchAims[0]
-
-      if (actualAim !== 2) {
-        return createWriteTaskFeedback('taskFeedbackNeedHelperGateLogic')
+      if (runStats.skippedNegativeBallCount !== 1) {
+        return createWriteTaskFeedback('taskFeedbackNeedSkipNegativeHelper')
       }
 
       return null
@@ -1987,6 +2212,60 @@ function getWriteTaskFeedback(
 
       if (runStats.helperLaunchCount > 0) {
         return createWriteTaskFeedback('taskFeedbackNeedPortalLaunch')
+      }
+
+      return null
+    }
+    case 'lists-write': {
+      if (!runStats.featureUsage.usedLists) {
+        return createWriteTaskFeedback('taskFeedbackNeedList')
+      }
+
+      if (!runStats.featureUsage.usedFor) {
+        return createWriteTaskFeedback('taskFeedbackNeedLoop')
+      }
+
+      if (!runStats.featureUsage.usedIf) {
+        return createWriteTaskFeedback('taskFeedbackNeedIf')
+      }
+
+      if (!runStats.featureUsage.usedVariables) {
+        return createWriteTaskFeedback('taskFeedbackNeedBestTracker')
+      }
+
+      if (!runStats.featureUsage.usedChooseInput) {
+        return createWriteTaskFeedback('taskFeedbackNeedChooseChute')
+      }
+
+      if (runStats.mainLaunchCount === 0) {
+        return createWriteTaskFeedback('taskFeedbackNeedDropBall')
+      }
+
+      const expectedAims = validationCase.expectation.expectedMainLaunchAims ?? []
+      const allowExtraLaunches =
+        validationCase.expectation.allowExtraMainLaunches ?? false
+
+      if (
+        expectedAims.length > 0 &&
+        (allowExtraLaunches
+          ? runStats.mainLaunchCount < expectedAims.length
+          : runStats.mainLaunchCount !== expectedAims.length)
+      ) {
+        return getWrongLaunchCountFeedback(
+          expectedAims.length,
+          runStats.mainLaunchCount,
+        )
+      }
+
+      const wrongAimIndex = expectedAims.findIndex(
+        (expectedAim, index) => runStats.launchAims[index] !== expectedAim,
+      )
+
+      if (wrongAimIndex !== -1) {
+        return getWrongChuteFeedback(
+          expectedAims[wrongAimIndex] ?? 2,
+          runStats.launchAims[wrongAimIndex] ?? 2,
+        )
       }
 
       return null
@@ -2479,16 +2758,21 @@ export function spawnAmbientPlainBall(state: GameState): GameState {
 
   const now = Date.now()
   const portalEnabled = isBluePortalActive(state)
+  const ambientBallType: BallType =
+    state.currentTopicId === 'lists' || state.learnedTopicIds.includes('lists')
+      ? 'center'
+      : 'plain'
   const outcome = createBallOutcome(
     2,
     state.moduleStates.board.portalSide,
-    'plain',
+    ambientBallType,
     {
       launchIndex: 0,
       portalEnabled,
       portalDepth: 0,
       maxPortalDepth: supportEffects.maxPortalDepth,
       extraCenterBinBonus: supportEffects.extraCenterBinBonus,
+      laneMultiplier: getLaneMultiplier(state, 2),
     },
   )
 
@@ -2501,7 +2785,8 @@ export function spawnAmbientPlainBall(state: GameState): GameState {
         lineNumber: 0,
         aim: 2,
         source: 'ambient',
-        ballType: 'plain',
+        ballType: ambientBallType,
+        laneMultiplier: outcome.laneMultiplier,
         spawnKind: 'direct',
         portalDepth: 0,
         bucketIndex: outcome.bucketIndex,

@@ -2,7 +2,6 @@ import CodeMirror from '@uiw/react-codemirror'
 import { python } from '@codemirror/lang-python'
 import { Decoration, EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
-import { oneDark } from '@codemirror/theme-one-dark'
 import type { UiText } from '../types'
 
 type ProgramEditorProps = {
@@ -15,7 +14,7 @@ type ProgramEditorProps = {
   isHighlighted: boolean
   activeLineNumber: number | null
   lineUsageText: string
-  helperText: string
+  helperText: string | null
   feedbackMessage: string | null
   feedbackTone: 'neutral' | 'success' | 'warning' | 'error'
   onChange: (value: string) => void
@@ -71,6 +70,35 @@ const readOnlyExtensions = [
 ]
 
 const editableExtensions = [python(), EditorView.lineWrapping]
+const editorTheme = EditorView.theme(
+  {
+    '&': {
+      backgroundColor: '#fff9f2',
+      color: '#241910',
+    },
+    '.cm-gutters': {
+      backgroundColor: '#f5ede0',
+      color: '#8b664d',
+      border: 'none',
+    },
+    '.cm-activeLine': {
+      backgroundColor: 'rgba(44, 93, 80, 0.08)',
+    },
+    '.cm-activeLineGutter': {
+      backgroundColor: 'rgba(44, 93, 80, 0.08)',
+    },
+    '.cm-content': {
+      caretColor: '#2c5d50',
+    },
+    '.cm-cursor, .cm-dropCursor': {
+      borderLeftColor: '#2c5d50',
+    },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
+      backgroundColor: 'rgba(216, 102, 47, 0.18)',
+    },
+  },
+  { dark: false },
+)
 
 export function ProgramEditor({
   code,
@@ -111,7 +139,9 @@ export function ProgramEditor({
       <div className="editor-header">
         <div className="editor-title-group">
           <h2>{title}</h2>
-          <p className="editor-help">{helperText}</p>
+          {helperText !== null && helperText.trim() !== '' ? (
+            <p className="editor-help">{helperText}</p>
+          ) : null}
         </div>
         <div className="editor-badges">
           <span className="editor-line-badge">{lineUsageText}</span>
@@ -144,9 +174,9 @@ export function ProgramEditor({
           }}
           extensions={[
             ...(isEditable ? editableExtensions : readOnlyExtensions),
+            editorTheme,
             ...executionHighlightExtension,
           ]}
-          theme={oneDark}
           className="code-editor"
         />
         {feedbackMessage !== null ? (

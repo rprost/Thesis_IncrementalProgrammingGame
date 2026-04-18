@@ -1,12 +1,14 @@
 import { useState, type KeyboardEvent } from 'react'
-import type { BallType, GameTask, ProgramValidation, TaskArchetype, UiText } from '../types'
+import type { GameTask, ProgramValidation, TaskArchetype, UiText } from '../types'
 import { useDialogFocusTrap } from '../useAccessibility'
 
 type TaskModalProps = {
   task: GameTask | null
+  isOpen: boolean
   ui: UiText
   progressText: string | null
   onResolved: (wasCorrect: boolean, task: GameTask) => void
+  onClose: () => void
   onEvaluated?: (wasCorrect: boolean) => void
   validateWriteAnswer: (
     task: GameTask,
@@ -40,40 +42,35 @@ function getArchetypeLabel(archetype: TaskArchetype, ui: UiText): string {
   }
 }
 
-function getLaneLabel(lane: 1 | 3, ui: UiText): string {
-  return lane === 1 ? ui.boardLaneLeft : ui.boardLaneRight
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(value)
 }
 
-function getBallTypeLabel(ballType: BallType, ui: UiText): string {
-  switch (ballType) {
-    case 'plain':
-      return ui.boardBallTypePlain
-    case 'portal':
-      return ui.boardBallTypeLucky
-    case 'negative':
-      return ui.boardBallTypeEvil
-    case 'center':
-    default:
-      return ui.boardBallTypeNormal
-  }
+function formatBonusMap(values: number[]): string {
+  return `[${values.map((value) => formatNumber(value)).join(', ')}]`
 }
 
 export function TaskModal({
   task,
+  isOpen,
   ui,
   progressText,
   onResolved,
+  onClose,
   onEvaluated,
   validateWriteAnswer,
   getValidationMessage,
 }: TaskModalProps) {
-  const dialogRef = useDialogFocusTrap<HTMLDivElement>(task !== null, null)
+  const dialogRef = useDialogFocusTrap<HTMLDivElement>(
+    task !== null && isOpen,
+    onClose,
+  )
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [codeAnswer, setCodeAnswer] = useState(task?.writeValidation?.starterSource ?? '')
   const [feedback, setFeedback] = useState<TaskFeedback | null>(null)
   const [showHints, setShowHints] = useState(false)
 
-  if (task === null) {
+  if (task === null || !isOpen) {
     return null
   }
 
@@ -224,22 +221,30 @@ export function TaskModal({
         aria-labelledby="task-title"
         tabIndex={-1}
       >
-        <div className="task-modal-header">
-          <div>
-            <p className="modal-kicker">{ui.challengeLabel}</p>
-            <h2 id="task-title">{task.title}</h2>
+        <div className="task-sheet-sticky">
+          <div className="task-modal-header">
+            <div>
+              <p className="modal-kicker">{ui.challengeLabel}</p>
+              <h2 id="task-title">{task.title}</h2>
+            </div>
+            <div className="task-modal-badges">
+              <span className="task-modal-badge">
+                {getArchetypeLabel(task.archetype, ui)}
+              </span>
+              {progressText !== null ? (
+                <span className="task-modal-badge subdued">{progressText}</span>
+              ) : null}
+              <button
+                className="ghost-button task-close-button"
+                onClick={onClose}
+                type="button"
+              >
+                {ui.taskCloseButton}
+              </button>
+            </div>
           </div>
-          <div className="task-modal-badges">
-            <span className="task-modal-badge">
-              {getArchetypeLabel(task.archetype, ui)}
-            </span>
-            {progressText !== null ? (
-              <span className="task-modal-badge subdued">{progressText}</span>
-            ) : null}
-          </div>
+          <p className="modal-question">{task.question}</p>
         </div>
-
-        <p className="modal-question">{task.question}</p>
 
         {task.code.trim().length > 0 ? (
           <div className="task-context-block">
@@ -267,30 +272,20 @@ export function TaskModal({
             <span className="task-cases-label">{ui.taskValidationExpectedBehavior}</span>
             <div className="task-case-grid">
               {visibleWriteCases.map((validationCase, index) => {
-                const showQueueState =
-                  task.topicId !== 'onboarding' &&
-                  task.topicId !== 'variables' &&
-                  !validationCase.scenario.previewQueue.every(
-                    (ballType) => ballType === 'plain',
-                  );
-                const queueLabel =
-                  validationCase.scenario.previewQueue.length > 1
-                    ? ui.boardUpcomingBallsLabel
-                    : ui.boardNextBallLabel
-                const queueValue = validationCase.scenario.previewQueue
-                  .map((ballType) => getBallTypeLabel(ballType, ui))
-                  .join(' -> ')
+                const hasStateDetails = validationCase.scenario.bonusMap !== undefined
 
                 return (
                   <article className="task-case-card" key={`${task.id}-case-${index + 1}`}>
                     <strong>{validationCase.title}</strong>
-                    <div className="task-case-state-list">
-                      <span>{`${ui.boardActivePortalLabel}: ${getLaneLabel(
-                        validationCase.scenario.portalSide,
-                        ui,
-                      )}`}</span>
-                      {showQueueState ? <span>{`${queueLabel}: ${queueValue}`}</span> : null}
-                    </div>
+                    {hasStateDetails ? (
+                      <div className="task-case-state-list">
+                      {validationCase.scenario.bonusMap !== undefined ? (
+                        <span>{`${ui.boardMultipliersLabel}: ${formatBonusMap(
+                          validationCase.scenario.bonusMap,
+                        )}`}</span>
+                      ) : null}
+                      </div>
+                    ) : null}
                     <p>{validationCase.requirement}</p>
                   </article>
                 )

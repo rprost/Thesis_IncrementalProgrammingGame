@@ -1,602 +1,770 @@
 [
     {
-        "id":  "onboarding-trace-demo",
-        "kind":  "onboarding",
-        "archetype":  "trace",
-        "topicId":  "onboarding",
-        "topicOrder":  0,
-        "taskOrder":  1,
-        "title":  "Stardijooks",
-        "question":  "Mida teeb stardirida `drop_ball()`?",
-        "code":  "drop_ball()",
-        "boardHint":  "Esimene jooks on ainult demo. Üks pall läheb lauale läbi praeguse sisendi.",
-        "unlockConnection":  "Kõigepealt vaatad ühe jooksu ära, siis lahendad 2 lühikest ülesannet ja redigeerimine avaneb.",
-        "options":  [
-                        "See laseb praegusest sisendist välja ühe palli.",
-                        "See jätab järgmise palli vahele.",
-                        "See muudab portaali asukohta.",
-                        "See avab poe."
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `drop_ball()` laseb välja ühe palli.",
-        "failureMessage":  "See rida laseb välja ainult ühe palli. See ei jäta midagi vahele, ei muuda suunda ega ava poodi."
+        "id": "onboarding-trace-demo",
+        "kind": "onboarding",
+        "archetype": "trace",
+        "topicId": "onboarding",
+        "topicOrder": 0,
+        "taskOrder": 1,
+        "title": "Stardijooks",
+        "question": "Mida teeb näidisprogrammis rida 'drop_ball()'?",
+        "code": "drop_ball()",
+        "boardHint": "Esimene jooks on ainult demo. Üks pall läheb lauale läbi praeguse sisendi.",
+        "unlockConnection": "Kõigepealt vaatad ühe jooksu ära, siis lahendad 2 lühikest ülesannet ja redigeerimine avaneb.",
+        "options": [
+            "See laseb vaikesisendist välja ühe palli.",
+            "See jätab järgmise palli vahele.",
+            "See muudab portaali asukohta.",
+            "See avab poe."
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'drop_ball()' laseb välja ühe palli.",
+        "failureMessage": "See rida laseb välja ainult ühe palli. See ei jäta midagi vahele, ei muuda suunda ega ava poodi."
     },
     {
-        "id":  "onboarding-choose-lane",
-        "kind":  "onboarding",
-        "archetype":  "choose",
-        "topicId":  "onboarding",
-        "topicOrder":  0,
-        "taskOrder":  2,
-        "title":  "Sisendite numbrid",
-        "question":  "Milline number tähistab keskmist sisendit?",
-        "code":  "1 = Vasak\n2 = Kesk\n3 = Parem",
-        "boardHint":  "Samu numbreid kasutad hiljem käsus `choose_input(...)`.",
-        "unlockConnection":  "Kui sisendinumbrid on selged, on esimesi programme lihtsam lugeda.",
-        "options":  [
-                        "1",
-                        "2",
-                        "3",
-                        "Keskmist sisendit ei ole."
-                    ],
-        "correctOption":  1,
-        "successMessage":  "Õige. Sisend 2 on keskmine sisend.",
-        "failureMessage":  "Laud kasutab: 1 = Vasak, 2 = Kesk, 3 = Parem."
+        "id": "onboarding-choose-lane",
+        "kind": "onboarding",
+        "archetype": "choose",
+        "topicId": "onboarding",
+        "topicOrder": 0,
+        "taskOrder": 2,
+        "title": "Sisendite numbrid",
+        "question": "Milline number tähistab keskmist sisendit?",
+        "code": "1 = Vasak\n2 = Kesk\n3 = Parem",
+        "boardHint": "Samu numbreid kasutad hiljem käsus 'choose_input(...)'.",
+        "unlockConnection": "Kui sisendinumbrid on selged, on esimesi programme lihtsam lugeda.",
+        "options": [
+            "1",
+            "2",
+            "3",
+            "Keskmist sisendit ei ole."
+        ],
+        "correctOption": 1,
+        "successMessage": "Õige. Sisend 2 on keskmine sisend.",
+        "failureMessage": "Laud kasutab: 1 = Vasak, 2 = Kesk, 3 = Parem."
     },
     {
-        "id":  "variables-trace",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  1,
-        "title":  "Jälgi `portal_side` väärtust",
-        "question":  "Kui `portal_side` on `3`, millise sisendi see programm valib?",
-        "code":  "target = portal_side\nchoose_input(target)\ndrop_ball()",
-        "boardHint":  "Portaali silt näitab nii poole nime kui ka koodis nähtavat väärtust.",
-        "unlockConnection":  "Muutuja saab kopeerida nähtava `portal_side` väärtuse ja kasutada seda sisendi valimiseks.",
-        "options":  [
-                        "Vasak sisend",
-                        "Keskmine sisend",
-                        "Parem sisend",
-                        "Mitte ükski"
-                    ],
-        "correctOption":  2,
-        "successMessage":  "Õige. `target` saab väärtuseks `3`, seega pall läheb parema sisendi kaudu.",
-        "failureMessage":  "`target` kopeerib väärtuse `portal_side`. Kui `portal_side` on `3`, valib programm parema sisendi."
+        "id": "variables-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 1,
+        "title": "Jälgi 'portal_side' väärtust",
+        "question": "Kui omistuslause 'target = portal_side' käivitub olukorras, kus 'portal_side' on '3', siis millise sisendi see programm valib?",
+        "code": "target = portal_side\nchoose_input(target)\ndrop_ball()",
+        "boardHint": "Portaali silt näitab nii poole nime kui ka koodis nähtavat väärtust.",
+        "unlockConnection": "Omistuslause kopeerib nähtava 'portal_side' väärtuse sinu enda muutujasse, et saaksid seda sisendi valimiseks uuesti kasutada.",
+        "options": [
+            "Vasak sisend",
+            "Keskmine sisend",
+            "Parem sisend",
+            "Mitte ükski"
+        ],
+        "correctOption": 2,
+        "successMessage": "Õige. 'target' saab väärtuseks '3', seega pall läheb parema sisendi kaudu.",
+        "failureMessage": "'target' kopeerib väärtuse 'portal_side'. Kui 'portal_side' on '3', valib programm parema sisendi."
     },
     {
-        "id":  "variables-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  2,
-        "title":  "Paranda sisendi väärtus",
-        "question":  "Milline asendus parandab programmi nii, et see sihiks portaali õigesti?",
-        "code":  "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
-        "boardHint":  "`choose_input(...)` peab jääma sisendi 1 ja sisendi 3 vahele.",
-        "unlockConnection":  "See kontrollib, kas saad aru, et `portal_side` juba sisaldab õiget sisendit.",
-        "options":  [
-                        "target = portal_side",
-                        "target = portal_side + 2",
-                        "target = 0",
-                        "target = 4"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `portal_side` sisaldab juba vajalikku sisendinumbrit, seega saab seda otse kasutada.",
-        "failureMessage":  "`portal_side` juba salvestab aktiivse poole. Sellele liitmine võib viia sisendi lubatud vahemikust välja."
+        "id": "variables-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 2,
+        "title": "Paranda sisendi väärtus",
+        "question": "Milline omistuslause asendus (1. rida) parandab programmi nii, et pall kukuks sisendist, mis on portaali kohal?",
+        "code": "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
+        "boardHint": "Omistuslause peaks kopeerima 'portal_side' otse, ilma sellele midagi juurde liitmata.",
+        "unlockConnection": "See kontrollib, kas saad aru, et omistuslause peaks 'portal_side'-i otse kasutama.",
+        "options": [
+            "target = portal_side",
+            "target = portal_side + 2",
+            "target = 0",
+            "target = 4"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'portal_side' sisaldab juba vajalikku sisendinumbrit, seega saab seda otse kasutada.",
+        "failureMessage": "'portal_side' juba salvestab aktiivse poole. Sellele liitmine võib viia sisendi lubatud vahemikust välja."
     },
     {
-        "id":  "variables-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "variables",
-        "topicOrder":  1,
-        "taskOrder":  3,
-        "title":  "Kirjuta üks vastaspoole lask",
-        "question":  "Kirjuta üks lühike programm, mis töötab kõigis allolevates nähtavates olukordades: salvesta `portal_side` oma muutujasse ja lase siis täpselt üks pall välja vastaspoolelt.",
-        "code":  "",
-        "boardHint":  "Kopeeri `portal_side` kõigepealt oma muutujasse. Siis saad vasaku ja parema poole vahetamiseks kasutada avaldist `4 - portal_side`.",
-        "unlockConnection":  "See kontrollib, kas oskad salvestatud väärtust väikeses avaldises kasutada, mitte ainult otse edasi kopeerida.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "drop_ball()",
-                                "cases":  [
-                                              {
-                                                  "title":  "Portaal vasakul",
-                                                  "requirement":  "Salvesta `portal_side` oma muutujasse ja lase siis täpselt üks pall välja paremale poolele.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "plain"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedVariables",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     3
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1,
-                                                                      "maxMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portaal paremal",
-                                                  "requirement":  "Salvesta `portal_side` oma muutujasse ja lase siis täpselt üks pall välja vasakule poolele.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "plain"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedVariables",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     1
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1,
-                                                                      "maxMainLaunchCount":  1
-                                                                  }
-                                              }
-                                          ]
+        "id": "variables-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "variables",
+        "topicOrder": 1,
+        "taskOrder": 3,
+        "title": "Kirjuta üks pahupidi lask",
+        "question": "Kirjuta programm, mis salvestab 'portal_side' mingisse muutujasse ning kukutab palli hoopis teiselt poolt.\nKui portaal on paremal pool, peab pall kukkuma vasakpoolsest sisendist ja ka teistpidi.",
+        "code": "",
+        "boardHint": "Alusta omistuslausest nagu 'target = portal_side'. Seejärel kasuta avaldist '4 - target', et vahetada vasak <-> parem.",
+        "unlockConnection": "See kontrollib, kas oskad kõigepealt kirjutada omistuslause ja siis kasutada salvestatud väärtust avaldise sees.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "drop_ball()",
+            "cases": [
+                {
+                    "title": "Portaal vasakul",
+                    "requirement": "Pall peab kukkuma paremalt.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Portaal paremal",
+                    "requirement": "Pall peab kukkuma vasakult.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1,
+                        "maxMainLaunchCount": 1
+                    }
+                }
+            ]
+        },
+        "successMessage": "Õige. See kood salvestab nähtava väärtuse ja kasutab seda vastaspoole leidmiseks.",
+        "failureMessage": "Sinu vastus peab salvestama 'portal_side' oma muutujasse ja laskma täpselt ühe palli välja vastaspoolelt."
+    },
+    {
+        "id": "conditions-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 1,
+        "title": "Paranda eelvaatereegel",
+        "question": "Milline versioon jätab vahele ainult 'negative_ball'-i ja laseb teised pallid välja?",
+        "code": "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
+        "boardHint": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga ja jätma teistele pallidele alles päris laskmise.",
+        "unlockConnection": "Tingimuslaused on olulised, sest masin saab reageerida eelvaatele enne, kui pall lauale läheb.",
+        "options": [
+            "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+            "if next_ball == center_ball:\n    choose_input(2)\nelse:\n    skip_ball()",
+            "if portal_side == negative_ball:\n    skip_ball()\nelse:\n    drop_ball()",
+            "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. Parandatud versioon jätab vahele ainult 'negative_ball'-i ja laseb teised pallid välja.",
+        "failureMessage": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga, jätma selle vahele ja laskma teised pallid siiski välja."
+    },
+    {
+        "id": "conditions-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 2,
+        "title": "Kirjuta erinevate pallide strateegia",
+        "question": "Kirjuta programm, mis teeb kõigis olukordades optimaalseima valiku:\n1. jätab 'negative_ball'-i vahele\n2. kukutab 'portal_ball'-i portaali kohal olevast sisendist\n3. kukutab 'center_ball'-i sisendist 2",
+        "code": "Kasuta 'next_ball', 'negative_ball', 'center_ball', 'portal_side', 'choose_input(...)', 'skip_ball()' ja 'drop_ball()'.",
+        "boardHint": "Sobib ükskõik milline ühe programmi lahendus. Võid kasutada 'if' / 'elif' / 'else' harusid või mõnda muud selget harustruktuuri. Jäta 'negative_ball' vahele, suuna 'portal_ball' portaali ja lase 'center_ball' välja sisendist 2.",
+        "unlockConnection": "See teeb eelvaatemehaanika sisukaks: eri pallitüübid vajavad nüüd eri koodireaktsioone.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "if next_ball == negative_ball:\n    skip_ball()",
+            "lineLimit": 8,
+            "cases": [
+                {
+                    "title": "Negatiivne pall",
+                    "requirement": "Kui 'next_ball' on 'negative_ball', jäta see vahele ja ära lase midagi välja.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball"
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1,
+                        "maxMainLaunchCount": 0
+                    }
+                },
+                {
+                    "title": "Portaalipall vasakul",
+                    "requirement": "Kui 'next_ball' on 'portal_ball' ja portaal on vasakul, sihi vasakule ja lase pall välja.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "portal"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Portaalipall paremal",
+                    "requirement": "Kui 'next_ball' on 'portal_ball' ja portaal on paremal, sihi paremale ja lase pall välja.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "portal"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                },
+                {
+                    "title": "Keskpall",
+                    "requirement": "Kui 'next_ball' on 'center_ball', lase see välja sisendist 2.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "center"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball"
+                        ],
+                        "expectedMainLaunchAims": [
+                            2
+                        ],
+                        "minMainLaunchCount": 1
+                    }
+                }
+            ]
+        },
+        "successMessage": "Õige. Sinu programm reageerib erinevalt negatiivsetele, portaali- ja keskpallidele.",
+        "failureMessage": "Sinu vastus peab jätma 'negative_ball'-i vahele, suunama 'portal_ball'-i portaali ja saatma 'center_ball'-i sisendisse 2."
+    },
+    {
+        "id": "conditions-review-variables",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "conditions",
+        "topicOrder": 2,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "variables",
+        "title": "Kordus: Portaali asukoht?",
+        "question": "Kui 'portal_side' on '1', kust see programm palli välja laseb?",
+        "code": "choose_input(portal_side)\ndrop_ball()",
+        "boardHint": "Varasemad teemad on endiselt tähtsad. Eelvaateloogika on kasulik ainult siis, kui loed portaali endiselt õigesti.",
+        "unlockConnection": "See on muutujate teema hajutatud kordamine.",
+        "options": [
+            "Vasak sisend",
+            "Keskmine sisend",
+            "Parem sisend",
+            "Mitte ükski"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'portal_side = 1' tähendab vasakut sisendit.",
+        "failureMessage": "Kui 'portal_side' on '1', peab pall väljuma vasakust sisendist."
+    },
+    {
+        "id": "functions-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 1,
+        "title": "Jälgi abifunktsiooni kutset",
+        "question": "Mis juhtub, kui põhiprogramm kutsub välja 'follow_portal()'?",
+        "code": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
+        "boardHint": "Abiredaktoris on üks abifunktsioon ja põhiprogramm saab selle nime järgi välja kutsuda.",
+        "unlockConnection": "Funktsioonid on tähtsad, sest üks nimega taktika saab juhtida korduvat käitumist laual.",
+        "options": [
+            "Abifunktsiooni keha käivitatakse ühe korra.",
+            "Abifunktsiooni keha eiratakse.",
+            "Abifunktsiooni keha käivitatakse lõputult.",
+            "Pood avaneb."
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'follow_portal()' käivitab selle abifunktsiooni keha ühe korra.",
+        "failureMessage": "Abifunktsiooni kutsumine käivitab selle keha selles kohas ühe korra."
+    },
+    {
+        "id": "functions-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 2,
+        "title": "Kirjuta 'skip_negative()'",
+        "question": "Kirjuta 'skip_negative()' nii, et see jätab ühe 'negative_ball'-i vahele.",
+        "code": "Põhiprogramm:\nskip_negative()",
+        "boardHint": "Selles kontrollpunktis on abifunktsioon teistsugune kui 'follow_portal()'. Selle töö on nähtava 'negative_ball'-i jaoks kutsuda 'skip_ball()'.",
+        "unlockConnection": "See ülekandeülesanne kontrollib, kas oskad kirjutada uue abifunktsiooni, mis jätab halva palli vahele, mitte ei lase seda välja.",
+        "writeValidation": {
+            "target": "helper",
+            "starterSource": "def skip_negative():\n    drop_ball()",
+            "presentation": {
+                "mode": "none"
+            },
+            "cases": [
+                {
+                    "title": "Portaal vasakul",
+                    "requirement": "Kui portaal on vasakul, peab 'skip_negative()' jätma nähtava 'negative_ball'-i vahele ega tohi midagi välja lasta.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "programContextSource": "skip_negative()",
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedHelperCall"
+                        ],
+                        "requiredIdentifiers": [
+                            "skip_negative"
+                        ],
+                        "maxMainLaunchCount": 0,
+                        "maxHelperLaunchCount": 0,
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1
+                    },
+                    "hiddenFromPrompt": true
+                },
+                {
+                    "title": "Portaal paremal",
+                    "requirement": "Kui portaal on paremal, peab 'skip_negative()' jätma nähtava 'negative_ball'-i vahele ega tohi midagi välja lasta.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "negative"
+                        ]
+                    },
+                    "programContextSource": "skip_negative()",
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedHelperCall"
+                        ],
+                        "requiredIdentifiers": [
+                            "skip_negative"
+                        ],
+                        "maxMainLaunchCount": 0,
+                        "maxHelperLaunchCount": 0,
+                        "minSkippedNegativeBallCount": 1,
+                        "maxSkippedNegativeBallCount": 1
+                    },
+                    "hiddenFromPrompt": true
+                }
+            ]
+        },
+        "successMessage": "Õige. Sinu abifunktsioon jätab negatiivse palli vahele ega lase midagi välja.",
+        "failureMessage": "Sinu abifunktsioon peab defineerima 'skip_negative()' ja kasutama nähtava 'negative_ball'-i jaoks ühe korra 'skip_ball()'."
+    },
+    {
+        "id": "functions-review-conditions",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "functions",
+        "topicOrder": 3,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "conditions",
+        "title": "Kordus: paranda negatiivse palli kontroll",
+        "question": "Milline tingimus jätab vahele ainult 'negative_ball'-i?",
+        "code": "if ???:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+        "boardHint": "Varasem haruloogika on endiselt oluline, kui tõstad taktika hiljem abifunktsioonidesse.",
+        "unlockConnection": "See on tingimuslausete teema hajutatud kordamine.",
+        "options": [
+            "next_ball == negative_ball",
+            "portal_side == negative_ball",
+            "next_ball == portal_side",
+            "next_ball == 4"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'next_ball == negative_ball' jätab vahele ainult negatiivse palli.",
+        "failureMessage": "Tingimus peab lugema 'next_ball' väärtust ja võrdlema seda otse 'negative_ball'-iga."
+    },
+    {
+        "id": "loops-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 1,
+        "title": "Paranda tsükli keha",
+        "question": "Milline versioon jätab 'negative_ball'-i vahele ja jätkab tsüklit turvaliselt?",
+        "code": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
+        "boardHint": "Pärast 'skip_ball()' peab praegune tsüklisamm lõppema enne, kui see jõuab 'follow_portal()'-ini.",
+        "unlockConnection": "See on peamine tsüklimuster, mis muudab ühe taktika turvaliseks automaatikaks.",
+        "options": [
+            "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
+            "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
+            "for shot in range(3):\n    if portal_side == negative_ball:\n        continue\n    follow_portal()",
+            "for shot in range(3):\n    skip_ball()\n    continue"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. 'continue' lõpetab selle tsüklisammu pärast negatiivse palli vahelejätmist.",
+        "failureMessage": "Turvaline versioon jätab negatiivse palli vahele ja kasutab 'continue', et tsükkel seda pärast enam välja ei laseks."
+    },
+    {
+        "id": "loops-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 2,
+        "title": "Kirjuta tulevaste pallide tsükkel",
+        "question": "Kirjuta üks tsükkel, mis töötleb reas \"Tulevased pallid\" näidatud 4 palli: suunab 'portal_ball'-i otse portaali, jätab 'negative_ball'-i vahele ja saadab iga 'center_ball'-i sisendisse 2.",
+        "code": "",
+        "boardHint": "Selles kontrollpunktis abifunktsiooni ei ole. \u00dcks ts\u00fckkel peab t\u00f6\u00f6tama m\u00f5lema n\u00e4htava j\u00e4rjekorra puhul. 'elif' sobib siin h\u00e4sti ja 'continue' on vabatahtlik, aga 'negative_ball'-i haru ei tohi sama ts\u00fcklisammu jooksul v\u00e4ljalaskeni j\u00f5uda. Lisakordused on lubatud, kui n\u00e4htav eelvaade saab \u00f5igesti t\u00f6\u00f6deldud.",
+        "unlockConnection": "See on päris ülekandeülesanne: nüüd pead kogu portaali / negatiivse / kesk-palli loogika kirjutama otse tsükli sisse.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "for shot in range(4):\n    drop_ball()",
+            "cases": [
+                {
+                    "title": "Portaal, negatiivne, kesk, portaal",
+                    "requirement": "Saada mõlemad 'portal_ball'-id otse portaali, jäta 'negative_ball' vahele, saada 'center_ball' sisendisse 2 ja käsitle ka viimast 'portal_ball'-i õigesti.",
+                    "scenario": {
+                        "portalSide": 3,
+                        "previewQueue": [
+                            "portal",
+                            "negative",
+                            "center",
+                            "portal"
+                        ],
+                        "visiblePreviewCount": 4
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedFor",
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "previewResponses": [
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
                             },
-        "successMessage":  "Õige. See kood salvestab nähtava väärtuse ja kasutab seda vastaspoole leidmiseks.",
-        "failureMessage":  "Sinu vastus peab salvestama `portal_side` oma muutujasse ja laskma täpselt ühe palli välja vastaspoolelt."
-    },
-    {
-        "id":  "conditions-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  1,
-        "title":  "Paranda eelvaatereegel",
-        "question":  "Milline versioon jätab vahele ainult `negative_ball`-i ja laseb teised pallid välja?",
-        "code":  "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-        "boardHint":  "Parandus peab võrdlema `next_ball` väärtust `negative_ball`-iga ja jätma teistele pallidele alles päris laskmise.",
-        "unlockConnection":  "Tingimuslaused on olulised, sest masin saab reageerida eelvaatele enne, kui pall lauale läheb.",
-        "options":  [
-                        "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-                        "if next_ball == center_ball:\n    choose_input(2)\nelse:\n    skip_ball()",
-                        "if portal_side == negative_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-                        "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    skip_ball()"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. Parandatud versioon jätab vahele ainult `negative_ball`-i ja laseb teised pallid välja.",
-        "failureMessage":  "Parandus peab võrdlema `next_ball` väärtust `negative_ball`-iga, jätma selle vahele ja laskma teised pallid siiski välja."
-    },
-    {
-        "id":  "conditions-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  2,
-        "title":  "Kirjuta eelvaatestrateegia",
-        "question":  "Kirjuta üks programm, mis teeb kõigis nähtavates olukordades õige asja: jätab `negative_ball`-i vahele, suunab `portal_ball`-i portaali ja saadab `center_ball`-i sisendisse 2.",
-        "code":  "Kasuta `next_ball`, `negative_ball`, `center_ball`, `portal_side`, `choose_input(...)`, `skip_ball()` ja `drop_ball()`.",
-        "boardHint":  "Sobib ükskõik milline ühe programmi lahendus. Jäta `negative_ball` vahele, suuna `portal_ball` portaali ja lase `center_ball` välja sisendist 2.",
-        "unlockConnection":  "See teeb eelvaatemehaanika sisukaks: eri pallitüübid vajavad nüüd eri koodireaktsioone.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "if next_ball == negative_ball:\n    skip_ball()",
-                                "lineLimit":  8,
-                                "cases":  [
-                                              {
-                                                  "title":  "Negatiivne pall",
-                                                  "requirement":  "Kui `next_ball` on `negative_ball`, jäta see vahele ja ära lase midagi välja.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "negative"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball"
-                                                                                              ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "maxSkippedNegativeBallCount":  1,
-                                                                      "maxMainLaunchCount":  0
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portaalipall vasakul",
-                                                  "requirement":  "Kui `next_ball` on `portal_ball` ja portaal on vasakul, sihi vasakule ja lase pall välja.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "portal"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     1
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Portaalipall paremal",
-                                                  "requirement":  "Kui `next_ball` on `portal_ball` ja portaal on paremal, sihi paremale ja lase pall välja.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "portal"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     3
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Keskpall",
-                                                  "requirement":  "Kui `next_ball` on `center_ball`, lase see välja sisendist 2.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball"
-                                                                                              ],
-                                                                      "expectedMainLaunchAims":  [
-                                                                                                     2
-                                                                                                 ],
-                                                                      "minMainLaunchCount":  1
-                                                                  }
-                                              }
-                                          ]
+                            {
+                                "type": "skip"
                             },
-        "successMessage":  "Õige. Sinu programm reageerib erinevalt negatiivsetele, portaali- ja keskpallidele.",
-        "failureMessage":  "Sinu vastus peab jätma `negative_ball`-i vahele, suunama `portal_ball`-i portaali ja saatma `center_ball`-i sisendisse 2."
-    },
-    {
-        "id":  "conditions-review-variables",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "conditions",
-        "topicOrder":  2,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "variables",
-        "title":  "Kordus: loe portaali",
-        "question":  "Kui `portal_side` on `1`, kust see programm palli välja laseb?",
-        "code":  "choose_input(portal_side)\ndrop_ball()",
-        "boardHint":  "Varasemad teemad on endiselt tähtsad. Eelvaateloogika on kasulik ainult siis, kui loed portaali endiselt õigesti.",
-        "unlockConnection":  "See on muutujate teema hajutatud kordamine.",
-        "options":  [
-                        "Vasak sisend",
-                        "Keskmine sisend",
-                        "Parem sisend",
-                        "Mitte ükski"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `portal_side = 1` tähendab vasakut sisendit.",
-        "failureMessage":  "Kui `portal_side` on `1`, peab pall väljuma vasakust sisendist."
-    },
-    {
-        "id":  "functions-trace",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  1,
-        "title":  "Jälgi abifunktsiooni kutset",
-        "question":  "Mis juhtub, kui põhiprogramm kutsub välja `follow_portal()`?",
-        "code":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
-        "boardHint":  "Abiredaktoris on üks abifunktsioon ja põhiprogramm saab selle nime järgi välja kutsuda.",
-        "unlockConnection":  "Funktsioonid on tähtsad, sest üks nimega taktika saab juhtida korduvat käitumist laual.",
-        "options":  [
-                        "Abifunktsiooni keha käivitatakse ühe korra.",
-                        "Abifunktsiooni keha eiratakse.",
-                        "Abifunktsiooni keha käivitatakse lõputult.",
-                        "Pood avaneb."
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `follow_portal()` käivitab selle abifunktsiooni keha ühe korra.",
-        "failureMessage":  "Abifunktsiooni kutsumine käivitab selle keha selles kohas ühe korra."
-    },
-    {
-        "id":  "functions-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  2,
-        "title":  "Kirjuta abifunktsioon `send_center()`",
-        "question":  "Kirjuta `send_center()` nii, et see valib sisendi 2 ja laseb ühe palli välja.",
-        "code":  "Põhiprogramm:\nsend_center()",
-        "boardHint":  "Selles kontrollpunktis on abifunktsioon teistsugune kui `follow_portal()`. See peab alati kasutama sisendit 2.",
-        "unlockConnection":  "See ülekandeülesanne kontrollib, kas oskad kirjutada uue abifunktsiooni, mitte lihtsalt sama portaaliabi korrata.",
-        "writeValidation":  {
-                                "target":  "helper",
-                                "starterSource":  "def send_center():\n    drop_ball()",
-                                "presentation":  {
-                                                     "mode":  "none"
-                                                 },
-                                "cases":  [
-                                              {
-                                                  "title":  "Portaal vasakul",
-                                                  "requirement":  "Kui portaal on vasakul, peab `send_center()` ikkagi kasutama sisendit 2 ja laskma välja ühe abilasu.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "programContextSource":  "send_center()",
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedHelperCall",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "send_center"
-                                                                                              ],
-                                                                      "expectedHelperLaunchAims":  [
-                                                                                                       2
-                                                                                                   ],
-                                                                      "minHelperLaunchCount":  1
-                                                                  },
-                                                  "hiddenFromPrompt":  true
-                                              },
-                                              {
-                                                  "title":  "Portaal paremal",
-                                                  "requirement":  "Kui portaal on paremal, peab `send_center()` ikkagi kasutama sisendit 2 ja laskma välja ühe abilasu.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "center"
-                                                                                    ]
-                                                               },
-                                                  "programContextSource":  "send_center()",
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedHelperCall",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "send_center"
-                                                                                              ],
-                                                                      "expectedHelperLaunchAims":  [
-                                                                                                       2
-                                                                                                   ],
-                                                                      "minHelperLaunchCount":  1
-                                                                  },
-                                                  "hiddenFromPrompt":  true
-                                              }
-                                          ]
+                            {
+                                "type": "main_launch",
+                                "aim": 2
                             },
-        "successMessage":  "Õige. Sinu abifunktsioon saadab palli alati sisendisse 2.",
-        "failureMessage":  "Sinu abifunktsioon peab defineerima `send_center()`, valima sisendi 2 ja laskma ühe korra välja."
-    },
-    {
-        "id":  "functions-review-conditions",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "functions",
-        "topicOrder":  3,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "conditions",
-        "title":  "Kordus: paranda negatiivse palli kontroll",
-        "question":  "Milline tingimus jätab vahele ainult `negative_ball`-i?",
-        "code":  "if ???:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-        "boardHint":  "Varasem haruloogika on endiselt oluline, kui tõstad taktika hiljem abifunktsioonidesse.",
-        "unlockConnection":  "See on tingimuslausete teema hajutatud kordamine.",
-        "options":  [
-                        "next_ball == negative_ball",
-                        "portal_side == negative_ball",
-                        "next_ball == portal_side",
-                        "next_ball == 4"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `next_ball == negative_ball` jätab vahele ainult negatiivse palli.",
-        "failureMessage":  "Tingimus peab lugema `next_ball` väärtust ja võrdlema seda otse `negative_ball`-iga."
-    },
-    {
-        "id":  "loops-repair",
-        "kind":  "mastery",
-        "archetype":  "repair",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  1,
-        "title":  "Paranda tsükli keha",
-        "question":  "Milline versioon jätab `negative_ball`-i vahele ja jätkab tsüklit turvaliselt?",
-        "code":  "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
-        "boardHint":  "Pärast `skip_ball()` peab praegune tsüklisamm lõppema enne, kui see jõuab `follow_portal()`-ini.",
-        "unlockConnection":  "See on peamine tsüklimuster, mis muudab ühe taktika turvaliseks automaatikaks.",
-        "options":  [
-                        "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
-                        "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
-                        "for shot in range(3):\n    if portal_side == negative_ball:\n        continue\n    follow_portal()",
-                        "for shot in range(3):\n    skip_ball()\n    continue"
-                    ],
-        "correctOption":  0,
-        "successMessage":  "Õige. `continue` lõpetab selle tsüklisammu pärast negatiivse palli vahelejätmist.",
-        "failureMessage":  "Turvaline versioon jätab negatiivse palli vahele ja kasutab `continue`, et tsükkel seda pärast enam välja ei laseks."
-    },
-    {
-        "id":  "loops-write",
-        "kind":  "mastery",
-        "archetype":  "write",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  2,
-        "title":  "Kirjuta tulevaste pallide tsükkel",
-        "question":  "Kirjuta üks tsükkel, mis töötleb reas \"Tulevased pallid\" näidatud 4 palli: suunab `portal_ball`-i otse portaali, jätab `negative_ball`-i vahele ja saadab iga `center_ball`-i sisendisse 2.",
-        "code":  "",
-        "boardHint":  "Selles kontrollpunktis abifunktsiooni ei ole. Üks tsükkel peab töötama mõlema nähtava järjekorra puhul. `continue` on vabatahtlik, aga `negative_ball`-i haru ei tohi sama tsüklisammu jooksul väljalaskeni jõuda.",
-        "unlockConnection":  "See on päris ülekandeülesanne: nüüd pead kogu portaali / negatiivse / kesk-palli loogika kirjutama otse tsükli sisse.",
-        "writeValidation":  {
-                                "target":  "main",
-                                "starterSource":  "for shot in range(4):\n    drop_ball()",
-                                "cases":  [
-                                              {
-                                                  "title":  "Portaal, negatiivne, kesk, portaal",
-                                                  "requirement":  "Saada mõlemad `portal_ball`-id otse portaali, jäta `negative_ball` vahele, saada `center_ball` sisendisse 2 ja käsitle ka viimast `portal_ball`-i õigesti.",
-                                                  "scenario":  {
-                                                                   "portalSide":  3,
-                                                                   "previewQueue":  [
-                                                                                        "portal",
-                                                                                        "negative",
-                                                                                        "center",
-                                                                                        "portal"
-                                                                                    ],
-                                                                   "visiblePreviewCount":  4
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedFor",
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "center_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "previewResponses":  [
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "skip"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               }
-                                                                                           ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "minMainLaunchCount":  3,
-                                                                      "maxMainLaunchCount":  3,
-                                                                      "maxHelperLaunchCount":  0
-                                                                  }
-                                              },
-                                              {
-                                                  "title":  "Negatiivne, kesk, kesk, portaal",
-                                                  "requirement":  "Jäta `negative_ball` vahele, saada mõlemad `center_ball`-id sisendisse 2 ja suuna viimane `portal_ball` otse portaali.",
-                                                  "scenario":  {
-                                                                   "portalSide":  1,
-                                                                   "previewQueue":  [
-                                                                                        "negative",
-                                                                                        "center",
-                                                                                        "center",
-                                                                                        "portal"
-                                                                                    ],
-                                                                   "visiblePreviewCount":  4
-                                                               },
-                                                  "expectation":  {
-                                                                      "requiredFeatures":  [
-                                                                                               "usedFor",
-                                                                                               "usedIf",
-                                                                                               "usedChooseInput"
-                                                                                           ],
-                                                                      "requiredIdentifiers":  [
-                                                                                                  "next_ball",
-                                                                                                  "negative_ball",
-                                                                                                  "center_ball",
-                                                                                                  "portal_side"
-                                                                                              ],
-                                                                      "previewResponses":  [
-                                                                                               {
-                                                                                                   "type":  "skip"
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  2
-                                                                                               },
-                                                                                               {
-                                                                                                   "type":  "main_launch",
-                                                                                                   "aim":  "portal_side"
-                                                                                               }
-                                                                                           ],
-                                                                      "minSkippedNegativeBallCount":  1,
-                                                                      "minMainLaunchCount":  3,
-                                                                      "maxMainLaunchCount":  3,
-                                                                      "maxHelperLaunchCount":  0
-                                                                  }
-                                              }
-                                          ]
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
+                            }
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "minMainLaunchCount": 3,
+                        "maxHelperLaunchCount": 0
+                    }
+                },
+                {
+                    "title": "Negatiivne, kesk, kesk, portaal",
+                    "requirement": "Jäta 'negative_ball' vahele, saada mõlemad 'center_ball'-id sisendisse 2 ja suuna viimane 'portal_ball' otse portaali.",
+                    "scenario": {
+                        "portalSide": 1,
+                        "previewQueue": [
+                            "negative",
+                            "center",
+                            "center",
+                            "portal"
+                        ],
+                        "visiblePreviewCount": 4
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedFor",
+                            "usedIf",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "next_ball",
+                            "negative_ball",
+                            "portal_side"
+                        ],
+                        "previewResponses": [
+                            {
+                                "type": "skip"
                             },
-        "successMessage":  "Õige. See tsükkel saab hakkama pikema segatud eelvaatega ka ilma abifunktsioonita.",
-        "failureMessage":  "Sinu tsükkel peab jätma `negative_ball`-i vahele, saatma iga `center_ball`-i sisendisse 2 ja suunama iga `portal_ball`-i otse portaali."
+                            {
+                                "type": "main_launch",
+                                "aim": 2
+                            },
+                            {
+                                "type": "main_launch",
+                                "aim": 2
+                            },
+                            {
+                                "type": "main_launch",
+                                "aim": "portal_side"
+                            }
+                        ],
+                        "minSkippedNegativeBallCount": 1,
+                        "minMainLaunchCount": 3,
+                        "maxHelperLaunchCount": 0
+                    }
+                }
+            ]
+        },
+        "successMessage": "Õige. See tsükkel saab hakkama pikema segatud eelvaatega ka ilma abifunktsioonita.",
+        "failureMessage": "Sinu tsükkel peab jätma 'negative_ball'-i vahele, saatma iga 'center_ball'-i sisendisse 2 ja suunama iga 'portal_ball'-i otse portaali."
     },
     {
-        "id":  "loops-review-functions",
-        "kind":  "mastery",
-        "archetype":  "trace",
-        "topicId":  "loops",
-        "topicOrder":  4,
-        "taskOrder":  3,
-        "reviewOriginTopicId":  "functions",
-        "title":  "Kordus: kutsu abifunktsiooni 2 korda",
-        "question":  "Mitu korda laseb see põhiprogramm palli välja?",
-        "code":  "follow_portal()\nfollow_portal()",
-        "boardHint":  "Iga `follow_portal()` kutse käivitab sama abifunktsiooni uuesti.",
-        "unlockConnection":  "See on funktsioonide teema hajutatud kordamine.",
-        "options":  [
-                        "0",
-                        "1",
-                        "2",
-                        "3"
-                    ],
-        "correctOption":  2,
-        "successMessage":  "Õige. Kaks kutset tähendavad kahte väljalaset.",
-        "failureMessage":  "Iga `follow_portal()` kutse käivitab abifunktsiooni ühe korra, seega kaks kutset tähendab kahte väljalaset."
+        "id": "loops-review-functions",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "loops",
+        "topicOrder": 4,
+        "taskOrder": 3,
+        "reviewOriginTopicId": "functions",
+        "title": "Kordus: kutsu abifunktsiooni 2 korda",
+        "question": "Mitu korda laseb see põhiprogramm palli välja?",
+        "code": "follow_portal()\nfollow_portal()",
+        "boardHint": "Iga 'follow_portal()' kutse käivitab sama abifunktsiooni uuesti.",
+        "unlockConnection": "See on funktsioonide teema hajutatud kordamine.",
+        "options": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ],
+        "correctOption": 2,
+        "successMessage": "Õige. Kaks kutset tähendavad kahte väljalaset.",
+        "failureMessage": "Iga 'follow_portal()' kutse käivitab abifunktsiooni ühe korra, seega kaks kutset tähendab kahte väljalaset."
+    },
+    {
+        "id": "lists-trace",
+        "kind": "mastery",
+        "archetype": "trace",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 1,
+        "title": "Jälgi boonuskaarti",
+        "question": "Kui 'bonus_map = [0.5, 1, 5]', siis millist kordajat loeb 'bonus_map[2]'?",
+        "code": "bonus_map = [0.5, 1, 5]\nbonus_map[2]",
+        "boardHint": "Indeks 0 on esimene element, seega indeks 2 on kolmas kordaja ja kuulub sisendile 3.",
+        "unlockConnection": "See kontrollib, kas oskad 'bonus_map'-ist ühe sisendi kordaja otse välja lugeda.",
+        "options": [
+            "0.5",
+            "1",
+            "5",
+            "0"
+        ],
+        "correctOption": 2,
+        "successMessage": "Õige. 'bonus_map[2]' loeb kolmanda kordaja, 5.",
+        "failureMessage": "Pea meeles, et järjendi indeksid algavad nullist, nii et indeks 2 tähendab kolmandat elementi."
+    },
+    {
+        "id": "lists-repair",
+        "kind": "mastery",
+        "archetype": "repair",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 2,
+        "title": "Paranda parima sisendi leidja",
+        "question": "Milline versioon kontrollib kõik kordajad läbi, jätab meelde tugevaima sisendi ja laseb sellest välja?",
+        "code": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index)\ndrop_ball()",
+        "boardHint": "Käi 'bonus_map'-ist otse läbi. Hoia meeles parim kordaja ja selle nullist algav indeks, siis lisa enne 'choose_input(...)'-i 1.",
+        "unlockConnection": "Indeksiga lugemine ja järjendi otse läbi käimine töötavad siin koos: loe iga kordaja, jäta parim meelde ja muuda selle indeks sisendinumbriks 1, 2 või 3.",
+        "options": [
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in range(3):\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = multiplier\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_index = multiplier\nchoose_input(best_index + 1)\ndrop_ball()",
+            "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()"
+        ],
+        "correctOption": 0,
+        "successMessage": "Õige. Parandatud versioon käib 'bonus_map'-i otse läbi, hoiab parimat kordajat meeles ja laseb välja sobiva raja.",
+        "failureMessage": "Õige lahendus peab käima 'bonus_map'-i läbi, jätma meelde tugevaima kordaja ja selle indeksi ning valima siis selle sisendi."
+    },
+    {
+        "id": "lists-write",
+        "kind": "mastery",
+        "archetype": "write",
+        "topicId": "lists",
+        "topicOrder": 5,
+        "taskOrder": 3,
+        "title": "Kirjuta parima sisendi kasutaja",
+        "question": "Kirjuta \u00fcks programm, mis t\u00f6\u00f6tab k\u00f5igi all n\u00e4htavate juhtude puhul: kasuta 'bonus_map'-i, et leida tugevaim sisend, ja lase siis sellest sisendist v\u00e4lja v\u00e4hemalt 3 palli.",
+        "code": "",
+        "boardHint": "Alusta ridadest 'best_multiplier = bonus_map[0]' ja 'best_index = 0'. K\u00e4i 'bonus_map' l\u00e4bi, j\u00e4ta meelde parim indeks ja kasuta siis teist ts\u00fcklit, et lasta 'best_index + 1' kaudu v\u00e4lja v\u00e4hemalt 3 korda. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
+        "unlockConnection": "See on järjendite lõpuülesanne: otsi sisendite kordajate nimekirjast parim koht ja kasuta seda sisendit mitu korda järjest.",
+        "writeValidation": {
+            "target": "main",
+            "starterSource": "drop_ball()",
+            "lineLimit": 12,
+            "cases": [
+                {
+                    "title": "Tugevaim keskel",
+                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli keskmisest sisendist, kui boonuskaart on [0.5, 5, 1].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            0.5,
+                            5,
+                            1
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                },
+                {
+                    "title": "Tugevaim vasakul",
+                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli vasakust sisendist, kui boonuskaart on [5, 1, 0.5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            5,
+                            1,
+                            0.5
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            1,
+                            1,
+                            1
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                },
+                {
+                    "title": "Tugevaim paremal",
+                    "requirement": "Leia tugevaim kordaja ja lase v\u00e4lja v\u00e4hemalt 3 palli paremast sisendist, kui boonuskaart on [1, 0.5, 5].",
+                    "scenario": {
+                        "portalSide": 1,
+                        "bonusMap": [
+                            1,
+                            0.5,
+                            5
+                        ],
+                        "previewQueue": [
+                            "plain",
+                            "plain",
+                            "plain"
+                        ]
+                    },
+                    "expectation": {
+                        "requiredFeatures": [
+                            "usedLists",
+                            "usedFor",
+                            "usedIf",
+                            "usedVariables",
+                            "usedChooseInput"
+                        ],
+                        "requiredIdentifiers": [
+                            "bonus_map"
+                        ],
+                        "expectedMainLaunchAims": [
+                            3,
+                            3,
+                            3
+                        ],
+                        "minMainLaunchCount": 3,
+                        "allowExtraMainLaunches": true
+                    }
+                }
+            ]
+        },
+        "successMessage": "\u00d5ige. Sinu programm leiab tugevaima sisendi, j\u00e4tab selle indeksi meelde ja kasutab seda v\u00e4hemalt 3 v\u00e4ljalaskeks.",
+        "failureMessage": "Vastus peab k\u00e4ima 'bonus_map'-i l\u00e4bi, j\u00e4tma meelde tugevaima kordaja ja indeksi ning laskma siis sellest sisendist v\u00e4lja v\u00e4hemalt 3 palli."
     }
 ]

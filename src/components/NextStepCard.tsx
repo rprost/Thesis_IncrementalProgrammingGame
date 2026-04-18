@@ -12,6 +12,7 @@ type NextStepCardProps = {
   primerCards: UnlockPrimerCard[]
   actionLabel: string | null
   onAction: (() => void) | null
+  highlightAction?: boolean
 }
 
 export function NextStepCard({
@@ -25,6 +26,7 @@ export function NextStepCard({
   primerCards,
   actionLabel,
   onAction,
+  highlightAction = false,
 }: NextStepCardProps) {
   const [showHint, setShowHint] = useState(false)
 
@@ -60,7 +62,9 @@ export function NextStepCard({
 
           {actionLabel !== null && onAction !== null ? (
             <button
-              className="secondary-button objective-action"
+              className={`secondary-button objective-action${
+                highlightAction ? ' attention' : ''
+              }`}
               onClick={onAction}
               type="button"
             >

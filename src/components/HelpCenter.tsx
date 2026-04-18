@@ -1,10 +1,13 @@
-import type { UiText } from '../types'
+import type { RefObject } from 'react'
+import type { UiText, UnlockPrimerCard } from '../types'
 import { useDialogFocusTrap } from '../useAccessibility'
 
 export type HelpEntry = {
   id: string
   title: string
   body: string
+  stageLabel?: string | null
+  primerCards?: UnlockPrimerCard[]
 }
 
 type HelpCenterProps = {
@@ -16,6 +19,8 @@ type HelpCenterProps = {
   onToggle: () => void
   onClose: () => void
   onSelect: (entryId: string) => void
+  buttonRef?: RefObject<HTMLButtonElement | null>
+  isHighlighted?: boolean
 }
 
 export function HelpCenter({
@@ -27,6 +32,8 @@ export function HelpCenter({
   onToggle,
   onClose,
   onSelect,
+  buttonRef,
+  isHighlighted = false,
 }: HelpCenterProps) {
   const dialogRef = useDialogFocusTrap<HTMLElement>(isOpen, onClose)
   const activeEntry =
@@ -35,13 +42,19 @@ export function HelpCenter({
   return (
     <>
       <button
-        className={`help-fab${hasUnread ? ' unread' : ''}`}
+        className={`help-fab${hasUnread ? ' unread' : ''}${isOpen ? ' active' : ''}${
+          isHighlighted ? ' coachmark-target' : ''
+        }`}
         aria-expanded={isOpen}
         aria-label={ui.helpCenterButtonLabel}
         onClick={onToggle}
+        ref={buttonRef}
         type="button"
       >
-        {ui.helpCenterTitle}
+        <span className="help-fab-mark" aria-hidden="true">
+          ?
+        </span>
+        <span>{ui.helpCenterTitle}</span>
       </button>
 
       {isOpen ? (
@@ -59,14 +72,18 @@ export function HelpCenter({
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="help-center-title"
+            aria-labelledby={
+              activeEntry !== null
+                ? 'help-center-title help-entry-title'
+                : 'help-center-title'
+            }
             tabIndex={-1}
           >
             <div className="help-center-header">
               <div>
                 <p className="panel-kicker">{ui.helpCenterTitle}</p>
                 <h2 className="help-center-title" id="help-center-title">
-                  {activeEntry?.title ?? ui.helpCenterEmpty}
+                  {ui.helpCenterTitle}
                 </h2>
               </div>
               <button
@@ -112,7 +129,37 @@ export function HelpCenter({
 
               <div className="help-center-body">
                 {activeEntry !== null ? (
-                  <p>{activeEntry.body}</p>
+                  <div className="help-entry-panel">
+                    <div className="objective-meta">
+                      <p className="panel-kicker">{ui.nextStepLabel}</p>
+                      {activeEntry.stageLabel ? (
+                        <span className="objective-stage">{activeEntry.stageLabel}</span>
+                      ) : null}
+                    </div>
+
+                    <h3 className="help-entry-title" id="help-entry-title">
+                      {activeEntry.title}
+                    </h3>
+                    <p className="help-entry-copy">{activeEntry.body}</p>
+
+                    {(activeEntry.primerCards?.length ?? 0) > 0 ? (
+                      <article className="objective-detail-card help-entry-primer-shell">
+                        <span>{ui.nextStepPrimerLabel}</span>
+                        <div className="objective-primer-grid">
+                          {activeEntry.primerCards?.map((card) => (
+                            <section className="objective-primer-card" key={card.id}>
+                              <strong>{card.title}</strong>
+                              <p>{card.body}</p>
+                              <div className="objective-primer-syntax">
+                                <span>{ui.nextStepPrimerSyntaxLabel}</span>
+                                <code>{card.syntax}</code>
+                              </div>
+                            </section>
+                          ))}
+                        </div>
+                      </article>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="help-center-empty">{ui.helpCenterEmpty}</p>
                 )}

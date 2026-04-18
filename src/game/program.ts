@@ -8,6 +8,7 @@ import type {
   ParsedProgram,
   ProgramFeatureUsage,
   ProgramValidation,
+  ProgramValidationIssueCode,
   ValidationIssue,
 } from '../types'
 
@@ -21,6 +22,7 @@ export const MAX_FOR_RANGE = 8
 export const MAX_STEPS_PER_RUN = 20
 export const MAX_HELPER_FUNCTIONS = 1
 export const BASE_HELPER_LINE_LIMIT = 6
+export const MAX_LIST_LITERAL_ITEMS = 8
 
 type ParsedLine = {
   raw: string
@@ -32,6 +34,8 @@ type ParsedLine = {
 type ExprNode =
   | { type: 'number'; value: number }
   | { type: 'identifier'; name: string }
+  | { type: 'list'; items: ExprNode[] }
+  | { type: 'index'; target: ExprNode; index: ExprNode }
   | { type: 'binary'; operator: '+' | '-' | '*'; left: ExprNode; right: ExprNode }
   | { type: 'unary'; operator: '-'; value: ExprNode }
 
@@ -61,6 +65,13 @@ type StatementNode =
       loopVariable: string
       body: StatementNode[]
     }
+  | {
+      type: 'for_list'
+      lineNumber: number
+      iterable: ExprNode
+      loopVariable: string
+      body: StatementNode[]
+    }
   | { type: 'helper_call'; lineNumber: number; name: string }
 
 type HelperDefinition = {
@@ -68,6 +79,8 @@ type HelperDefinition = {
   lineNumber: number
   body: StatementNode[]
 }
+
+type IfStatementNode = Extract<StatementNode, { type: 'if' }>
 
 type ParseContext = {
   allowedCommands: AllowedCommand[]
@@ -81,14 +94,45 @@ type ParseContext = {
 type Token =
   | { type: 'number'; value: number }
   | { type: 'identifier'; value: string }
-  | { type: 'operator'; value: '+' | '-' | '*' | '(' | ')' }
+  | { type: 'operator'; value: '+' | '-' | '*' | '(' | ')' | '[' | ']' | ',' }
 
-type EvaluationContext = Record<string, number>
+type RuntimeValue = number | number[]
+type EvaluationContext = Record<string, RuntimeValue>
 type PlanningContext = {
   ballQueue: BallType[]
   queueIndex: number
 }
 type ExecutionControl = 'none' | 'continue'
+
+class ProgramEvaluationError extends Error {
+  issueCode: ProgramValidationIssueCode
+
+  constructor(issueCode: ProgramValidationIssueCode, message?: string) {
+    super(message)
+    this.issueCode = issueCode
+  }
+}
+
+function expressionUsesLists(node: ExprNode): boolean {
+  switch (node.type) {
+    case 'identifier':
+      return node.name === 'bonus_map'
+    case 'list':
+      return true
+    case 'index':
+      return true
+    case 'binary':
+      return expressionUsesLists(node.left) || expressionUsesLists(node.right)
+    case 'unary':
+      return expressionUsesLists(node.value)
+    default:
+      return false
+  }
+}
+
+function conditionUsesLists(node: ConditionNode): boolean {
+  return expressionUsesLists(node.left) || expressionUsesLists(node.right)
+}
 
 function createFeatureUsage(): ProgramFeatureUsage {
   return {
@@ -98,6 +142,7 @@ function createFeatureUsage(): ProgramFeatureUsage {
     usedHelperCall: false,
     usedFor: false,
     usedContinue: false,
+    usedLists: false,
   }
 }
 
@@ -173,6 +218,14 @@ function tokenizeExpression(source: string): Token[] | null {
         end += 1
       }
 
+      if (source[end] === '.' && /\d/.test(source[end + 1] ?? '')) {
+        end += 1
+
+        while (end < source.length && /\d/.test(source[end] ?? '')) {
+          end += 1
+        }
+      }
+
       tokens.push({
         type: 'number',
         value: Number(source.slice(index, end)),
@@ -201,7 +254,10 @@ function tokenizeExpression(source: string): Token[] | null {
       current === '-' ||
       current === '*' ||
       current === '(' ||
-      current === ')'
+      current === ')' ||
+      current === '[' ||
+      current === ']' ||
+      current === ','
     ) {
       tokens.push({
         type: 'operator',
@@ -250,6 +306,61 @@ function parseExpression(source: string): ExprNode | null {
       }
     }
 
+    if (token.type === 'operator' && token.value === '[') {
+      index += 1
+      const items: ExprNode[] = []
+
+      if (
+        expressionTokens[index]?.type === 'operator' &&
+        expressionTokens[index]?.value === ']'
+      ) {
+        index += 1
+        return {
+          type: 'list',
+          items,
+        }
+      }
+
+      while (index < expressionTokens.length) {
+        const item = parseAdditive()
+
+        if (item === null) {
+          return null
+        }
+
+        if (items.length >= MAX_LIST_LITERAL_ITEMS) {
+          return null
+        }
+
+        items.push(item)
+
+        const separator = expressionTokens[index]
+
+        if (
+          separator?.type === 'operator' &&
+          separator.value === ','
+        ) {
+          index += 1
+          continue
+        }
+
+        if (
+          separator?.type === 'operator' &&
+          separator.value === ']'
+        ) {
+          index += 1
+          return {
+            type: 'list',
+            items,
+          }
+        }
+
+        return null
+      }
+
+      return null
+    }
+
     if (token.type === 'operator' && token.value === '(') {
       index += 1
       const inner = parseAdditive()
@@ -296,7 +407,32 @@ function parseExpression(source: string): ExprNode | null {
       return null
     }
 
-    return base
+    let current = base
+
+    while (
+      expressionTokens[index]?.type === 'operator' &&
+      expressionTokens[index]?.value === '['
+    ) {
+      index += 1
+      const indexExpression = parseAdditive()
+
+      if (
+        indexExpression === null ||
+        expressionTokens[index]?.type !== 'operator' ||
+        expressionTokens[index]?.value !== ']'
+      ) {
+        return null
+      }
+
+      index += 1
+      current = {
+        type: 'index',
+        target: current,
+        index: indexExpression,
+      }
+    }
+
+    return current
   }
 
   function parseMultiplicative(): ExprNode | null {
@@ -398,7 +534,7 @@ function parseCondition(source: string): ConditionNode | null {
 function evaluateExpression(
   node: ExprNode,
   environment: EvaluationContext,
-): number {
+): RuntimeValue {
   switch (node.type) {
     case 'number':
       return node.value
@@ -410,6 +546,27 @@ function evaluateExpression(
       }
 
       return value
+    }
+    case 'list':
+      return node.items.map((item) => evaluateNumericExpression(item, environment))
+    case 'index': {
+      const target = evaluateExpression(node.target, environment)
+
+      if (!Array.isArray(target)) {
+        throw new ProgramEvaluationError('invalid_index_access')
+      }
+
+      const indexValue = evaluateNumericExpression(node.index, environment)
+
+      if (
+        !Number.isInteger(indexValue) ||
+        indexValue < 0 ||
+        indexValue >= target.length
+      ) {
+        throw new ProgramEvaluationError('invalid_index_access')
+      }
+
+      return target[indexValue]
     }
     case 'unary':
       return -evaluateNumericExpression(node.value, environment)
@@ -437,7 +594,13 @@ function evaluateNumericExpression(
   node: ExprNode,
   environment: EvaluationContext,
 ): number {
-  return evaluateExpression(node, environment)
+  const value = evaluateExpression(node, environment)
+
+  if (typeof value !== 'number') {
+    throw new ProgramEvaluationError('invalid_expression')
+  }
+
+  return value
 }
 
 function evaluateCondition(
@@ -478,12 +641,20 @@ function detectLockedConstruct(line: string): LockedConstruct | null {
     return 'variables'
   }
 
-  if (line.startsWith('if ') || line.startsWith('else:')) {
+  if (
+    line.startsWith('if ') ||
+    line.startsWith('elif ') ||
+    line.startsWith('else:')
+  ) {
     return 'if'
   }
 
   if (line.startsWith('def ')) {
     return 'functions'
+  }
+
+  if (line.includes('[') || line.includes(']')) {
+    return 'lists'
   }
 
   return null
@@ -533,6 +704,179 @@ function parseIndentedBlock(
   return parseStatements(lines, nextIndex, firstLine.indent, context)
 }
 
+function parseConditionalLine(
+  line: ParsedLine,
+  keyword: 'if' | 'elif',
+  context: ParseContext,
+): { condition: ConditionNode | null; issues: ValidationIssue[] } {
+  const issues: ValidationIssue[] = []
+
+  if (!context.unlockedConstructs.includes('if')) {
+    issues.push({
+      code: 'locked_construct',
+      lineNumber: line.lineNumber,
+      construct: 'if',
+    })
+
+    return {
+      condition: null,
+      issues,
+    }
+  }
+
+  const conditionMatch = line.trimmed.match(
+    keyword === 'if' ? /^if (.+):$/ : /^elif (.+):$/,
+  )
+  const condition = parseCondition(conditionMatch?.[1]?.trim() ?? '')
+
+  if (condition === null) {
+    issues.push({
+      code: 'invalid_condition',
+      lineNumber: line.lineNumber,
+    })
+
+    return {
+      condition: null,
+      issues,
+    }
+  }
+
+  if (
+    conditionUsesLists(condition) &&
+    !context.unlockedConstructs.includes('lists')
+  ) {
+    issues.push({
+      code: 'locked_construct',
+      lineNumber: line.lineNumber,
+      construct: 'lists',
+    })
+
+    return {
+      condition: null,
+      issues,
+    }
+  }
+
+  return {
+    condition,
+    issues,
+  }
+}
+
+function parseIfStatement(
+  lines: ParsedLine[],
+  startIndex: number,
+  currentIndent: number,
+  context: ParseContext,
+): { statement: IfStatementNode | null; nextIndex: number; issues: ValidationIssue[] } {
+  const line = lines[startIndex]
+  const issues: ValidationIssue[] = []
+
+  if (line === undefined) {
+    return {
+      statement: null,
+      nextIndex: startIndex,
+      issues,
+    }
+  }
+
+  const initialCondition = parseConditionalLine(line, 'if', context)
+  issues.push(...initialCondition.issues)
+
+  if (initialCondition.condition === null) {
+    return {
+      statement: null,
+      nextIndex: startIndex + 1,
+      issues,
+    }
+  }
+
+  const thenBlock = parseIndentedBlock(
+    lines,
+    startIndex + 1,
+    currentIndent,
+    context,
+    'for_body_required',
+  )
+  issues.push(...thenBlock.issues)
+
+  const root: IfStatementNode = {
+    type: 'if',
+    lineNumber: line.lineNumber,
+    condition: initialCondition.condition,
+    thenBody: thenBlock.statements,
+    elseBody: [],
+  }
+
+  let currentNode = root
+  let index = thenBlock.nextIndex
+
+  while (true) {
+    const nextLine = lines[index]
+
+    if (
+      nextLine !== undefined &&
+      nextLine.indent === currentIndent &&
+      nextLine.trimmed.startsWith('elif ')
+    ) {
+      const elifCondition = parseConditionalLine(nextLine, 'elif', context)
+      issues.push(...elifCondition.issues)
+
+      if (elifCondition.condition === null) {
+        index += 1
+        break
+      }
+
+      const elifBlock = parseIndentedBlock(
+        lines,
+        index + 1,
+        currentIndent,
+        context,
+        'for_body_required',
+      )
+      issues.push(...elifBlock.issues)
+
+      const elifNode: IfStatementNode = {
+        type: 'if',
+        lineNumber: nextLine.lineNumber,
+        condition: elifCondition.condition,
+        thenBody: elifBlock.statements,
+        elseBody: [],
+      }
+
+      currentNode.elseBody = [elifNode]
+      currentNode = elifNode
+      index = elifBlock.nextIndex
+      continue
+    }
+
+    if (
+      nextLine !== undefined &&
+      nextLine.trimmed === 'else:' &&
+      nextLine.indent === currentIndent
+    ) {
+      const elseBlock = parseIndentedBlock(
+        lines,
+        index + 1,
+        currentIndent,
+        context,
+        'for_body_required',
+      )
+      issues.push(...elseBlock.issues)
+      currentNode.elseBody = elseBlock.statements
+      index = elseBlock.nextIndex
+    }
+
+    break
+  }
+
+  return {
+    statement: root,
+    nextIndex: index,
+    issues,
+  }
+}
+
 function parseStatements(
   lines: ParsedLine[],
   startIndex: number,
@@ -568,7 +912,10 @@ function parseStatements(
       continue
     }
 
-    if (line.trimmed === 'else:') {
+    if (
+      currentIndent > 0 &&
+      (line.trimmed === 'else:' || line.trimmed.startsWith('elif '))
+    ) {
       break
     }
 
@@ -584,66 +931,24 @@ function parseStatements(
       continue
     }
 
-    if (line.trimmed.startsWith('if ')) {
-      if (!context.unlockedConstructs.includes('if')) {
-        issues.push({
-          code: 'locked_construct',
-          lineNumber: line.lineNumber,
-          construct: 'if',
-        })
-        index += 1
-        continue
-      }
-
-      const ifMatch = line.trimmed.match(/^if (.+):$/)
-      const condition = parseCondition(ifMatch?.[1]?.trim() ?? '')
-
-      if (condition === null) {
-        issues.push({
-          code: 'invalid_condition',
-          lineNumber: line.lineNumber,
-        })
-        index += 1
-        continue
-      }
-
-      const thenBlock = parseIndentedBlock(
-        lines,
-        index + 1,
-        currentIndent,
-        context,
-        'for_body_required',
-      )
-      issues.push(...thenBlock.issues)
-      index = thenBlock.nextIndex
-
-      let elseBody: StatementNode[] = []
-      const maybeElseLine = lines[index]
-
-      if (
-        maybeElseLine !== undefined &&
-        maybeElseLine.trimmed === 'else:' &&
-        maybeElseLine.indent === currentIndent
-      ) {
-        const elseBlock = parseIndentedBlock(
-          lines,
-          index + 1,
-          currentIndent,
-          context,
-          'for_body_required',
-        )
-        issues.push(...elseBlock.issues)
-        elseBody = elseBlock.statements
-        index = elseBlock.nextIndex
-      }
-
-      statements.push({
-        type: 'if',
+    if (line.trimmed.startsWith('elif ') || line.trimmed === 'else:') {
+      issues.push({
+        code: 'invalid_command',
         lineNumber: line.lineNumber,
-        condition,
-        thenBody: thenBlock.statements,
-        elseBody,
       })
+      index += 1
+      continue
+    }
+
+    if (line.trimmed.startsWith('if ')) {
+      const ifStatement = parseIfStatement(lines, index, currentIndent, context)
+      issues.push(...ifStatement.issues)
+      index = ifStatement.nextIndex
+
+      if (ifStatement.statement !== null) {
+        statements.push(ifStatement.statement)
+      }
+
       continue
     }
 
@@ -658,9 +963,59 @@ function parseStatements(
         continue
       }
 
-      const forMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in range\((\d+)\):$/)
+      const rangeMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in range\((\d+)\):$/)
 
-      if (forMatch === null) {
+      if (rangeMatch !== null) {
+        const loopVariable = rangeMatch[1] ?? '_'
+        const iterations = Number(rangeMatch[2])
+
+        if (
+          !Number.isInteger(iterations) ||
+          iterations < 1 ||
+          iterations > MAX_FOR_RANGE
+        ) {
+          issues.push({
+            code: 'for_range_limit',
+            lineNumber: line.lineNumber,
+            maxRange: MAX_FOR_RANGE,
+          })
+          index += 1
+          continue
+        }
+
+        const block = parseIndentedBlock(
+          lines,
+          index + 1,
+          currentIndent,
+          {
+            ...context,
+            insideLoop: true,
+          },
+          'for_body_required',
+        )
+        issues.push(...block.issues)
+
+        if (block.statements.length === 0) {
+          issues.push({
+            code: 'for_body_required',
+            lineNumber: line.lineNumber,
+          })
+        }
+
+        statements.push({
+          type: 'for_range',
+          lineNumber: line.lineNumber,
+          iterations,
+          loopVariable,
+          body: block.statements,
+        })
+        index = block.nextIndex
+        continue
+      }
+
+      const iterableMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in (.+):$/)
+
+      if (iterableMatch === null) {
         issues.push({
           code: 'unsupported_for_loop',
           lineNumber: line.lineNumber,
@@ -669,18 +1024,22 @@ function parseStatements(
         continue
       }
 
-      const loopVariable = forMatch[1] ?? '_'
-      const iterations = Number(forMatch[2])
-
-      if (
-        !Number.isInteger(iterations) ||
-        iterations < 1 ||
-        iterations > MAX_FOR_RANGE
-      ) {
+      if (!context.unlockedConstructs.includes('lists')) {
         issues.push({
-          code: 'for_range_limit',
+          code: 'locked_construct',
           lineNumber: line.lineNumber,
-          maxRange: MAX_FOR_RANGE,
+          construct: 'lists',
+        })
+        index += 1
+        continue
+      }
+
+      const iterable = parseExpression(iterableMatch[2]?.trim() ?? '')
+
+      if (iterable === null) {
+        issues.push({
+          code: 'invalid_expression',
+          lineNumber: line.lineNumber,
         })
         index += 1
         continue
@@ -706,10 +1065,10 @@ function parseStatements(
       }
 
       statements.push({
-        type: 'for_range',
+        type: 'for_list',
         lineNumber: line.lineNumber,
-        iterations,
-        loopVariable,
+        iterable,
+        loopVariable: iterableMatch[1] ?? '_',
         body: block.statements,
       })
       index = block.nextIndex
@@ -757,6 +1116,19 @@ function parseStatements(
         issues.push({
           code: 'invalid_expression',
           lineNumber: line.lineNumber,
+        })
+        index += 1
+        continue
+      }
+
+      if (
+        expressionUsesLists(expression) &&
+        !context.unlockedConstructs.includes('lists')
+      ) {
+        issues.push({
+          code: 'locked_construct',
+          lineNumber: line.lineNumber,
+          construct: 'lists',
         })
         index += 1
         continue
@@ -830,6 +1202,19 @@ function parseStatements(
           issues.push({
             code: 'invalid_set_aim',
             lineNumber: line.lineNumber,
+          })
+          index += 1
+          continue
+        }
+
+        if (
+          expressionUsesLists(expression) &&
+          !context.unlockedConstructs.includes('lists')
+        ) {
+          issues.push({
+            code: 'locked_construct',
+            lineNumber: line.lineNumber,
+            construct: 'lists',
           })
           index += 1
           continue
@@ -1103,9 +1488,12 @@ function executeStatements(
           return 'continue'
         case 'choose_input': {
           featureUsage.usedChooseInput = true
+          if (expressionUsesLists(statement.value)) {
+            featureUsage.usedLists = true
+          }
           const value = evaluateNumericExpression(statement.value, environment)
 
-          if (value < 1 || value > 3) {
+          if (!Number.isInteger(value) || value < 1 || value > 3) {
             issues.push({
               code: 'aim_range_limit',
               lineNumber: statement.lineNumber,
@@ -1118,10 +1506,16 @@ function executeStatements(
         }
         case 'assign':
           featureUsage.usedVariables = true
+          if (expressionUsesLists(statement.value)) {
+            featureUsage.usedLists = true
+          }
           environment[statement.name] = evaluateExpression(statement.value, environment)
           break
         case 'if':
           featureUsage.usedIf = true
+          if (conditionUsesLists(statement.condition)) {
+            featureUsage.usedLists = true
+          }
           {
             const control = executeStatements(
               evaluateCondition(statement.condition, environment)
@@ -1169,6 +1563,38 @@ function executeStatements(
             }
           }
           break
+        case 'for_list': {
+          featureUsage.usedFor = true
+          featureUsage.usedLists = true
+          const iterable = evaluateExpression(statement.iterable, environment)
+
+          if (!Array.isArray(iterable)) {
+            throw new ProgramEvaluationError('invalid_expression')
+          }
+
+          for (const value of iterable) {
+            environment[statement.loopVariable] = value
+            const control = executeStatements(
+              statement.body,
+              environment,
+              helperDefinitions,
+              steps,
+              issues,
+              featureUsage,
+              planning,
+              callStack,
+            )
+
+            if (issues.length > 0) {
+              return 'none'
+            }
+
+            if (control === 'continue') {
+              continue
+            }
+          }
+          break
+        }
         case 'helper_call': {
           featureUsage.usedHelperCall = true
           const helper = helperDefinitions.get(statement.name)
@@ -1215,14 +1641,18 @@ function executeStatements(
         default:
           break
       }
-    } catch {
+    } catch (error) {
       issues.push({
         code:
-          statement.type === 'if'
-            ? 'invalid_condition'
-            : statement.type === 'choose_input' || statement.type === 'assign'
-              ? 'invalid_expression'
-              : 'invalid_command',
+          error instanceof ProgramEvaluationError
+            ? error.issueCode
+            : statement.type === 'if'
+              ? 'invalid_condition'
+              : statement.type === 'choose_input' ||
+                  statement.type === 'assign' ||
+                  statement.type === 'for_list'
+                ? 'invalid_expression'
+                : 'invalid_command',
         lineNumber: statement.lineNumber,
       })
       return 'none'

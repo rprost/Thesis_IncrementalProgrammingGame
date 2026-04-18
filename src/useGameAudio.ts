@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 type SoundEvent =
   | 'launch'
@@ -93,9 +93,24 @@ function scheduleTone(
 export function useGameAudio(enabled: boolean) {
   const contextRef = useRef<AudioContext | null>(null)
   const masterGainRef = useRef<GainNode | null>(null)
+  const readyRef = useRef(false)
+  const [isReady, setIsReady] = useState(false)
+
+  const markReady = useCallback(() => {
+    if (readyRef.current) {
+      return
+    }
+
+    readyRef.current = true
+    setIsReady(true)
+  }, [])
 
   const ensureContext = useCallback(() => {
     if (contextRef.current !== null) {
+      if (contextRef.current.state === 'running') {
+        markReady()
+      }
+
       return contextRef.current
     }
 
@@ -107,24 +122,37 @@ export function useGameAudio(enabled: boolean) {
 
     const context = new AudioContextCtor()
     const masterGain = context.createGain()
-    masterGain.gain.value = 0.16
+    masterGain.gain.value = 0.24
     masterGain.connect(context.destination)
 
     contextRef.current = context
     masterGainRef.current = masterGain
 
     return context
-  }, [])
+  }, [markReady])
 
   const unlock = useCallback(() => {
     const context = ensureContext()
 
-    if (context === null || context.state !== 'suspended') {
+    if (context === null) {
       return
     }
 
-    void context.resume()
-  }, [ensureContext])
+    if (context.state === 'running') {
+      markReady()
+      return
+    }
+
+    if (context.state !== 'suspended') {
+      return
+    }
+
+    void context.resume().then(() => {
+      if (context.state === 'running') {
+        markReady()
+      }
+    })
+  }, [ensureContext, markReady])
 
   const play = useCallback(
     (sound: SoundEvent) => {
@@ -135,21 +163,39 @@ export function useGameAudio(enabled: boolean) {
       const context = ensureContext()
       const masterGain = masterGainRef.current
 
-      if (context === null || masterGain === null || context.state !== 'running') {
+      if (context === null || masterGain === null) {
         return
       }
 
       const tones = SOUND_LIBRARY[sound]
-      const startAt = context.currentTime + 0.01
+      const playTones = () => {
+        const startAt = context.currentTime + 0.01
 
-      tones.forEach((tone) => {
-        scheduleTone(context, masterGain, startAt, tone)
-      })
+        tones.forEach((tone) => {
+          scheduleTone(context, masterGain, startAt, tone)
+        })
+      }
+
+      if (context.state === 'suspended') {
+        void context.resume().then(() => {
+          if (context.state === 'running') {
+            markReady()
+            playTones()
+          }
+        })
+        return
+      }
+
+      if (context.state === 'running') {
+        markReady()
+        playTones()
+      }
     },
-    [enabled, ensureContext],
+    [enabled, ensureContext, markReady],
   )
 
   return {
+    isReady,
     unlock,
     play,
   }

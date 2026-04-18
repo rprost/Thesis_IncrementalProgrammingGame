@@ -18,6 +18,7 @@ export const DEFAULT_CENTER_BONUS = 6
 export const DEFAULT_NEGATIVE_PENALTY = 10
 export const DEFAULT_PORTAL_CHILD_COUNT = 2
 export const PORTAL_BALL_CHILD_COUNT = 4
+export const BONUS_MAP_TEMPLATE = [0.5, 1, 5] as const
 
 const BOARD_CENTER_X = 230
 const BUCKET_SPACING = 46
@@ -306,6 +307,19 @@ export function rollPortalSide(): PortalSide {
   return Math.random() < 0.5 ? 1 : 3
 }
 
+export function rollBonusMap(): number[] {
+  const values = [...BONUS_MAP_TEMPLATE]
+
+  for (let index = values.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    const current = values[index]
+    values[index] = values[swapIndex] ?? current
+    values[swapIndex] = current
+  }
+
+  return values
+}
+
 export function createBallOutcome(
   aim: AimLevel,
   portalSide: PortalSide,
@@ -316,6 +330,7 @@ export function createBallOutcome(
     portalDepth: number
     maxPortalDepth: number
     extraCenterBinBonus: number
+    laneMultiplier: number
   },
 ): BoardOutcome {
   const decisionCount = Math.max(0, BOARD_PIN_ROWS.length - ENTRY_ROW_BY_AIM[aim] - 1)
@@ -342,6 +357,7 @@ export function createBallOutcome(
       bucketIndex,
       basePoints: 0,
       points: 0,
+      laneMultiplier: options.laneMultiplier,
       ballType,
       centerBonusValue: 0,
       usedCenterBonus: false,
@@ -360,11 +376,13 @@ export function createBallOutcome(
   const usedCenterBonus = centerBonusValue > 0
   const usedNegativePenalty = ballType === 'negative'
   const modifier = centerBonusValue + (usedNegativePenalty ? -DEFAULT_NEGATIVE_PENALTY : 0)
+  const laneMultiplier = options.laneMultiplier
 
   return {
     bucketIndex,
     basePoints,
-    points: basePoints + modifier,
+    points: (basePoints + modifier) * laneMultiplier,
+    laneMultiplier,
     ballType,
     centerBonusValue,
     usedCenterBonus,

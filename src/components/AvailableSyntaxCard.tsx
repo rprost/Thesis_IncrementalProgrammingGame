@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import type {
   ReferenceExampleItem,
   ReferenceValueItem,
@@ -10,6 +11,8 @@ type AvailableSyntaxCardProps = {
   structures: string[]
   referenceValues: ReferenceValueItem[]
   patterns: ReferenceExampleItem[]
+  containerRef?: RefObject<HTMLElement | null>
+  isHighlighted?: boolean
 }
 
 export function AvailableSyntaxCard({
@@ -18,9 +21,15 @@ export function AvailableSyntaxCard({
   structures,
   referenceValues,
   patterns,
+  containerRef,
+  isHighlighted = false,
 }: AvailableSyntaxCardProps) {
   return (
-    <section className="syntax-card" aria-label={ui.referenceTitle}>
+    <section
+      className={`syntax-card${isHighlighted ? ' coachmark-target' : ''}`}
+      aria-label={ui.referenceTitle}
+      ref={containerRef}
+    >
       <p className="panel-kicker">{ui.referenceTitle}</p>
 
       <details className="reference-section">

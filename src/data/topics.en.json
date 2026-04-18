@@ -1,554 +1,701 @@
 [
     {
-        "id":  "variables",
-        "courseOrderLabel":  "1. Variables and expressions",
-        "title":  "Variables and expressions",
-        "moduleName":  "Portal",
-        "meterGoal":  3,
-        "masteryTaskIds":  [
-                               "variables-trace",
-                               "variables-repair",
-                               "variables-write"
-                           ],
-        "visibleStateLabels":  [
-                                   "portal_side"
-                               ],
-        "supportUpgradeIds":  [
-                                  "extra_line",
-                                  "extra_portal_split"
-                              ],
-        "boardSubtitle":  "Aim with fixed inputs first, then reuse a stored value as your target.",
-        "unlockSpotlightText":  "Variables let your code store a value under a name. In this topic, you will first aim with fixed inputs, then copy one board value into your own variable and reuse it in `choose_input(...)`.",
-        "unlockPrimerCards":  [
-                                  {
-                                      "id":  "variables-what",
-                                      "title":  "What a variable is",
-                                      "body":  "A variable is a named place that stores a value so you can use it later.",
-                                      "syntax":  "target = 3"
-                                  },
-                                  {
-                                      "id":  "variables-store",
-                                      "title":  "What assignment does",
-                                      "body":  "`target = 3` stores the value 3 in a variable named `target`. After that, `target` means the same value.",
-                                      "syntax":  "target"
-                                  },
-                                  {
-                                      "id":  "variables-use",
-                                      "title":  "What you do here",
-                                      "body":  "First aim by writing the input number directly. Then use a stored variable as the value inside `choose_input(...)`.",
-                                      "syntax":  "choose_input(target)"
-                                  }
-                              ],
-        "practiceGoals":  [
-                              {
-                                  "id":  "variables-aim-left",
-                                  "title":  "Goal 1: Launch from input 1",
-                                  "instruction":  "Launch one ball from input 1.",
-                                  "boardHint":  "Use `choose_input(1)` and then `drop_ball()`.",
-                                  "suggestedSnippet":  "choose_input(1)\ndrop_ball()",
-                                  "starterProgramSource":  "drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  1,
-                                                   "previewQueue":  [
-                                                                        "plain"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "expectedMainLaunchAims":  [
-                                                                                    1
-                                                                                ],
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "variables-aim-right",
-                                  "title":  "Goal 2: Launch from input 3",
-                                  "instruction":  "Now launch one ball from input 3.",
-                                  "boardHint":  "This time the target input is 3.",
-                                  "suggestedSnippet":  "choose_input(3)\ndrop_ball()",
-                                  "starterProgramSource":  "choose_input(2)\ndrop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "plain"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "expectedMainLaunchAims":  [
-                                                                                    3
-                                                                                ],
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "variables-store-target",
-                                  "title":  "Goal 3: Read `portal_side`",
-                                  "instruction":  "A portal just appeared on the board. Copy `portal_side` into your own variable first, then use that variable in `choose_input(...)` and launch exactly one ball toward the portal.",
-                                  "boardHint":  "Copy the visible `portal_side` value into your own variable first, then use that variable in `choose_input(...)`.",
-                                  "primerCards":  [
-                                                      {
-                                                          "id":  "variables-goal-3-board",
-                                                          "title":  "What the board gives you",
-                                                          "body":  "The board shows you which side the portal is on. Python reads that same side as `portal_side`.",
-                                                          "syntax":  "portal_side"
-                                                      }
-                                                  ],
-                                  "suggestedSnippet":  "target = portal_side\nchoose_input(target)\ndrop_ball()",
-                                  "starterProgramSource":  "choose_input(portal_side)\ndrop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "plain"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedVariables",
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "portal_side"
-                                                                             ],
-                                                     "expectedMainLaunchAims":  [
-                                                                                    3
-                                                                                ],
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              }
-                          ]
+        "id": "variables",
+        "courseOrderLabel": "1. Variables and expressions",
+        "title": "Variables and expressions",
+        "moduleName": "Portal",
+        "meterGoal": 3,
+        "masteryTaskIds": [
+            "variables-trace",
+            "variables-repair",
+            "variables-write"
+        ],
+        "visibleStateLabels": [
+            "portal_side"
+        ],
+        "supportUpgradeIds": [
+            "extra_line",
+            "extra_portal_split"
+        ],
+        "boardSubtitle": "Aim with fixed inputs first, then use an assignment to store and reuse the portal side.",
+        "unlockSpotlightText": "A variable lets you store a value under a name.\n\nNew game action: before dropping the ball, write 'choose_input(...)' to choose which input the ball launches from.",
+        "unlockPrimerCards": [
+            {
+                "id": "variables-what",
+                "title": "What a variable is",
+                "body": "A variable is a named place in the program where you can store a value and use it again later.",
+                "syntax": "variable_name = 3"
+            },
+            {
+                "id": "variables-store",
+                "title": "What assignment does",
+                "body": "'variable_name = 3' is an assignment statement. It stores the value 3 in a variable called 'variable_name'.",
+                "syntax": "variable_name = 3"
+            },
+            {
+                "id": "variables-use",
+                "title": "What you do here",
+                "body": "To aim a ball you can use 'choose_input(3)', which launches the ball from the right input. If you already defined 'variable_name' as 3, you can put that variable name inside 'choose_input(...)' instead.",
+                "syntax": "choose_input(variable_name)"
+            }
+        ],
+        "practiceGoals": [
+            {
+                "id": "variables-aim-left",
+                "title": "Goal 1: Drop a ball from input 1 (left)",
+                "instruction": "Change the main program.\nAdd the line 'choose_input(1)' before 'drop_ball()' and run the program.",
+                "boardHint": "The code can look like this:\nchoose_input(1)\ndrop_ball()",
+                "suggestedSnippet": "choose_input(1)\ndrop_ball()",
+                "starterProgramSource": "drop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "previewQueue": []
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedChooseInput"
+                    ],
+                    "expectedMainLaunchAims": [
+                        1
+                    ],
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "variables-aim-right",
+                "title": "Goal 2: Drop a ball from input 3 (right)",
+                "instruction": "Now change the number inside 'choose_input(...)'.",
+                "boardHint": "The code can look like this:\nchoose_input(3)\ndrop_ball()",
+                "suggestedSnippet": "choose_input(3)\ndrop_ball()",
+                "starterProgramSource": "choose_input(2)\ndrop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": []
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedChooseInput"
+                    ],
+                    "expectedMainLaunchAims": [
+                        3
+                    ],
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "variables-store-target",
+                "title": "Goal 3: Drop the ball toward the portal",
+                "instruction": "New board part: a 🟣portal has appeared on the pachinko board. If a ball enters it, something interesting happens.\n\nAlso notice the panel under the board called 'Board internals'. It shows information about the pachinko board that you can use.\n\nIt says that the variable 'portal_side' stores the input number where the portal is currently located.\n\nGoal: write an assignment like 'target = portal_side', then use that variable inside 'choose_input(...)' and launch one ball toward the portal.",
+                "boardHint": "The important step in this goal is the assignment 'target = portal_side' before the launch:\ntarget = portal_side\nchoose_input(target)\ndrop_ball()",
+                "primerCards": [
+                    {
+                        "id": "variables-goal-3-board",
+                        "title": "What the board gives you",
+                        "body": "The board shows you which side the portal is on. Python reads that same side as 'portal_side'.",
+                        "syntax": "portal_side"
+                    }
+                ],
+                "suggestedSnippet": "target = portal_side\nchoose_input(target)\ndrop_ball()",
+                "starterProgramSource": "choose_input(portal_side)\ndrop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "plain"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedVariables",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "portal_side"
+                    ],
+                    "expectedMainLaunchAims": [
+                        3
+                    ],
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            }
+        ]
     },
     {
-        "id":  "conditions",
-        "courseOrderLabel":  "2. Conditionals",
-        "title":  "Conditionals",
-        "moduleName":  "Ball preview",
-        "meterGoal":  3,
-        "masteryTaskIds":  [
-                               "conditions-repair",
-                               "conditions-write",
-                               "conditions-review-variables"
-                           ],
-        "visibleStateLabels":  [
-                                   "next_ball",
-                                   "center_ball",
-                                   "portal_ball",
-                                   "negative_ball"
-                               ],
-        "supportUpgradeIds":  [
-                                  "queue_peek",
-                                  "center_bin_bonus"
-                              ],
-        "boardSubtitle":  "Read `next_ball` before the launch and choose the right response.",
-        "unlockSpotlightText":  "The board now previews the next ball. Use `if` to react to `next_ball`, and use `skip_ball()` when that ball should not launch.",
-        "unlockPrimerCards":  [
-                                  {
-                                      "id":  "conditions-what",
-                                      "title":  "What an `if` does",
-                                      "body":  "An `if` statement lets your code do different things in different situations.",
-                                      "syntax":  "if next_ball == negative_ball:"
-                                  },
-                                  {
-                                      "id":  "conditions-board",
-                                      "title":  "What the board gives you",
-                                      "body":  "The board shows the next ball before the launch. Python reads that same value as `next_ball`.",
-                                      "syntax":  "next_ball"
-                                  },
-                                  {
-                                      "id":  "conditions-use",
-                                      "title":  "What you do here",
-                                      "body":  "Skip `negative_ball`, send `portal_ball` to the portal, and send `center_ball` to input 2.",
-                                      "syntax":  "skip_ball()"
-                                  }
-                              ],
-        "practiceGoals":  [
-                              {
-                                  "id":  "conditions-skip-negative",
-                                  "title":  "Goal 1: Skip `negative_ball`",
-                                  "instruction":  "The next ball is `negative_ball`. Write the smallest `if` program that skips this one-ball setup.",
-                                  "boardHint":  "This setup has one negative ball. If you skip it, the run should launch nothing.",
-                                  "suggestedSnippet":  "if next_ball == negative_ball:\n    skip_ball()",
-                                  "starterProgramSource":  "drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  1,
-                                                   "previewQueue":  [
-                                                                        "negative"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedIf"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "next_ball",
-                                                                                 "negative_ball"
-                                                                             ],
-                                                     "minSkippedNegativeBallCount":  1,
-                                                     "maxSkippedNegativeBallCount":  1,
-                                                     "maxMainLaunchCount":  0
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "conditions-send-portal",
-                                  "title":  "Goal 2: Launch `portal_ball`",
-                                  "instruction":  "Keep the negative-ball skip rule, then launch `portal_ball` toward the portal.",
-                                  "boardHint":  "The negative branch still skips. The other branch should choose the portal-side input and launch.",
-                                  "suggestedSnippet":  "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-                                  "starterProgramSource":  "if next_ball == negative_ball:\n    skip_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "portal"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedIf",
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "next_ball",
-                                                                                 "negative_ball",
-                                                                                 "portal_side"
-                                                                             ],
-                                                     "expectedMainLaunchAims":  [
-                                                                                    3
-                                                                                ],
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "conditions-center-rule",
-                                  "title":  "Goal 3: Launch `center_ball` from input 2",
-                                  "instruction":  "This setup shows `center_ball`. Write an `if` program that launches it from input 2.",
-                                  "boardHint":  "In this one-ball setup, your `if` statement only needs the center-ball launch branch.",
-                                  "suggestedSnippet":  "if next_ball == center_ball:\n    choose_input(2)\n    drop_ball()",
-                                  "starterProgramSource":  "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "center"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedIf",
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "next_ball",
-                                                                                 "center_ball"
-                                                                             ],
-                                                     "expectedMainLaunchAims":  [
-                                                                                    2
-                                                                                ],
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              }
-                          ]
+        "id": "conditions",
+        "courseOrderLabel": "2. Conditionals",
+        "title": "Conditionals",
+        "moduleName": "Ball preview",
+        "meterGoal": 3,
+        "masteryTaskIds": [
+            "conditions-repair",
+            "conditions-write",
+            "conditions-review-variables"
+        ],
+        "visibleStateLabels": [
+            "next_ball",
+            "center_ball",
+            "portal_ball",
+            "negative_ball"
+        ],
+        "supportUpgradeIds": [
+            "queue_peek",
+            "center_bin_bonus"
+        ],
+        "boardSubtitle": "Read 'next_ball' before the launch and choose the right response.",
+        "unlockSpotlightText": "New game part: special balls.\nFrom now on new ball types can drop.\n\nThere are 3 types:\n🔴Negative ball (negative_ball) - this ball gives negative points\n🟢Center ball (center_ball) - this ball gives bonus points if you drop it from input 2\n🔵Portal ball (portal_ball) - this ball has a stronger effect if it goes into the portal\n\nEach ball has its own synergy.\n'Board internals' now shows which ball comes next. That value is stored in the variable 'next_ball'.\nYou can skip balls with 'skip_ball()'.\nBy using 'if', 'elif', and 'else', you can check 'next_ball' and react differently to different balls.",
+        "unlockPrimerCards": [
+            {
+                "id": "conditions-what",
+                "title": "What 'if', 'elif', and 'else' do",
+                "body": "'if' checks the first condition. 'elif' lets you check another condition if the first one was false, and 'else' handles everything left over.",
+                "syntax": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()"
+            },
+            {
+                "id": "conditions-board",
+                "title": "What the board gives you",
+                "body": "The board shows the next ball before the launch. The same value is stored in the variable 'next_ball' in code.",
+                "syntax": "next_ball"
+            },
+            {
+                "id": "conditions-use",
+                "title": "What you do here",
+                "body": "1. Skip 'negative_ball'\n2. Send 'portal_ball' to the portal\n3. Send 'center_ball' to input 2",
+                "syntax": "skip_ball()"
+            }
+        ],
+        "practiceGoals": [
+            {
+                "id": "conditions-skip-negative",
+                "title": "Goal 1: Skip 'negative_ball'",
+                "instruction": "The next ball is 'negative_ball'.\nUsing an 'if' statement, write a program that checks the next ball and skips it with 'skip_ball()'.",
+                "boardHint": "In this situation there is only one negative ball. If you skip it, nothing should launch. Make sure you use an 'if' statement.",
+                "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()",
+                "starterProgramSource": "drop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "previewQueue": [
+                        "negative"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedIf"
+                    ],
+                    "requiredIdentifiers": [
+                        "next_ball",
+                        "negative_ball"
+                    ],
+                    "minSkippedNegativeBallCount": 1,
+                    "maxSkippedNegativeBallCount": 1,
+                    "maxMainLaunchCount": 0
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "conditions-send-portal",
+                "title": "Goal 2: Send the remaining balls toward the portal",
+                "instruction": "Keep the rule for skipping the negative ball.\nAdd another branch for the safe balls. You can use 'else', or you can already start using 'elif' and 'else'.\nLaunch the remaining balls from the input above the portal.",
+                "boardHint": "The negative-ball branch still skips the ball. The other branch should aim at the portal and launch it. A short version can look like this:\n\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+                "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+                "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "portal"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedIf",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "next_ball",
+                        "negative_ball",
+                        "portal_side"
+                    ],
+                    "expectedMainLaunchAims": [
+                        3
+                    ],
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "conditions-center-rule",
+                "title": "Goal 3: Launch 'center_ball' from input 2",
+                "instruction": "In this situation the next ball is 'center_ball'.\nDelete the current code and write an 'if' program that launches it from input 2.",
+                "boardHint": "In this one-ball situation, you only need the center-ball launch branch.",
+                "suggestedSnippet": "if next_ball == center_ball:\n    choose_input(2)\n    drop_ball()",
+                "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "center"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedIf",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "next_ball",
+                        "center_ball"
+                    ],
+                    "expectedMainLaunchAims": [
+                        2
+                    ],
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            }
+        ]
     },
     {
-        "id":  "functions",
-        "courseOrderLabel":  "3. Functions",
-        "title":  "Functions",
-        "moduleName":  "Helper tactic",
-        "meterGoal":  3,
-        "masteryTaskIds":  [
-                               "functions-trace",
-                               "functions-write",
-                               "functions-review-conditions"
-                           ],
-        "visibleStateLabels":  [
-                                   "portal_side",
-                                   "next_ball"
-                               ],
-        "supportUpgradeIds":  [
-                                  "helper_line_capacity"
-                              ],
-        "boardSubtitle":  "Store one reusable tactic in the helper editor and call it from the main program.",
-        "unlockSpotlightText":  "Functions unlock the helper editor. Put one reusable tactic there, then call it from the main program instead of rewriting it every time.",
-        "unlockPrimerCards":  [
-                                  {
-                                      "id":  "functions-what",
-                                      "title":  "What a function is",
-                                      "body":  "A function is a named block of code you can run again later.",
-                                      "syntax":  "def follow_portal():"
-                                  },
-                                  {
-                                      "id":  "functions-game",
-                                      "title":  "What it does here",
-                                      "body":  "The helper editor stores one reusable tactic. The main program can trigger it with a short function call.",
-                                      "syntax":  "follow_portal()"
-                                  },
-                                  {
-                                      "id":  "functions-use",
-                                      "title":  "What you do here",
-                                      "body":  "Keep the portal-aiming logic in the helper editor, then reuse it from the main program.",
-                                      "syntax":  "choose_input(portal_side)"
-                                  }
-                              ],
-        "practiceGoals":  [
-                              {
-                                  "id":  "functions-call-helper-left",
-                                  "title":  "Goal 1: Call the helper",
-                                  "instruction":  "Call `follow_portal()` so the helper launches once through the left side.",
-                                  "boardHint":  "The helper editor already stores the tactic. The main editor only needs the helper call.",
-                                  "suggestedSnippet":  "follow_portal()",
-                                  "starterProgramSource":  "drop_ball()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  1,
-                                                   "previewQueue":  [
-                                                                        "portal",
-                                                                        "center",
-                                                                        "center"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedHelperCall"
-                                                                          ],
-                                                     "expectedHelperLaunchAims":  [
-                                                                                      1
-                                                                                  ],
-                                                     "minHelperLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "functions-call-helper-right",
-                                  "title":  "Goal 2: Reuse the helper",
-                                  "instruction":  "Use the same helper again. This time the portal is on the right, so the helper should aim there.",
-                                  "boardHint":  "If your helper already reads `portal_side`, you can reuse it without rewriting the helper body.",
-                                  "suggestedSnippet":  "follow_portal()",
-                                  "starterProgramSource":  "follow_portal()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "portal",
-                                                                        "center",
-                                                                        "portal"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedHelperCall"
-                                                                          ],
-                                                     "expectedHelperLaunchAims":  [
-                                                                                      3
-                                                                                  ],
-                                                     "minHelperLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  false,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "functions-write-center-helper",
-                                  "title":  "Goal 3: Write `send_center()`",
-                                  "instruction":  "Create a different helper named `send_center()` that launches one ball from input 2. Then call that helper from the main program.",
-                                  "boardHint":  "The helper for this goal should always aim at input 2. It does not need portal logic.",
-                                  "suggestedSnippet":  "def send_center():\n    choose_input(2)\n    drop_ball()",
-                                  "starterProgramSource":  "follow_portal()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  1,
-                                                   "previewQueue":  [
-                                                                        "center",
-                                                                        "center",
-                                                                        "center"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedHelperCall",
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "send_center"
-                                                                             ],
-                                                     "expectedHelperLaunchAims":  [
-                                                                                      2
-                                                                                  ],
-                                                     "minHelperLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "helper"
-                              }
-                          ]
+        "id": "functions",
+        "courseOrderLabel": "3. Functions",
+        "title": "Functions",
+        "moduleName": "Helper tactic",
+        "meterGoal": 3,
+        "masteryTaskIds": [
+            "functions-trace",
+            "functions-write",
+            "functions-review-conditions"
+        ],
+        "visibleStateLabels": [
+            "portal_side",
+            "next_ball"
+        ],
+        "supportUpgradeIds": [
+            "helper_line_capacity"
+        ],
+        "boardSubtitle": "Store one reusable tactic in the helper editor and call it from the main program.",
+        "unlockSpotlightText": "The helper editor is now unlocked. You can write code there too.\nIt makes sense to put a helper function there. Later you can call that helper from the main program. That lets you reuse code.",
+        "unlockPrimerCards": [
+            {
+                "id": "functions-what",
+                "title": "What a function is",
+                "body": "A function is a named block of code that you can run again later.",
+                "syntax": "def follow_portal():"
+            },
+            {
+                "id": "functions-game",
+                "title": "What it does here",
+                "body": "You can keep one helper function in the helper editor. You can run it from the main program with one command.",
+                "syntax": "follow_portal()"
+            },
+            {
+                "id": "functions-use",
+                "title": "What you do here",
+                "body": "For example, you can write a helper function that always launches balls from the input above the portal.",
+                "syntax": "choose_input(portal_side)"
+            }
+        ],
+        "practiceGoals": [
+            {
+                "id": "functions-call-helper-left",
+                "title": "Goal 1: Call the helper",
+                "instruction": "Call 'follow_portal()' so the helper launches once through the left side.",
+                "boardHint": "The helper editor already stores the tactic. The main editor only needs the helper call.",
+                "suggestedSnippet": "follow_portal()",
+                "starterProgramSource": "drop_ball()",
+                "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "previewQueue": [
+                        "portal",
+                        "center",
+                        "center"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedHelperCall"
+                    ],
+                    "expectedHelperLaunchAims": [
+                        1
+                    ],
+                    "minHelperLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "functions-call-helper-right",
+                "title": "Goal 2: Reuse the helper",
+                "instruction": "Use the same helper again. This time the portal is on the right, so the helper should aim there.",
+                "boardHint": "If your helper already reads 'portal_side', you can reuse it without rewriting the helper body.",
+                "suggestedSnippet": "follow_portal()",
+                "starterProgramSource": "follow_portal()",
+                "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "portal",
+                        "center",
+                        "portal"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedHelperCall"
+                    ],
+                    "expectedHelperLaunchAims": [
+                        3
+                    ],
+                    "minHelperLaunchCount": 1
+                },
+                "requiresCodeChange": false,
+                "changeTarget": "main"
+            },
+            {
+                "id": "functions-write-skip-helper",
+                "title": "Goal 3: Write 'skip_negative()'",
+                "instruction": "Edit the helper function.\nRename it to 'skip_negative()'.\nIt should check the next ball, and if that ball is 'negative_ball', it should skip it.\nDo not forget to call it from the main program under the new name.",
+                "boardHint": "This helper function should call 'skip_ball()' once. You do not need to choose an input or launch a ball here.",
+                "suggestedSnippet": "def skip_negative():\n    skip_ball()",
+                "starterProgramSource": "skip_negative()",
+                "starterHelperSource": "def skip_negative():\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "previewQueue": [
+                        "negative"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedHelperCall"
+                    ],
+                    "requiredIdentifiers": [
+                        "skip_negative"
+                    ],
+                    "maxMainLaunchCount": 0,
+                    "maxHelperLaunchCount": 0,
+                    "minSkippedNegativeBallCount": 1,
+                    "maxSkippedNegativeBallCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "helper"
+            }
+        ]
     },
     {
-        "id":  "loops",
-        "courseOrderLabel":  "4. Loops",
-        "title":  "Loops",
-        "moduleName":  "Auto-run",
-        "meterGoal":  3,
-        "masteryTaskIds":  [
-                               "loops-repair",
-                               "loops-write",
-                               "loops-review-functions"
-                           ],
-        "visibleStateLabels":  [
-                                   "next_ball",
-                                   "portal_side"
-                               ],
-        "supportUpgradeIds":  [
-                                  "portal_chain_once"
-                              ],
-        "boardSubtitle":  "Use a loop to automate a short preview response.",
-        "unlockSpotlightText":  "Loops repeat small plans. One loop can now handle several upcoming balls in order, but skipped balls must not fall through into a launch afterward.",
-        "unlockPrimerCards":  [
-                                  {
-                                      "id":  "loops-what",
-                                      "title":  "What a loop is",
-                                      "body":  "A loop repeats the same plan several times without you copying the code again and again.",
-                                      "syntax":  "for shot in range(3):"
-                                  },
-                                  {
-                                      "id":  "loops-game",
-                                      "title":  "What it does here",
-                                      "body":  "One loop can handle a short preview sequence and push the game toward automation.",
-                                      "syntax":  "follow_portal()"
-                                  },
-                                  {
-                                      "id":  "loops-safety",
-                                      "title":  "What to watch out for",
-                                      "body":  "If you skip a ball, that branch must stop before it accidentally reaches a launch later in the loop body.",
-                                      "syntax":  "continue"
-                                  }
-                              ],
-        "practiceGoals":  [
-                              {
-                                  "id":  "loops-repeat-three",
-                                  "title":  "Goal 1: Repeat the helper three times",
-                                  "instruction":  "Use `for ... in range(3)` so the helper launches three matching shots in one run.",
-                                  "boardHint":  "Once this goal is complete, auto-run unlocks for short repeated sessions.",
-                                  "suggestedSnippet":  "for shot in range(3):\n    follow_portal()",
-                                  "starterProgramSource":  "follow_portal()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  1,
-                                                   "previewQueue":  [
-                                                                        "portal",
-                                                                        "portal",
-                                                                        "portal"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedFor",
-                                                                              "usedHelperCall"
-                                                                          ],
-                                                     "expectedHelperLaunchAims":  [
-                                                                                      1,
-                                                                                      1,
-                                                                                      1
-                                                                                  ],
-                                                     "minHelperLaunchCount":  3
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "loops-repeat-four",
-                                  "title":  "Goal 2: Repeat the helper four times",
-                                  "instruction":  "Increase the repeat count to four so the same helper tactic launches four matching shots in one run.",
-                                  "boardHint":  "Change the number inside `range(...)`. The helper call itself can stay the same.",
-                                  "suggestedSnippet":  "for shot in range(4):\n    follow_portal()",
-                                  "starterProgramSource":  "for shot in range(3):\n    follow_portal()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "portal",
-                                                                        "portal",
-                                                                        "portal",
-                                                                        "portal"
-                                                                    ]
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedFor",
-                                                                              "usedHelperCall"
-                                                                          ],
-                                                     "expectedHelperLaunchAims":  [
-                                                                                      3,
-                                                                                      3,
-                                                                                      3,
-                                                                                      3
-                                                                                  ],
-                                                     "minHelperLaunchCount":  4
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              },
-                              {
-                                  "id":  "loops-mixed-strategy",
-                                  "title":  "Goal 3: Loop over the preview",
-                                  "instruction":  "Handle the 3 upcoming balls shown in the preview: use `follow_portal()` for `portal_ball`, skip `negative_ball`, and send `center_ball` to input 2.",
-                                  "boardHint":  "`continue` is one clean way to stop the skip branch. If you do not use it, make sure the negative-ball branch does not fall through into a launch.",
-                                  "suggestedSnippet":  "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    if next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
-                                  "starterProgramSource":  "for shot in range(4):\n    follow_portal()",
-                                  "starterHelperSource":  "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
-                                  "scenario":  {
-                                                   "portalSide":  3,
-                                                   "previewQueue":  [
-                                                                        "portal",
-                                                                        "negative",
-                                                                        "center"
-                                                                    ],
-                                                   "visiblePreviewCount":  3
-                                               },
-                                  "acceptance":  {
-                                                     "requiredFeatures":  [
-                                                                              "usedFor",
-                                                                              "usedIf",
-                                                                              "usedHelperCall",
-                                                                              "usedChooseInput"
-                                                                          ],
-                                                     "requiredIdentifiers":  [
-                                                                                 "next_ball",
-                                                                                 "negative_ball",
-                                                                                 "center_ball"
-                                                                             ],
-                                                     "previewResponses":  [
-                                                                              {
-                                                                                  "type":  "helper_launch",
-                                                                                  "aim":  "portal_side"
-                                                                              },
-                                                                              {
-                                                                                  "type":  "skip"
-                                                                              },
-                                                                              {
-                                                                                  "type":  "main_launch",
-                                                                                  "aim":  2
-                                                                              }
-                                                                          ],
-                                                     "minSkippedNegativeBallCount":  1,
-                                                     "minHelperLaunchCount":  1,
-                                                     "minMainLaunchCount":  1
-                                                 },
-                                  "requiresCodeChange":  true,
-                                  "changeTarget":  "main"
-                              }
-                          ]
+        "id": "loops",
+        "courseOrderLabel": "4. Loops",
+        "title": "Loops",
+        "moduleName": "Auto-run",
+        "meterGoal": 3,
+        "masteryTaskIds": [
+            "loops-repair",
+            "loops-write",
+            "loops-review-functions"
+        ],
+        "visibleStateLabels": [
+            "next_ball",
+            "portal_side"
+        ],
+        "supportUpgradeIds": [
+            "portal_chain_once"
+        ],
+        "boardSubtitle": "Use a loop to automate a short preview response.",
+        "unlockSpotlightText": "A loop repeats the code inside it several times. That means one loop can handle and launch multiple balls in a single run.\nInside that loop you can also use 'if', 'elif', and 'else' to react to different balls.\nIf you skip a ball, it is smart to use 'continue'. That stops the current loop step and starts the next one.",
+        "unlockPrimerCards": [
+            {
+                "id": "loops-what",
+                "title": "What a loop is",
+                "body": "A loop repeats the code inside it several times, so you do not have to write the same lines again.",
+                "syntax": "for shot in range(3):\n    drop_ball()"
+            },
+            {
+                "id": "loops-game",
+                "title": "What it does here",
+                "body": "One loop can handle several upcoming balls in a row and take the game one step closer to automation.",
+                "syntax": "for shot in range(3):\n    follow_portal()"
+            },
+            {
+                "id": "loops-safety",
+                "title": "What to watch out for",
+                "body": "If you use 'skip_ball()', that branch must end before the same loop step reaches another launch. 'continue' works well for that.",
+                "syntax": "if next_ball == negative_ball:\n    skip_ball()\n    continue"
+            }
+        ],
+        "practiceGoals": [
+            {
+                "id": "loops-repeat-three",
+                "title": "Goal 1: Repeat the helper at least three times",
+                "instruction": "Use 'for ... in range(3)' in the main program and put 'follow_portal()' inside the loop body so the helper launches at least three balls in one run.",
+                "boardHint": "Once this goal is complete, auto-run unlocks for short repeated sessions. 'range(3)' is the smallest loop that works here.",
+                "suggestedSnippet": "for shot in range(3):\n    follow_portal()",
+                "starterProgramSource": "follow_portal()",
+                "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "previewQueue": [
+                        "portal",
+                        "portal",
+                        "portal"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedFor",
+                        "usedHelperCall"
+                    ],
+                    "expectedHelperLaunchAims": [
+                        1,
+                        1,
+                        1
+                    ],
+                    "minHelperLaunchCount": 3,
+                    "allowExtraHelperLaunches": true
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "loops-repeat-four",
+                "title": "Goal 2: Repeat the helper at least four times",
+                "instruction": "New game part: auto-run.\nTo the left of the 'Run program' button there is now an auto-run button. Try it: it runs the code for you at short intervals.\n\nIncrease the repeat count so the same helper launches at least four balls in one run.",
+                "boardHint": "Change the number inside 'range(...)'. 'range(4)' is the smallest loop that works here.",
+                "suggestedSnippet": "for shot in range(4):\n    follow_portal()",
+                "starterProgramSource": "for shot in range(3):\n    follow_portal()",
+                "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "portal",
+                        "portal",
+                        "portal",
+                        "portal"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedFor",
+                        "usedHelperCall"
+                    ],
+                    "expectedHelperLaunchAims": [
+                        3,
+                        3,
+                        3,
+                        3
+                    ],
+                    "minHelperLaunchCount": 4,
+                    "allowExtraHelperLaunches": true
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "loops-mixed-strategy",
+                "title": "Goal 3: Handle every possible ball with a loop",
+                "instruction": "Look at the 'Upcoming balls' row and handle those 3 balls in a loop:\nuse 'follow_portal()' for 'portal_ball'\nskip 'negative_ball'\nsend 'center_ball' to input 2.",
+                "boardHint": "'continue' stops the current loop step and moves to the next repetition. 'elif' is also useful here, because it keeps the ball checks in one clean chain.",
+                "suggestedSnippet": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    elif next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
+                "starterProgramSource": "for shot in range(4):\n    follow_portal()",
+                "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
+                "scenario": {
+                    "portalSide": 3,
+                    "previewQueue": [
+                        "portal",
+                        "negative",
+                        "center"
+                    ],
+                    "visiblePreviewCount": 3
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedFor",
+                        "usedIf",
+                        "usedHelperCall",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "next_ball",
+                        "negative_ball"
+                    ],
+                    "previewResponses": [
+                        {
+                            "type": "helper_launch",
+                            "aim": "portal_side"
+                        },
+                        {
+                            "type": "skip"
+                        },
+                        {
+                            "type": "main_launch",
+                            "aim": 2
+                        }
+                    ],
+                    "minSkippedNegativeBallCount": 1,
+                    "minHelperLaunchCount": 1,
+                    "minMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            }
+        ]
+    },
+    {
+        "id": "lists",
+        "courseOrderLabel": "5. Lists",
+        "title": "Lists",
+        "moduleName": "Bonus map",
+        "meterGoal": 3,
+        "masteryTaskIds": [
+            "lists-trace",
+            "lists-repair",
+            "lists-write"
+        ],
+        "visibleStateLabels": [
+            "bonus_map"
+        ],
+        "supportUpgradeIds": [],
+        "boardSubtitle": "Read the 3 input multipliers, find the strongest one, and farm that input.",
+        "unlockSpotlightText": "New game part: each input now has its own multiplier.\n'Board internals' and the pachinko board show these multipliers under inputs 1, 2, and 3.\nThose multiplier values are stored in the list 'bonus_map'.\n\n'bonus_map[0]' refers to the 1st item in that list (input 1)\n'bonus_map[1]' refers to the 2nd item in that list (input 2)\n'bonus_map[2]' refers to the 3rd item in that list (input 3)\n\nThe values in this list change on every program run.\nBecause the multiplier is very strong, your job is to drop balls from the input with the highest multiplier.",
+        "unlockPrimerCards": [
+            {
+                "id": "lists-what",
+                "title": "What the list stores",
+                "body": "'bonus_map' stores the three input multipliers in order.",
+                "syntax": "bonus_map"
+            },
+            {
+                "id": "lists-index",
+                "title": "How indexes match inputs",
+                "body": "'bonus_map[0]' matches input 1, 'bonus_map[1]' matches input 2, and 'bonus_map[2]' matches input 3.",
+                "syntax": "bonus_map[2]"
+            },
+            {
+                "id": "lists-loop",
+                "title": "How to search the map",
+                "body": "With a loop you can go through 'bonus_map', inspect its values, and remember which input has the highest multiplier.",
+                "syntax": "for multiplier in bonus_map:"
+            }
+        ],
+        "practiceGoals": [
+            {
+                "id": "lists-read-right-step",
+                "title": "Goal 1: Compare two multipliers",
+                "instruction": "Compare the multipliers in 'bonus_map[0]' and 'bonus_map[2]'.\nStore the index of the higher multiplier in the variable 'best_index' and then launch one ball from the matching input.\nFor the comparison you can use 'if bonus_map[0] < bonus_map[2]:'",
+                "boardHint": "'bonus_map[2]' gives the multiplier value, not the input number. If the best slot is index 2, the matching input is 'best_index + 1', which means input 3.",
+                "suggestedSnippet": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
+                "starterProgramSource": "best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "bonusMap": [
+                        1,
+                        0.5,
+                        5
+                    ],
+                    "previewQueue": [
+                        "plain"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedLists",
+                        "usedVariables",
+                        "usedIf",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "bonus_map"
+                    ],
+                    "expectedMainLaunchAims": [
+                        3
+                    ],
+                    "minMainLaunchCount": 1,
+                    "maxMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "lists-track-best-value",
+                "title": "Goal 2: Find the best multiplier out of all 3",
+                "instruction": "Turn the two-slot comparison into a real search. Use 'for multiplier in bonus_map:' to keep track of both the highest multiplier and its index, then launch one ball from that input.",
+                "boardHint": "Start with 'best_multiplier = bonus_map[0]', 'best_index = 0', and 'index = 0'. When the loop finds a bigger multiplier, store both the value and the index.",
+                "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
+                "starterProgramSource": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "bonusMap": [
+                        0.5,
+                        5,
+                        1
+                    ],
+                    "previewQueue": [
+                        "plain"
+                    ]
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedLists",
+                        "usedFor",
+                        "usedIf",
+                        "usedVariables",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "bonus_map"
+                    ],
+                    "expectedMainLaunchAims": [
+                        2
+                    ],
+                    "minMainLaunchCount": 1,
+                    "maxMainLaunchCount": 1
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            },
+            {
+                "id": "lists-launch-best-lane",
+                "title": "Goal 3: Use the best input",
+                "instruction": "Use the same best-input search and then drop at least 3 balls from that input with a loop.",
+                "boardHint": "Keep the search from Goal 2 and add a second loop that drops at least 3 balls from 'best_index + 1'. 'range(3)' is the smallest loop that works here.",
+                "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nfor shot in range(3):\n    choose_input(best_index + 1)\n    drop_ball()",
+                "starterProgramSource": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
+                "scenario": {
+                    "portalSide": 1,
+                    "bonusMap": [
+                        1,
+                        0.5,
+                        5
+                    ],
+                    "previewQueue": []
+                },
+                "acceptance": {
+                    "requiredFeatures": [
+                        "usedLists",
+                        "usedFor",
+                        "usedIf",
+                        "usedVariables",
+                        "usedChooseInput"
+                    ],
+                    "requiredIdentifiers": [
+                        "bonus_map"
+                    ],
+                    "expectedMainLaunchAims": [
+                        3,
+                        3,
+                        3
+                    ],
+                    "minMainLaunchCount": 3,
+                    "allowExtraMainLaunches": true
+                },
+                "requiresCodeChange": true,
+                "changeTarget": "main"
+            }
+        ]
     }
 ]
