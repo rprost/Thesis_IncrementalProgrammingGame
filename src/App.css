@@ -308,7 +308,7 @@
 
 .objective-primer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 0.7rem;
 }
 
@@ -341,13 +341,14 @@
   display: block;
   overflow-x: auto;
   border-radius: 0.5rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.42rem 0.54rem;
   background: rgba(46, 48, 56, 0.92);
   color: #fff7ec;
   white-space: pre-wrap;
-  tab-size: 4;
+  tab-size: 2;
   font-family: "Consolas", "Courier New", monospace;
-  line-height: 1.5;
+  font-size: 0.84rem;
+  line-height: 1.42;
 }
 
 .objective-spotlight-card {
@@ -624,7 +625,7 @@
   top: calc(100% + 0.7rem);
   right: 0;
   z-index: 25;
-  width: min(360px, calc(100vw - 1rem));
+  width: min(420px, calc(100vw - 1rem));
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
@@ -648,6 +649,38 @@
 .settings-reset {
   padding: 0.5rem 0.8rem;
   white-space: nowrap;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.settings-copy-progress {
+  padding: 0.5rem 0.8rem;
+  white-space: nowrap;
+}
+
+.settings-section-progress .settings-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.settings-section-progress .settings-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  justify-content: stretch;
+}
+
+.settings-section-progress .settings-copy-progress,
+.settings-section-progress .settings-reset {
+  width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
 }
 
 .settings-section {
@@ -675,6 +708,19 @@
   color: #5a4839;
   line-height: 1.5;
   max-width: 28ch;
+}
+
+.settings-progress-note,
+.settings-progress-status {
+  margin: 0.15rem 0 0;
+  color: #5a4839;
+  line-height: 1.5;
+}
+
+.settings-progress-status {
+  color: #235246;
+  font-weight: 700;
+  max-width: 32ch;
 }
 
 .settings-toggle {
@@ -2189,6 +2235,31 @@
   line-height: 1.6;
 }
 
+.intro-reminder {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(44, 93, 80, 0.18);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at top right, rgba(77, 151, 125, 0.12), transparent 46%),
+    rgba(245, 251, 248, 0.9);
+}
+
+.intro-reminder span {
+  color: #2c5d50;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.intro-reminder p {
+  margin: 0;
+  color: #5a4839;
+  line-height: 1.6;
+}
+
 .intro-checklist {
   display: grid;
   gap: 0.7rem;
@@ -2784,7 +2855,7 @@
   }
 
   .settings-panel {
-    width: min(100vw - 1rem, 360px);
+    width: min(100vw - 1rem, 420px);
   }
 
   .next-step-header,

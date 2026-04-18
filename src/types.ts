@@ -410,6 +410,11 @@ export type UiText = {
   settingsSoundOn: string
   settingsSoundOff: string
   settingsProgressLabel: string
+  settingsCopyProgressButton: string
+  settingsCopyProgressDescription: string
+  settingsCopyProgressCopied: string
+  settingsCopyProgressManual: string
+  settingsCopyProgressManualPrompt: string
   settingsResetProgressButton: string
   settingsResetProgressConfirm: string
   settingsCloseButton: string
@@ -700,6 +705,8 @@ export type UiText = {
   introBody: string
   introZoomWarningLabel: string
   introZoomWarning: string
+  introFeedbackReminderLabel: string
+  introFeedbackReminder: string
   introChecklistLabel: string
   introChecklistOne: string
   introChecklistTwo: string

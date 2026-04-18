@@ -45,6 +45,11 @@ export function IntroModal({ ui, isOpen, onStart }: IntroModalProps) {
           </ul>
         </div>
 
+        <div className="intro-reminder">
+          <span>{ui.introFeedbackReminderLabel}</span>
+          <p>{ui.introFeedbackReminder}</p>
+        </div>
+
         <button
           className="secondary-button intro-start-button"
           data-autofocus="true"

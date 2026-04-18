@@ -76,6 +76,8 @@ type HelpEntryId =
   | 'unlock-loops'
   | 'unlock-lists'
 
+type ProgressCopyStatus = 'copied' | 'manual' | null
+
 function getCurrentTopic(
   gameState: GameState,
   topics: TopicDefinition[],
@@ -263,6 +265,44 @@ function formatNumber(value: number): string {
 
 function formatBonusMapValue(values: number[]): string {
   return `[${values.map((value) => formatNumber(value)).join(', ')}]`
+}
+
+function formatSummaryList(values: readonly string[]): string {
+  return values.length > 0 ? values.join(',') : 'none'
+}
+
+function buildProgressSummary(
+  gameState: GameState,
+  sessionStartedAt: number | null,
+  copiedAt: number,
+): string {
+  const currentTopicId =
+    gameState.currentTopicId ??
+    (gameState.topicStage === 'onboarding' ? 'onboarding' : 'none')
+  const goalProgress =
+    gameState.currentTopicId !== null && gameState.topicMeterGoal > 0
+      ? `${String(gameState.topicMeter)}/${String(gameState.topicMeterGoal)}`
+      : 'none'
+  const sessionDurationMinutes =
+    sessionStartedAt === null
+      ? 0
+      : Math.max(0, Math.round((copiedAt - sessionStartedAt) / 60000))
+
+  return [
+    `current_topic_id=${currentTopicId}`,
+    `topic_stage=${gameState.topicStage}`,
+    `goal_progress=${goalProgress}`,
+    `active_task_id=${gameState.activeTaskId ?? 'none'}`,
+    `learned_topic_ids=${formatSummaryList(gameState.learnedTopicIds)}`,
+    `mastered_topic_ids=${formatSummaryList(gameState.masteredTopicIds)}`,
+    `solved_task_count=${String(gameState.solvedTaskIds.length)}`,
+    `score=${String(gameState.score)}`,
+    `resolved_drop_count=${String(gameState.resolvedDropCount)}`,
+    `support_upgrade_ids=${formatSummaryList(gameState.supportUpgradeIds)}`,
+    `current_view=${gameState.currentView}`,
+    `session_duration_minutes=${String(sessionDurationMinutes)}`,
+    `copied_at=${new Date(copiedAt).toISOString()}`,
+  ].join('\n')
 }
 
 function sourceMentionsToken(source: string, token: string): boolean {
@@ -694,10 +734,15 @@ function App() {
     ),
   )
   const [animationNow, setAnimationNow] = useState(() => Date.now())
+  const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(() =>
+    gameState.introDismissed ? Date.now() : null,
+  )
   const [selectedHelpEntryId, setSelectedHelpEntryId] =
     useState<HelpEntryId | null>(null)
   const [isHelpManuallyOpen, setIsHelpManuallyOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [copyProgressStatus, setCopyProgressStatus] =
+    useState<ProgressCopyStatus>(null)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(
     () => gameState.activeTaskId !== null,
   )
@@ -750,6 +795,12 @@ function App() {
     gameState.activeTaskId === null
       ? null
       : tasks.find((task) => task.id === gameState.activeTaskId) ?? null
+  const copyProgressStatusMessage =
+    copyProgressStatus === 'copied'
+      ? ui.settingsCopyProgressCopied
+      : copyProgressStatus === 'manual'
+        ? ui.settingsCopyProgressManual
+        : null
   const activeTaskId = activeTask?.id ?? null
   const canShowSupportCoachmarks =
     gameState.introDismissed &&
@@ -977,6 +1028,12 @@ function App() {
   }, [isSettingsOpen])
 
   useEffect(() => {
+    if (!isSettingsOpen) {
+      setCopyProgressStatus(null)
+    }
+  }, [isSettingsOpen])
+
+  useEffect(() => {
     if (!gameState.isRunning && gameState.activeBalls.length === 0) {
       return
     }
@@ -1150,6 +1207,27 @@ function App() {
     setIsSettingsOpen((current) => !current)
   }
 
+  const handleCopyProgressSummary = async () => {
+    const copiedAt = Date.now()
+    const summary = buildProgressSummary(gameState, sessionStartedAt, copiedAt)
+
+    try {
+      if (
+        typeof navigator === 'undefined' ||
+        navigator.clipboard === undefined ||
+        typeof navigator.clipboard.writeText !== 'function'
+      ) {
+        throw new Error('clipboard unavailable')
+      }
+
+      await navigator.clipboard.writeText(summary)
+      setCopyProgressStatus('copied')
+    } catch {
+      window.prompt(ui.settingsCopyProgressManualPrompt, summary)
+      setCopyProgressStatus('manual')
+    }
+  }
+
   const handlePurchaseNode = (nodeId: SupportUpgradeId) => {
     unlockAudio()
     setGameState((currentState) => purchaseShopNode(currentState, nodeId))
@@ -1195,6 +1273,7 @@ function App() {
   }
 
   const handleDismissIntro = () => {
+    setSessionStartedAt((current) => current ?? Date.now())
     setGameState((currentState) => ({
       ...currentState,
       introDismissed: true,
@@ -1221,9 +1300,11 @@ function App() {
     }
 
     setGameState((currentState) => resetProgress(currentState))
+    setSessionStartedAt(null)
     setIsHelpManuallyOpen(false)
     setSelectedHelpEntryId(null)
     setIsSettingsOpen(false)
+    setCopyProgressStatus(null)
     setIsHelpCoachmarkDismissed(false)
     setIsReferenceCoachmarkDismissed(false)
   }
@@ -1333,7 +1414,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="settings-section">
+              <div className="settings-section settings-section-progress">
                 <span className="settings-section-label">{ui.settingsLanguageLabel}</span>
                 <div className="language-switcher" aria-label={ui.settingsLanguageLabel}>
                   <button
@@ -1377,15 +1458,32 @@ function App() {
               <div className="settings-section">
                 <div className="settings-row">
                   <span className="settings-section-label">{ui.settingsProgressLabel}</span>
-                  <button
-                    className="ghost-button settings-reset"
-                    onClick={handleResetProgress}
-                    type="button"
-                    disabled={gameState.isRunning}
-                  >
-                    {ui.settingsResetProgressButton}
-                  </button>
+                  <div className="settings-actions">
+                    <button
+                      className="ghost-button settings-copy-progress"
+                      onClick={handleCopyProgressSummary}
+                      type="button"
+                    >
+                      {ui.settingsCopyProgressButton}
+                    </button>
+                    <button
+                      className="ghost-button settings-reset"
+                      onClick={handleResetProgress}
+                      type="button"
+                      disabled={gameState.isRunning}
+                    >
+                      {ui.settingsResetProgressButton}
+                    </button>
+                  </div>
                 </div>
+                <p className="settings-progress-note">
+                  {ui.settingsCopyProgressDescription}
+                </p>
+                {copyProgressStatusMessage !== null ? (
+                  <p className="settings-progress-status" aria-live="polite">
+                    {copyProgressStatusMessage}
+                  </p>
+                ) : null}
               </div>
             </section>
           ) : null}
