@@ -613,6 +613,25 @@
   font-weight: 700;
 }
 
+.feedback-link {
+  min-width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-right: 0.2rem;
+  color: #fff9f2;
+  background: #e0702f;
+  border-color: #e0702f;
+  box-shadow: 0 10px 24px rgba(224, 112, 47, 0.2);
+}
+
+.feedback-link:hover {
+  color: #fff9f2;
+  background: #f07c38;
+  border-color: #f07c38;
+}
+
 .settings-button.active,
 .settings-toggle.active {
   color: #fff9f2;

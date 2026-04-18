@@ -1538,6 +1538,15 @@ function App() {
         </div>
 
         <div className="topbar-right" ref={settingsRef}>
+          <a
+            className="settings-button feedback-link"
+            href="https://forms.gle/fVkM43kZryFyQSsY7"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {ui.feedbackButtonLabel}
+          </a>
+
           <HelpCenter
             ui={ui}
             entries={helpEntries}

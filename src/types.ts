@@ -412,6 +412,7 @@ export type UiText = {
   estonianLabel: string
   englishLabel: string
   settingsButtonLabel: string
+  feedbackButtonLabel: string
   settingsTitle: string
   settingsLanguageLabel: string
   settingsSoundLabel: string
