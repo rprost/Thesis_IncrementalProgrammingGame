@@ -51,10 +51,7 @@ export function HelpCenter({
         ref={buttonRef}
         type="button"
       >
-        <span className="help-fab-mark" aria-hidden="true">
-          ?
-        </span>
-        <span>{ui.helpCenterTitle}</span>
+        <span className="help-fab-label">{ui.helpCenterTitle}</span>
       </button>
 
       {isOpen ? (

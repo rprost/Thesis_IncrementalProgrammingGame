@@ -1507,24 +1507,26 @@ function App() {
     <main className="app-shell">
       <section className="app-topbar">
         <div className="topbar-left">
-          <nav className="view-tabs" aria-label="Primary">
-            <button
-              className={`view-tab${gameState.currentView === 'play' ? ' active' : ''}`}
-              onClick={() => handleChangeView('play')}
-              type="button"
-              disabled={gameState.isRunning}
-            >
-              {ui.playTabLabel}
-            </button>
-            <button
-              className={`view-tab${gameState.currentView === 'shop' ? ' active' : ''}`}
-              onClick={() => handleChangeView('shop')}
-              type="button"
-              disabled={gameState.isRunning || !shopIsAvailable}
-            >
-              {ui.shopTabLabel}
-            </button>
-          </nav>
+          <div className="topbar-primary-cluster">
+            <nav className="view-tabs" aria-label="Primary">
+              <button
+                className={`view-tab${gameState.currentView === 'play' ? ' active' : ''}`}
+                onClick={() => handleChangeView('play')}
+                type="button"
+                disabled={gameState.isRunning}
+              >
+                {ui.playTabLabel}
+              </button>
+              <button
+                className={`view-tab${gameState.currentView === 'shop' ? ' active' : ''}`}
+                onClick={() => handleChangeView('shop')}
+                type="button"
+                disabled={gameState.isRunning || !shopIsAvailable}
+              >
+                {ui.shopTabLabel}
+              </button>
+            </nav>
+          </div>
           <div
             className={`points-chip${
               gameState.topicStage !== 'completed' ? ' points-chip-secondary' : ''
@@ -1532,8 +1534,8 @@ function App() {
             aria-label={ui.pointsChipLabel}
           >
             <span className="points-chip-icon" aria-hidden="true" />
-            <span>{ui.pointsChipLabel}</span>
-            <strong>{gameState.score}</strong>
+            <span className="points-chip-label">{ui.pointsChipLabel}</span>
+            <strong className="points-chip-value">{gameState.score}</strong>
           </div>
         </div>
 
@@ -1547,35 +1549,37 @@ function App() {
             {ui.feedbackButtonLabel}
           </a>
 
-          <HelpCenter
-            ui={ui}
-            entries={helpEntries}
-            activeEntryId={activeHelpEntryId}
-            isOpen={isHelpOpen}
-            hasUnread={false}
-            onToggle={handleToggleHelp}
-            onClose={handleCloseHelp}
-            onSelect={handleSelectHelpEntry}
-            buttonRef={helpButtonRef}
-            isHighlighted={showHelpCoachmark}
-          />
+          <div className="topbar-utility-cluster">
+            <HelpCenter
+              ui={ui}
+              entries={helpEntries}
+              activeEntryId={activeHelpEntryId}
+              isOpen={isHelpOpen}
+              hasUnread={false}
+              onToggle={handleToggleHelp}
+              onClose={handleCloseHelp}
+              onSelect={handleSelectHelpEntry}
+              buttonRef={helpButtonRef}
+              isHighlighted={showHelpCoachmark}
+            />
 
-          <button
-            className={`settings-button${isSettingsOpen ? ' active' : ''}`}
-            onClick={handleToggleSettings}
-            type="button"
-            aria-expanded={isSettingsOpen}
-            aria-haspopup="dialog"
-          >
-            {ui.settingsButtonLabel}
-          </button>
+            <button
+              className={`settings-button settings-trigger${isSettingsOpen ? ' active' : ''}`}
+              onClick={handleToggleSettings}
+              type="button"
+              aria-expanded={isSettingsOpen}
+              aria-haspopup="dialog"
+            >
+              {ui.settingsButtonLabel}
+            </button>
+          </div>
 
           {isSettingsOpen ? (
-            <section className="settings-panel" aria-label={ui.settingsTitle}>
+            <section className="settings-panel" aria-labelledby="settings-panel-title">
               <div className="settings-header">
-                <div>
-                  <p className="panel-kicker">{ui.settingsTitle}</p>
-                </div>
+                <h2 className="settings-title" id="settings-panel-title">
+                  {ui.settingsTitle}
+                </h2>
               </div>
 
               <div className="settings-section settings-section-progress">

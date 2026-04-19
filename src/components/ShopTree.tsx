@@ -40,10 +40,6 @@ export function ShopTree({
           <p className="panel-kicker">{ui.shopTitle}</p>
           <h2 className="shop-heading">{ui.shopSubtitle}</h2>
         </div>
-        <div className="shop-score-card">
-          <span>{ui.shopScoreLabel}</span>
-          <strong>{gameState.score}</strong>
-        </div>
       </div>
 
       <div className="skill-tree">
@@ -56,16 +52,11 @@ export function ShopTree({
           return (
             <article className={`skill-node ${status}`} key={node.id}>
               <div className="skill-node-top">
-                <span className="skill-node-status">
-                  {status === 'completed'
-                    ? ui.shopNodeCompleted
-                    : status === 'available'
-                      ? ui.shopNodeAvailable
-                      : ui.shopNodeLocked}
-                </span>
-                <span className="skill-node-cost">
-                  <PointCostText amount={node.cost} template={ui.shopCostValue} />
-                </span>
+                {status === 'available' ? <span /> : (
+                  <span className="skill-node-status">
+                    {status === 'completed' ? ui.shopNodeCompleted : ui.shopNodeLocked}
+                  </span>
+                )}
               </div>
 
               <h3>{copy?.title ?? node.id}</h3>
@@ -85,9 +76,6 @@ export function ShopTree({
                       <PointCostText amount={node.cost} template={ui.shopBuyButton} />
                     )}
                   </button>
-                  {!canPurchase ? (
-                    <span className="skill-node-hint">{ui.shopAvailableHint}</span>
-                  ) : null}
                 </div>
               ) : status === 'locked' ? (
                 <p className="skill-node-hint">{ui.shopLockedHint}</p>
