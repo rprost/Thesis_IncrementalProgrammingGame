@@ -7,11 +7,10 @@
     sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #2c2017;
+  color: #262a31;
   background:
-    radial-gradient(circle at 0% 0%, rgba(247, 193, 132, 0.32), transparent 30%),
-    radial-gradient(circle at 100% 8%, rgba(122, 167, 151, 0.12), transparent 22%),
-    linear-gradient(180deg, #f6eee2 0%, #efe1cd 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(247, 250, 252, 0) 22rem),
+    linear-gradient(180deg, #f7fafc 0%, #edf2f6 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -29,7 +28,24 @@ html {
 body {
   min-height: 100dvh;
   margin: 0;
-  color: #2c2017;
+  color: #262a31;
+  background: transparent;
+}
+
+:root[data-theme='dark'] {
+  color: #e8edf0;
+  background:
+    linear-gradient(180deg, rgba(32, 43, 50, 0.72) 0%, rgba(15, 20, 24, 0) 22rem),
+    linear-gradient(180deg, #121920 0%, #0b1116 100%);
+}
+
+:root[data-theme='dark'] body {
+  color: #e8edf0;
+}
+
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2 {
+  color: #f6f8f7;
 }
 
 button,
@@ -47,7 +63,7 @@ h1,
 h2 {
   margin: 0;
   line-height: 1.1;
-  color: #20170f;
+  color: #191c22;
 }
 
 h1 {

@@ -1,6 +1,7 @@
 import type {
   AimLevel,
   BallType,
+  BonusMap,
   ExecutionExpectation,
   FeedEntry,
   FeedEntryType,
@@ -10,14 +11,16 @@ import type {
   PracticeGoalDefinition,
   PracticeGoalScenario,
   ProgramFeatureUsage,
-  ProgramValidation,
   RunSummary,
   RunStats,
   ScoreBreakdownLine,
   SupportUpgradeId,
+  TaskWriteCase,
   TaskTopicId,
   TopicDefinition,
+  WriteTaskFeedback,
   WriteTaskFeedbackKey,
+  WriteTaskValidationResult,
 } from '../types'
 import {
   BALL_QUEUE_LENGTH,
@@ -26,6 +29,8 @@ import {
   BALL_SETTLE_HOLD_MS,
   BALL_SPAWN_INTERVAL_MS,
   DEFAULT_NEGATIVE_PENALTY,
+  DEFAULT_PORTAL_CHILD_COUNT,
+  PORTAL_BALL_CHILD_COUNT,
   createBallQueue,
   createBallOutcome,
   getBallTypeValue,
@@ -42,13 +47,15 @@ import {
 import {
   canOpenShop,
   canPurchaseShopNode,
+  getShopNodeCost,
+  getShopNodeStatus,
   getSupportUpgradeEffects,
   SHOP_NODES,
 } from './shop'
 
 const FEED_LIMIT = 8
-const SAVE_VERSION = 8
-export const SAVE_STORAGE_KEY = 'incremental-programming-game.save'
+const SAVE_VERSION = 9
+const SAVE_STORAGE_KEY = 'incremental-programming-game.save'
 
 type FeedEntryInput = {
   type: FeedEntryType
@@ -84,6 +91,7 @@ type PersistedGameState = {
     | 'checkpointIndex'
     | 'activeTaskId'
     | 'solvedTaskIds'
+    | 'skippedTaskIds'
     | 'moduleStates'
     | 'activeScenario'
     | 'supportUpgradeIds'
@@ -94,6 +102,13 @@ type PersistedGameState = {
     | 'autoRunUnlocked'
     | 'autoRunEnabled'
   >
+}
+
+type PersistedGameStateField = keyof PersistedGameState['state']
+
+type PersistedGameStateRecord = {
+  version: number
+  state: Partial<Record<PersistedGameStateField, unknown>>
 }
 
 function prependFeedEntries(
@@ -458,7 +473,8 @@ function getPortalChildCount(
   supportUpgradeIds: SupportUpgradeId[],
 ): number {
   const effects = getSupportUpgradeEffects(supportUpgradeIds)
-  const baseCount = ballType === 'portal' ? 4 : 2
+  const baseCount =
+    ballType === 'portal' ? PORTAL_BALL_CHILD_COUNT : DEFAULT_PORTAL_CHILD_COUNT
   return baseCount + effects.extraPortalChildren
 }
 
@@ -631,6 +647,7 @@ function spawnDueBalls(state: GameState, now: number): GameState {
         portalDepth: 0,
         maxPortalDepth: supportEffects.maxPortalDepth,
         extraCenterBinBonus: supportEffects.extraCenterBinBonus,
+        bucketValueMultiplier: supportEffects.bucketValueMultiplier,
         laneMultiplier: getLaneMultiplier(state, step.aim),
       },
     )
@@ -721,6 +738,7 @@ function createPortalChildBall(
       portalDepth: parentBall.portalDepth + 1,
       maxPortalDepth: supportEffects.maxPortalDepth,
       extraCenterBinBonus: supportEffects.extraCenterBinBonus,
+      bucketValueMultiplier: supportEffects.bucketValueMultiplier,
       laneMultiplier: parentBall.laneMultiplier,
     },
   )
@@ -755,62 +773,6 @@ function settleBall(
   ball: GameState['activeBalls'][number],
   now: number,
 ): GameState {
-  if (ball.source === 'ambient') {
-    if (ball.triggeredPortal) {
-      const portalNode = ball.path[ball.path.length - 1] ?? {
-        x: ball.cancelX ?? 0,
-        y: ball.cancelY ?? 0,
-      }
-      const childStart = now + 70
-      const childCount = getPortalChildCount(ball.ballType, state.supportUpgradeIds)
-      const childBalls = Array.from({ length: childCount }, (_, index) =>
-        createPortalChildBall(
-          state,
-          ball,
-          state.nextBallId + index,
-          childStart + index * 120,
-          index,
-        ),
-      )
-
-      return {
-        ...state,
-        resolvedDropCount: state.resolvedDropCount + 1,
-        lastPoints: 0,
-        streak: 0,
-        nextBallId: state.nextBallId + childCount,
-        activeBalls: state.activeBalls.flatMap((entry) =>
-          entry.id === ball.id
-            ? [markBallCanceled(entry, now, portalNode.x, portalNode.y), ...childBalls]
-            : [entry],
-        ),
-      }
-    }
-
-    const points = ball.points
-
-    return {
-      ...state,
-      score: Math.max(0, state.score + points),
-      resolvedDropCount: state.resolvedDropCount + 1,
-      lastPoints: points,
-      lastBucket: ball.bucketIndex + 1,
-      streak: points >= 8 ? state.streak + 1 : 0,
-      activeBalls: state.activeBalls.map((entry) =>
-        entry.id === ball.id
-          ? markBallSettled(
-              {
-                ...entry,
-                points,
-                scoreBreakdown: createScoreBreakdown(entry, points),
-              },
-              now,
-            )
-          : entry,
-      ),
-    }
-  }
-
   const runStats = state.currentRunStats ?? createRunStats(createFeatureUsage())
   const didEarnPositiveOutcome = ball.usedCenterBonus || ball.triggeredPortal
 
@@ -968,7 +930,9 @@ function launchAimsMatch(
   return expectedAims.every((aim, index) => aims[index] === aim)
 }
 
-function getBestBonusInputAim(bonusMap: number[] | undefined): AimLevel | null {
+const AIM_LEVELS = [1, 2, 3] as const satisfies readonly AimLevel[]
+
+function getBestBonusInputAim(bonusMap: BonusMap | undefined): AimLevel | null {
   if (
     bonusMap === undefined ||
     bonusMap.length !== 3 ||
@@ -985,7 +949,7 @@ function getBestBonusInputAim(bonusMap: number[] | undefined): AimLevel | null {
     }
   }
 
-  return (bestIndex + 1) as AimLevel
+  return AIM_LEVELS[bestIndex] ?? null
 }
 
 function launchesUseSingleAim(aims: number[], expectedAim: AimLevel | null): boolean {
@@ -1034,7 +998,7 @@ function matchesExecutionExpectation(
   runStats: RunStats,
   combinedSource: string,
   scenario: PracticeGoalScenario,
-  bonusMap?: number[],
+  bonusMap?: BonusMap,
 ): boolean {
   const requiredFeatures = expectation.requiredFeatures ?? []
   const requiredBestAim = expectation.allMainLaunchesUseBestBonusInput
@@ -1174,14 +1138,18 @@ function refreshMachineState(state: GameState): GameState {
 
 function getNextOnboardingTaskId(
   tasks: GameTask[],
-  solvedTaskIds: string[],
+  completedTaskIds: string[],
 ): string | null {
-  const solvedTaskSet = new Set(solvedTaskIds)
+  const completedTaskSet = new Set(completedTaskIds)
   const onboardingTasks = tasks
     .filter((task) => task.kind === 'onboarding')
     .sort((left, right) => left.taskOrder - right.taskOrder)
 
-  return onboardingTasks.find((task) => !solvedTaskSet.has(task.id))?.id ?? null
+  return onboardingTasks.find((task) => !completedTaskSet.has(task.id))?.id ?? null
+}
+
+function getCompletedTaskIds(state: Pick<GameState, 'solvedTaskIds' | 'skippedTaskIds'>): string[] {
+  return [...new Set([...state.solvedTaskIds, ...state.skippedTaskIds])]
 }
 
 function applyPracticeGoalState(
@@ -1364,7 +1332,8 @@ function completeRun(
   let shouldRefreshMachineState = true
 
   if (nextState.topicStage === 'onboarding') {
-    const nextTaskId = getNextOnboardingTaskId(tasks, nextState.solvedTaskIds)
+    const completedTaskIds = getCompletedTaskIds(nextState)
+    const nextTaskId = getNextOnboardingTaskId(tasks, completedTaskIds)
     nextState = refreshMachineState({
       ...nextState,
       currentRunFeatureUsage: null,
@@ -1374,13 +1343,13 @@ function completeRun(
     nextState = revalidatePrograms(nextState)
 
     if (nextTaskId !== null) {
-      const solvedOnboardingCount = nextState.solvedTaskIds.filter((taskId) =>
+      const completedOnboardingCount = completedTaskIds.filter((taskId) =>
         tasks.some((task) => task.id === taskId && task.kind === 'onboarding'),
       ).length
 
       return {
         ...nextState,
-        checkpointIndex: solvedOnboardingCount,
+        checkpointIndex: completedOnboardingCount,
         activeTaskId: nextTaskId,
       }
     }
@@ -1495,6 +1464,53 @@ function finalizeRun(
   return completeRun(state, tasks, topics)
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isPersistedGameStateRecord(
+  value: unknown,
+): value is PersistedGameStateRecord {
+  return (
+    isRecord(value) &&
+    typeof value.version === 'number' &&
+    Number.isFinite(value.version) &&
+    isRecord(value.state)
+  )
+}
+
+function parsePersistedGameState(raw: string): PersistedGameStateRecord | null {
+  const parsed = JSON.parse(raw) as unknown
+
+  return isPersistedGameStateRecord(parsed) ? parsed : null
+}
+
+function getFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function getNonnegativeInteger(value: unknown, fallback: number): number {
+  return Math.max(0, Math.floor(getFiniteNumber(value, fallback)))
+}
+
+function getBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function getString(value: unknown, fallback: string): string {
+  return typeof value === 'string' ? value : fallback
+}
+
+function getNullableString(value: unknown, fallback: string | null): string | null {
+  return typeof value === 'string' || value === null ? value : fallback
+}
+
+function getStringArray(value: unknown): string[] {
+  const entries: readonly unknown[] = Array.isArray(value) ? value : []
+
+  return entries.filter((entry): entry is string => typeof entry === 'string')
+}
+
 function isValidBallType(value: unknown): value is BallType {
   return (
     value === 'plain' ||
@@ -1502,6 +1518,12 @@ function isValidBallType(value: unknown): value is BallType {
     value === 'portal' ||
     value === 'negative'
   )
+}
+
+function getBallTypeArray(value: unknown): BallType[] {
+  const entries: readonly unknown[] = Array.isArray(value) ? value : []
+
+  return entries.filter(isValidBallType)
 }
 
 function isValidTopicStage(value: unknown): value is GameState['topicStage'] {
@@ -1513,6 +1535,113 @@ function isValidTopicStage(value: unknown): value is GameState['topicStage'] {
     value === 'new_unlock_spotlight' ||
     value === 'completed'
   )
+}
+
+function isKnownTopicId(
+  value: unknown,
+  validTopicIds: ReadonlySet<string>,
+): value is TaskTopicId {
+  return typeof value === 'string' && validTopicIds.has(value)
+}
+
+function isKnownSupportUpgradeId(
+  value: string,
+  validUpgradeIds: ReadonlySet<string>,
+): value is SupportUpgradeId {
+  return validUpgradeIds.has(value)
+}
+
+function isValidPortalSide(
+  value: unknown,
+): value is GameState['moduleStates']['board']['portalSide'] {
+  return value === 1 || value === 3
+}
+
+function isBonusMap(value: unknown): value is BonusMap {
+  return (
+    Array.isArray(value) &&
+    value.length === 3 &&
+    value.every((entry) => typeof entry === 'number' && Number.isFinite(entry))
+  )
+}
+
+const FEED_ENTRY_TYPES = [
+  'module_installed',
+  'checkpoint_ready',
+  'task_solved',
+  'topic_mastered',
+  'support_upgrade_bought',
+  'shop_opened',
+] as const satisfies readonly FeedEntryType[]
+
+function isValidFeedEntryType(value: unknown): value is FeedEntryType {
+  return FEED_ENTRY_TYPES.some((entryType) => entryType === value)
+}
+
+function isPersistedFeedEntry(
+  value: unknown,
+  validTaskIds: ReadonlySet<string>,
+  validTopicIds: ReadonlySet<string>,
+  validUpgradeIds: ReadonlySet<string>,
+): value is FeedEntry {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'number' ||
+    !Number.isFinite(value.id) ||
+    !isValidFeedEntryType(value.type)
+  ) {
+    return false
+  }
+
+  const { taskId, topicId, upgradeId } = value
+
+  return (
+    (taskId === undefined ||
+      (typeof taskId === 'string' && validTaskIds.has(taskId))) &&
+    (topicId === undefined || isKnownTopicId(topicId, validTopicIds)) &&
+    (upgradeId === undefined ||
+      (typeof upgradeId === 'string' &&
+        isKnownSupportUpgradeId(upgradeId, validUpgradeIds)))
+  )
+}
+
+function sanitizeFeedEntries(
+  value: unknown,
+  validTaskIds: ReadonlySet<string>,
+  validTopicIds: ReadonlySet<string>,
+  validUpgradeIds: ReadonlySet<string>,
+): FeedEntry[] {
+  const entries: readonly unknown[] = Array.isArray(value) ? value : []
+
+  return entries
+    .filter((entry): entry is FeedEntry =>
+      isPersistedFeedEntry(entry, validTaskIds, validTopicIds, validUpgradeIds),
+    )
+    .slice(0, FEED_LIMIT)
+}
+
+function getPersistedBoardState(moduleStates: unknown): Record<string, unknown> {
+  if (!isRecord(moduleStates) || !isRecord(moduleStates.board)) {
+    return {}
+  }
+
+  return moduleStates.board
+}
+
+function readStorageItem(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeStorageItem(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    // Saving is best-effort when browser storage is blocked or full.
+  }
 }
 
 function sanitizeScenario(
@@ -1551,13 +1680,8 @@ function sanitizeScenario(
       ? Math.floor(value.visiblePreviewCount)
       : undefined
   const bonusMap =
-    'bonusMap' in value &&
-    Array.isArray(value.bonusMap) &&
-    value.bonusMap.length === 3 &&
-    value.bonusMap.every(
-      (entry) => typeof entry === 'number' && Number.isFinite(entry),
-    )
-      ? value.bonusMap
+    'bonusMap' in value && isBonusMap(value.bonusMap)
+      ? copyBonusMap(value.bonusMap)
       : undefined
 
   if (
@@ -1578,13 +1702,11 @@ function sanitizeScenario(
   }
 }
 
-function sanitizeBonusMap(value: unknown, fallback: number[]): number[] {
+function sanitizeBonusMap(value: unknown, fallback: BonusMap): BonusMap {
   if (
-    Array.isArray(value) &&
-    value.length === 3 &&
-    value.every((entry) => typeof entry === 'number' && Number.isFinite(entry))
+    isBonusMap(value)
   ) {
-    return value
+    return copyBonusMap(value)
   }
 
   return fallback
@@ -1645,7 +1767,7 @@ function buildShiftedCycleQueue(
 const EDGE_COMPARE_BONUS_MAPS = [
   [1, 0.5, 5],
   [5, 0.5, 1],
-] as const
+] as const satisfies readonly BonusMap[]
 
 const FULL_ROTATING_BONUS_MAPS = [
   [0.5, 1, 5],
@@ -1654,15 +1776,19 @@ const FULL_ROTATING_BONUS_MAPS = [
   [1, 5, 0.5],
   [5, 0.5, 1],
   [5, 1, 0.5],
-] as const
+] as const satisfies readonly BonusMap[]
 
 function bonusMapsEqual(left: readonly number[], right: readonly number[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index])
 }
 
+function copyBonusMap(bonusMap: BonusMap): BonusMap {
+  return [bonusMap[0], bonusMap[1], bonusMap[2]]
+}
+
 function pickScenarioBonusMapSet(
   scenario: PracticeGoalScenario | null,
-): ReadonlyArray<readonly number[]> | null {
+): ReadonlyArray<BonusMap> | null {
   if (scenario?.bonusMapMode === 'rotate_edges') {
     return EDGE_COMPARE_BONUS_MAPS
   }
@@ -1676,10 +1802,10 @@ function pickScenarioBonusMapSet(
 
 function createScenarioBonusMap(
   scenario: PracticeGoalScenario | null,
-  currentBonusMap?: number[],
-): number[] {
+  currentBonusMap?: BonusMap,
+): BonusMap {
   if (scenario?.bonusMap !== undefined) {
-    return [...scenario.bonusMap]
+    return copyBonusMap(scenario.bonusMap)
   }
 
   const bonusMapSet = pickScenarioBonusMapSet(scenario)
@@ -1696,11 +1822,11 @@ function createScenarioBonusMap(
       bonusMapsEqual(candidate, currentBonusMap),
     )
     const nextIndex = (currentIndex + 1) % bonusMapSet.length
-    return [...(bonusMapSet[nextIndex] ?? bonusMapSet[0] ?? rollBonusMap())]
+    return copyBonusMap(bonusMapSet[nextIndex] ?? bonusMapSet[0] ?? rollBonusMap())
   }
 
   const randomIndex = Math.floor(Math.random() * bonusMapSet.length)
-  return [...(bonusMapSet[randomIndex] ?? bonusMapSet[0] ?? rollBonusMap())]
+  return copyBonusMap(bonusMapSet[randomIndex] ?? bonusMapSet[0] ?? rollBonusMap())
 }
 
 function replacePlainBallsInListsQueue(options: {
@@ -1776,17 +1902,22 @@ export function loadPersistedGameState(
     return initialState
   }
 
-  const raw = window.localStorage.getItem(SAVE_STORAGE_KEY)
+  const raw = readStorageItem(SAVE_STORAGE_KEY)
 
   if (raw === null) {
     return initialState
   }
 
   try {
-    const parsed = JSON.parse(raw) as PersistedGameState
+    const parsed = parsePersistedGameState(raw)
+
+    if (parsed === null) {
+      return initialState
+    }
 
     if (
       parsed.version !== SAVE_VERSION &&
+      parsed.version !== 8 &&
       parsed.version !== 7 &&
       parsed.version !== 6 &&
       parsed.version !== 5
@@ -1797,11 +1928,22 @@ export function loadPersistedGameState(
     const validTaskIds = new Set(tasks.map((task) => task.id))
     const validTopicIds = new Set<string>(topics.map((topic) => topic.id))
     const validUpgradeIds = new Set<string>(SHOP_NODES.map((node) => node.id))
+    const persistedState = parsed.state
     const isLegacySave = parsed.version < SAVE_VERSION
-    const persistedCurrentTopicId = parsed.state.currentTopicId as string | null
-    const persistedLearnedTopicIds = (parsed.state.learnedTopicIds ?? []) as string[]
-    const persistedMasteredTopicIds = (parsed.state.masteredTopicIds ?? []) as string[]
-    const persistedSupportUpgradeIds = (parsed.state.supportUpgradeIds ?? []) as string[]
+    const persistedCurrentTopicId =
+      typeof persistedState.currentTopicId === 'string' ||
+      persistedState.currentTopicId === null
+        ? persistedState.currentTopicId
+        : null
+    const persistedLearnedTopicIds = getStringArray(
+      persistedState.learnedTopicIds,
+    )
+    const persistedMasteredTopicIds = getStringArray(
+      persistedState.masteredTopicIds,
+    )
+    const persistedSupportUpgradeIds = getStringArray(
+      persistedState.supportUpgradeIds,
+    )
     const hadLegacyListsProgress =
       isLegacySave &&
       (
@@ -1812,18 +1954,20 @@ export function loadPersistedGameState(
       )
     const hadLegacyLoopsCompletion =
       isLegacySave &&
-      parsed.state.topicStage === 'completed' &&
+      persistedState.topicStage === 'completed' &&
       (persistedLearnedTopicIds.includes('loops') ||
         persistedMasteredTopicIds.includes('loops') ||
         persistedCurrentTopicId === 'loops')
     const shouldUnlockListsFromMigration =
       validTopicIds.has('lists') &&
       (hadLegacyListsProgress || hadLegacyLoopsCompletion)
-    const learnedTopicIdsBase = persistedLearnedTopicIds.filter((topicId): topicId is TaskTopicId =>
-      validTopicIds.has(topicId),
+    const learnedTopicIdsBase = persistedLearnedTopicIds.filter(
+      (topicId): topicId is TaskTopicId =>
+        isKnownTopicId(topicId, validTopicIds),
     )
-    const masteredTopicIdsBase = persistedMasteredTopicIds.filter((topicId): topicId is TaskTopicId =>
-      validTopicIds.has(topicId),
+    const masteredTopicIdsBase = persistedMasteredTopicIds.filter(
+      (topicId): topicId is TaskTopicId =>
+        isKnownTopicId(topicId, validTopicIds),
     )
     const needsLoopsMastered = hadLegacyListsProgress || hadLegacyLoopsCompletion
     const learnedTopicIds: TaskTopicId[] =
@@ -1834,20 +1978,22 @@ export function loadPersistedGameState(
       needsLoopsMastered && !masteredTopicIdsBase.includes('loops')
         ? [...masteredTopicIdsBase, 'loops']
         : masteredTopicIdsBase
-    const supportUpgradeIds = (parsed.state.supportUpgradeIds ?? []).filter((upgradeId) =>
-      validUpgradeIds.has(upgradeId),
+    const supportUpgradeIds = persistedSupportUpgradeIds.filter(
+      (upgradeId): upgradeId is SupportUpgradeId =>
+        isKnownSupportUpgradeId(upgradeId, validUpgradeIds),
     )
     const parsedCurrentTopicId = persistedCurrentTopicId
-    const currentTopicId =
-      typeof parsedCurrentTopicId === 'string' &&
-      validTopicIds.has(parsedCurrentTopicId as TaskTopicId)
-        ? (parsedCurrentTopicId as TaskTopicId)
-        : null
+    const currentTopicId = isKnownTopicId(parsedCurrentTopicId, validTopicIds)
+      ? parsedCurrentTopicId
+      : null
     const currentTopic = getTopicById(topics, currentTopicId)
     const topicMeterGoal = currentTopic?.practiceGoals.length ?? 0
-    const topicMeter = Math.min(parsed.state.topicMeter ?? 0, topicMeterGoal)
-    const topicStage = isValidTopicStage(parsed.state.topicStage)
-      ? parsed.state.topicStage
+    const topicMeter = Math.min(
+      getNonnegativeInteger(persistedState.topicMeter, 0),
+      topicMeterGoal,
+    )
+    const topicStage = isValidTopicStage(persistedState.topicStage)
+      ? persistedState.topicStage
       : currentTopicId === null
         ? 'onboarding'
         : 'topic_active'
@@ -1858,16 +2004,14 @@ export function loadPersistedGameState(
         ? currentTopic.practiceGoals[topicMeter]?.scenario ?? null
         : null
     const activeScenario =
-      derivedScenario ?? sanitizeScenario(parsed.state.activeScenario, derivedScenario)
+      derivedScenario ?? sanitizeScenario(persistedState.activeScenario, derivedScenario)
     const fallbackQueue = createScenarioQueue({
       activeScenario,
       learnedTopicIds,
       currentTopicId,
       topicStage,
     })
-    const persistedBallQueue = Array.isArray(parsed.state.ballQueue)
-      ? parsed.state.ballQueue.filter(isValidBallType)
-      : fallbackQueue
+    const persistedBallQueue = getBallTypeArray(persistedState.ballQueue)
     const ballQueue =
       persistedBallQueue.length > 0 ? persistedBallQueue : fallbackQueue
     const filteredBallQueue =
@@ -1881,46 +2025,62 @@ export function loadPersistedGameState(
             fallbackQueue,
           })
     const ballQueueCursor = Math.min(
-      Math.max(0, parsed.state.ballQueueCursor ?? 0),
+      getNonnegativeInteger(persistedState.ballQueueCursor, 0),
       Math.max(0, filteredBallQueue.length - 1),
     )
-    const feedEntries = (parsed.state.feedEntries ?? [])
-      .filter(
-        (entry): entry is FeedEntry =>
-          typeof entry?.id === 'number' &&
-          typeof entry?.type === 'string',
-      )
-      .slice(0, FEED_LIMIT)
+    const feedEntries = sanitizeFeedEntries(
+      persistedState.feedEntries,
+      validTaskIds,
+      validTopicIds,
+      validUpgradeIds,
+    )
     const nextFeedEntryId = Math.max(
-      parsed.state.nextFeedEntryId ?? 1,
+      getNonnegativeInteger(persistedState.nextFeedEntryId, 1),
       (feedEntries[0]?.id ?? 0) + 1,
     )
+    const persistedBoardState = getPersistedBoardState(
+      persistedState.moduleStates,
+    )
     const modulePortalSide =
-      parsed.state.moduleStates?.board?.portalSide === 1 ||
-      parsed.state.moduleStates?.board?.portalSide === 3
-        ? parsed.state.moduleStates.board.portalSide
+      isValidPortalSide(persistedBoardState.portalSide)
+        ? persistedBoardState.portalSide
         : activeScenario?.portalSide ?? initialState.moduleStates.board.portalSide
     const moduleBonusMap = sanitizeBonusMap(
-      parsed.state.moduleStates?.board?.bonusMap,
+      persistedBoardState.bonusMap,
       activeScenario?.bonusMap ?? initialState.moduleStates.board.bonusMap,
+    )
+    const persistedHelperProgramSource = getString(
+      persistedState.helperProgramSource,
+      '',
     )
     const helperProgramSource =
       learnedTopicIds.includes('functions') &&
-      (parsed.state.helperProgramSource ?? '').trim() === ''
+      persistedHelperProgramSource.trim() === ''
         ? INITIAL_HELPER_SOURCE
-        : parsed.state.helperProgramSource ?? ''
+        : persistedHelperProgramSource
+    const autoRunUnlocked = getBoolean(persistedState.autoRunUnlocked, false)
+    const persistedActiveTaskId = getString(persistedState.activeTaskId, '')
     const loadedState = revalidatePrograms({
       ...initialState,
-      score: parsed.state.score ?? initialState.score,
+      score: getFiniteNumber(persistedState.score, initialState.score),
       resolvedDropCount:
-        parsed.state.resolvedDropCount ?? initialState.resolvedDropCount,
-      soundEnabled: parsed.state.soundEnabled ?? initialState.soundEnabled,
-      programSource: parsed.state.programSource ?? initialState.programSource,
+        getNonnegativeInteger(
+          persistedState.resolvedDropCount,
+          initialState.resolvedDropCount,
+        ),
+      soundEnabled: getBoolean(
+        persistedState.soundEnabled,
+        initialState.soundEnabled,
+      ),
+      programSource: getString(
+        persistedState.programSource,
+        initialState.programSource,
+      ),
       helperProgramSource,
-      lastPoints: parsed.state.lastPoints ?? initialState.lastPoints,
-      lastBucket: parsed.state.lastBucket ?? initialState.lastBucket,
-      lastRunSummary: sanitizeRunSummary(parsed.state.lastRunSummary),
-      streak: parsed.state.streak ?? initialState.streak,
+      lastPoints: getFiniteNumber(persistedState.lastPoints, initialState.lastPoints),
+      lastBucket: getFiniteNumber(persistedState.lastBucket, initialState.lastBucket),
+      lastRunSummary: sanitizeRunSummary(persistedState.lastRunSummary),
+      streak: getNonnegativeInteger(persistedState.streak, initialState.streak),
       ballQueue: filteredBallQueue,
       ballQueueCursor,
       currentTopicId,
@@ -1930,20 +2090,31 @@ export function loadPersistedGameState(
       topicMeter,
       topicMeterGoal,
       goalBaselineProgramSource:
-        parsed.state.goalBaselineProgramSource ??
+        getNullableString(
+          persistedState.goalBaselineProgramSource,
+          initialState.goalBaselineProgramSource,
+        ) ??
         initialState.goalBaselineProgramSource,
       goalBaselineHelperSource:
-        parsed.state.goalBaselineHelperSource ??
+        getNullableString(
+          persistedState.goalBaselineHelperSource,
+          initialState.goalBaselineHelperSource,
+        ) ??
         initialState.goalBaselineHelperSource,
-      activeCheckpointTaskIds: (parsed.state.activeCheckpointTaskIds ?? []).filter((taskId) =>
+      activeCheckpointTaskIds: getStringArray(
+        persistedState.activeCheckpointTaskIds,
+      ).filter((taskId) =>
         validTaskIds.has(taskId),
       ),
-      checkpointIndex: Math.max(0, parsed.state.checkpointIndex ?? 0),
+      checkpointIndex: getNonnegativeInteger(persistedState.checkpointIndex, 0),
       activeTaskId:
-        validTaskIds.has(parsed.state.activeTaskId ?? '')
-          ? parsed.state.activeTaskId
+        validTaskIds.has(persistedActiveTaskId)
+          ? persistedActiveTaskId
           : null,
-      solvedTaskIds: (parsed.state.solvedTaskIds ?? []).filter((taskId) =>
+      solvedTaskIds: getStringArray(persistedState.solvedTaskIds).filter((taskId) =>
+        validTaskIds.has(taskId),
+      ),
+      skippedTaskIds: getStringArray(persistedState.skippedTaskIds).filter((taskId) =>
         validTaskIds.has(taskId),
       ),
       moduleStates: {
@@ -1957,12 +2128,12 @@ export function loadPersistedGameState(
       unlocks: buildUnlockState(learnedTopicIds, supportUpgradeIds),
       feedEntries,
       nextFeedEntryId,
-      hasOpenedShop: parsed.state.hasOpenedShop ?? false,
-      introDismissed: parsed.state.introDismissed ?? false,
-      autoRunUnlocked: parsed.state.autoRunUnlocked ?? false,
+      hasOpenedShop: getBoolean(persistedState.hasOpenedShop, false),
+      introDismissed: getBoolean(persistedState.introDismissed, false),
+      autoRunUnlocked,
       autoRunEnabled:
-        (parsed.state.autoRunUnlocked ?? false) &&
-        (parsed.state.autoRunEnabled ?? false),
+        autoRunUnlocked &&
+        getBoolean(persistedState.autoRunEnabled, false),
       goalChangeNoticeTarget: null,
     })
 
@@ -2062,6 +2233,7 @@ export function savePersistedGameState(state: GameState): void {
       checkpointIndex: state.checkpointIndex,
       activeTaskId: state.activeTaskId,
       solvedTaskIds: state.solvedTaskIds,
+      skippedTaskIds: state.skippedTaskIds,
       moduleStates: state.moduleStates,
       activeScenario: state.activeScenario,
       supportUpgradeIds: state.supportUpgradeIds,
@@ -2074,10 +2246,10 @@ export function savePersistedGameState(state: GameState): void {
     },
   }
 
-  window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(payload))
+  writeStorageItem(SAVE_STORAGE_KEY, JSON.stringify(payload))
 }
 
-export function createInitialGameState(): GameState {
+function createInitialGameState(): GameState {
   const initialState: GameState = {
     currentView: 'play',
     score: 0,
@@ -2127,6 +2299,7 @@ export function createInitialGameState(): GameState {
     checkpointIndex: 0,
     activeTaskId: null,
     solvedTaskIds: [],
+    skippedTaskIds: [],
     moduleStates: createInitialModuleState(),
     activeScenario: null,
     supportUpgradeIds: [],
@@ -2235,22 +2408,6 @@ function createTaskRunStats(parsed: ReturnType<typeof parseProgram>): RunStats {
   return runStats
 }
 
-type WriteTaskValidationCase = NonNullable<
-  NonNullable<GameTask['writeValidation']>['cases']
->[number]
-
-type WriteTaskFeedback = {
-  key: WriteTaskFeedbackKey
-  values?: Record<string, string>
-}
-
-type WriteTaskValidationResult = {
-  passed: boolean
-  validation: ProgramValidation | null
-  feedback?: WriteTaskFeedback
-  failedCaseTitle?: string
-}
-
 function createWriteTaskFeedback(
   key: WriteTaskFeedbackKey,
   values?: Record<string, string>,
@@ -2283,7 +2440,7 @@ function getWrongLaunchCountFeedback(
 
 function getWriteTaskFeedback(
   task: GameTask,
-  validationCase: WriteTaskValidationCase,
+  validationCase: TaskWriteCase,
   runStats: RunStats,
   programSource: string,
   helperProgramSource: string,
@@ -2293,7 +2450,7 @@ function getWriteTaskFeedback(
 
   switch (task.id) {
     case 'variables-write': {
-      if (!sourceMentions(combinedSource, 'portal_side') || !runStats.featureUsage.usedVariables) {
+      if (!sourceMentions(combinedSource, 'portal_side')) {
         return createWriteTaskFeedback('taskFeedbackNeedVariableStore')
       }
 
@@ -2637,29 +2794,6 @@ export function validateWriteTaskAnswer(
   }
 }
 
-export function resetToSuggestedGoalCode(
-  state: GameState,
-  goal: PracticeGoalDefinition,
-): GameState {
-  if (state.isRunning) {
-    return state
-  }
-
-  const helperProgramSource =
-    goal.starterHelperSource !== undefined
-      ? (goal.starterHelperSource ?? '')
-      : state.helperProgramSource
-
-  return revalidatePrograms({
-    ...state,
-    programSource: goal.suggestedSnippet,
-    helperProgramSource,
-    goalBaselineProgramSource: normalizeSourceForGoalComparison(goal.suggestedSnippet),
-    goalBaselineHelperSource: normalizeSourceForGoalComparison(helperProgramSource),
-    goalChangeNoticeTarget: null,
-  })
-}
-
 export function resetProgress(state: GameState): GameState {
   const initialState = createInitialGameState()
 
@@ -2945,42 +3079,54 @@ export function applyTaskResult(
   state: GameState,
   task: GameTask,
   wasCorrect: boolean,
+  wasSkipped: boolean,
   tasks: GameTask[],
   topics: TopicDefinition[],
 ): GameState {
-  if (!wasCorrect) {
+  if (!wasCorrect && !wasSkipped) {
     return state
   }
+
+  const solvedTaskIds =
+    wasCorrect && !state.solvedTaskIds.includes(task.id)
+      ? [...state.solvedTaskIds, task.id]
+      : state.solvedTaskIds
+  const skippedTaskIds =
+    wasSkipped && !state.skippedTaskIds.includes(task.id)
+      ? [...state.skippedTaskIds, task.id]
+      : state.skippedTaskIds
 
   const nextState = prependFeedEntries(
     {
       ...state,
-      solvedTaskIds: state.solvedTaskIds.includes(task.id)
-        ? state.solvedTaskIds
-        : [...state.solvedTaskIds, task.id],
+      solvedTaskIds,
+      skippedTaskIds,
     },
-    [
-      {
-        type: 'task_solved',
-        taskId: task.id,
-        topicId: task.topicId === 'onboarding' ? undefined : task.topicId,
-      },
-    ],
+    wasCorrect
+      ? [
+          {
+            type: 'task_solved',
+            taskId: task.id,
+            topicId: task.topicId === 'onboarding' ? undefined : task.topicId,
+          },
+        ]
+      : [],
   )
 
   if (task.kind === 'onboarding') {
+    const completedTaskIds = getCompletedTaskIds(nextState)
     const nextOnboardingTaskId = getNextOnboardingTaskId(
       tasks,
-      nextState.solvedTaskIds,
+      completedTaskIds,
     )
-    const solvedOnboardingCount = nextState.solvedTaskIds.filter((taskId) =>
+    const completedOnboardingCount = completedTaskIds.filter((taskId) =>
       tasks.some((entry) => entry.id === taskId && entry.kind === 'onboarding'),
     ).length
 
     if (nextOnboardingTaskId !== null) {
       return {
         ...nextState,
-        checkpointIndex: solvedOnboardingCount,
+        checkpointIndex: completedOnboardingCount,
         activeTaskId: nextOnboardingTaskId,
       }
     }
@@ -3061,16 +3207,17 @@ export function purchaseShopNode(
   if (
     node === undefined ||
     !canPurchaseShopNode(state, nodeId) ||
-    state.supportUpgradeIds.includes(node.id) ||
-    state.score < node.cost
+    getShopNodeStatus(state, node) !== 'available'
   ) {
     return state
   }
 
+  const cost = getShopNodeCost(state, node)
+
   return prependFeedEntries(
     revalidatePrograms({
       ...state,
-      score: state.score - node.cost,
+      score: state.score - cost,
       supportUpgradeIds: [...state.supportUpgradeIds, node.id],
       unlocks: buildUnlockState(
         state.learnedTopicIds,
@@ -3084,71 +3231,4 @@ export function purchaseShopNode(
       },
     ],
   )
-}
-
-export function spawnAmbientPlainBall(state: GameState): GameState {
-  const supportEffects = getSupportUpgradeEffects(state.supportUpgradeIds)
-
-  if (
-    supportEffects.ambientDropIntervalMs === null ||
-    state.currentView !== 'play' ||
-    state.topicStage !== 'completed' ||
-    state.activeTaskId !== null ||
-    state.isRunning ||
-    state.activeBalls.length > 0 ||
-    !state.introDismissed
-  ) {
-    return state
-  }
-
-  const now = Date.now()
-  const portalEnabled = isBluePortalActive(state)
-  const ambientBallType: BallType =
-    state.currentTopicId === 'lists' || state.learnedTopicIds.includes('lists')
-      ? 'center'
-      : 'plain'
-  const outcome = createBallOutcome(
-    2,
-    state.moduleStates.board.portalSide,
-    ambientBallType,
-    {
-      launchIndex: 0,
-      portalEnabled,
-      portalDepth: 0,
-      maxPortalDepth: supportEffects.maxPortalDepth,
-      extraCenterBinBonus: supportEffects.extraCenterBinBonus,
-      laneMultiplier: getLaneMultiplier(state, 2),
-    },
-  )
-
-  return {
-    ...state,
-    activeBalls: [
-      ...state.activeBalls,
-      {
-        id: state.nextBallId,
-        lineNumber: 0,
-        aim: 2,
-        source: 'ambient',
-        ballType: ambientBallType,
-        laneMultiplier: outcome.laneMultiplier,
-        spawnKind: 'direct',
-        portalDepth: 0,
-        bucketIndex: outcome.bucketIndex,
-        basePoints: outcome.basePoints,
-        usedCenterBonus: outcome.usedCenterBonus,
-        centerBonusValue: outcome.centerBonusValue,
-        usedNegativePenalty: outcome.usedNegativePenalty,
-        triggeredPortal: outcome.triggeredPortal,
-        points: outcome.points,
-        scoreBreakdown: [],
-        path: outcome.path,
-        spawnedAt: now,
-        settleAt: now + BALL_FALL_DURATION_MS,
-        removeAt: now + BALL_FALL_DURATION_MS + BALL_SETTLE_HOLD_MS,
-        state: 'falling',
-      },
-    ],
-    nextBallId: state.nextBallId + 1,
-  }
 }

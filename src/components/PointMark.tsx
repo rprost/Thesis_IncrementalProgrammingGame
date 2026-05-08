@@ -2,7 +2,7 @@ type PointMarkProps = {
   className?: string
 }
 
-export function PointMark({ className = '' }: PointMarkProps) {
+function PointMark({ className = '' }: PointMarkProps) {
   const classes = className.trim().length > 0 ? `point-mark ${className}` : 'point-mark'
 
   return <span aria-hidden="true" className={classes} />

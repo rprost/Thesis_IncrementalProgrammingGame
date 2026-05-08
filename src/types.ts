@@ -7,7 +7,7 @@ export type TaskTopicId =
   | 'loops'
   | 'lists'
 
-export type TopicStage =
+type TopicStage =
   | 'onboarding'
   | 'topic_active'
   | 'checkpoint_ready'
@@ -32,12 +32,13 @@ export type LockedConstruct =
 export type SupportUpgradeId =
   | 'extra_line'
   | 'extra_portal_split'
+  | 'bucket_value_doubler'
   | 'queue_peek'
   | 'center_bin_bonus'
   | 'helper_line_capacity'
   | 'portal_chain_once'
 
-export type SupportUpgradeKind =
+type SupportUpgradeKind =
   | 'capacity'
   | 'visibility'
   | 'scoring'
@@ -48,13 +49,16 @@ export type SupportUpgradeDefinition = {
   kind: SupportUpgradeKind
   cost: number
   requiredTopicId: TaskTopicId
+  repeatable?: boolean
+  maxPurchaseCount?: number
+  costScale?: number
   mainLineCapacityBonus?: number
   helperLineCapacityBonus?: number
   previewCountBonus?: number
   extraPortalChildren?: number
+  bucketValueMultiplier?: number
   extraCenterBinBonus?: number
   maxPortalDepth?: number
-  ambientDropIntervalMs?: number
 }
 
 export type SupportUpgradeCopy = {
@@ -70,17 +74,18 @@ export type SupportUpgradeEffects = {
   helperLineCapacityBonus: number
   previewCount: number
   extraPortalChildren: number
+  bucketValueMultiplier: number
   extraCenterBinBonus: number
   maxPortalDepth: number
-  ambientDropIntervalMs: number | null
 }
 
 export type AimLevel = 1 | 2 | 3
+export type BonusMap = [number, number, number]
 
 export type PortalSide = 1 | 3
 
-export type ActiveBallSource = 'main' | 'helper' | 'ambient'
-export type BallSpawnKind = 'direct' | 'portal'
+export type ActiveBallSource = 'main' | 'helper'
+type BallSpawnKind = 'direct' | 'portal'
 export type BallType = 'plain' | 'center' | 'portal' | 'negative'
 
 export type BoardPathNode = {
@@ -90,7 +95,7 @@ export type BoardPathNode = {
   renderYOffset?: number
 }
 
-export type ScoreBreakdownKind =
+type ScoreBreakdownKind =
   | 'bucket'
   | 'center_bonus'
   | 'negative_penalty'
@@ -139,15 +144,15 @@ export type ProgramFeatureUsage = {
   usedLists: boolean
 }
 
-export type PreviewResponseKind = 'skip' | 'main_launch' | 'helper_launch'
+type PreviewResponseKind = 'skip' | 'main_launch' | 'helper_launch'
 
-export type PreviewResponse = {
+type PreviewResponse = {
   type: PreviewResponseKind
   ballType: BallType
   aim: AimLevel | null
 }
 
-export type PreviewResponseExpectation = {
+type PreviewResponseExpectation = {
   type: PreviewResponseKind
   aim?: AimLevel | 'portal_side'
 }
@@ -192,7 +197,19 @@ export type WriteTaskFeedbackKey =
   | 'taskFeedbackNeedList'
   | 'taskFeedbackWrongLaunchCount'
 
-export type ActiveBallState = 'falling' | 'settled' | 'canceled'
+export type WriteTaskFeedback = {
+  key: WriteTaskFeedbackKey
+  values?: Record<string, string>
+}
+
+export type WriteTaskValidationResult = {
+  passed: boolean
+  validation: ProgramValidation | null
+  feedback?: WriteTaskFeedback
+  failedCaseTitle?: string
+}
+
+type ActiveBallState = 'falling' | 'settled' | 'canceled'
 
 export type ActiveBall = {
   id: number
@@ -223,6 +240,7 @@ export type ActiveBall = {
 export type ProgramValidationIssueCode =
   | 'empty_program'
   | 'invalid_command'
+  | 'invalid_drop_ball_args'
   | 'line_capacity_exceeded'
   | 'locked_construct'
   | 'unsupported_for_loop'
@@ -289,7 +307,7 @@ export type FeedEntry = {
   upgradeId?: SupportUpgradeId
 }
 
-export type TaskKind = 'onboarding' | 'mastery'
+type TaskKind = 'onboarding' | 'mastery'
 
 export type TaskArchetype = 'trace' | 'choose' | 'repair' | 'write'
 
@@ -303,7 +321,7 @@ export type TaskWriteCase = {
   hiddenFromPrompt?: boolean
 }
 
-export type TaskWriteValidation = {
+type TaskWriteValidation = {
   target: 'main' | 'helper'
   starterSource: string
   lineLimit?: number
@@ -348,7 +366,7 @@ export type PracticeGoalScenario = {
   queueMode?: 'pinned' | 'random' | 'cycle'
   bonusMapMode?: 'rotate_edges' | 'rotate_all'
   visiblePreviewCount?: number
-  bonusMap?: number[]
+  bonusMap?: BonusMap
   launchPlan?: number[]
   planFocusIndex?: number | null
 }
@@ -373,6 +391,18 @@ export type UnlockPrimerCard = {
   title: string
   body: string
   syntax: string
+}
+
+export type HelpEntry = {
+  id: string
+  title: string
+  body: string
+  primerCards?: UnlockPrimerCard[]
+}
+
+export type GoalAnswerSection = {
+  label: string
+  code: string
 }
 
 export type TopicDefinition = {
@@ -415,6 +445,9 @@ export type UiText = {
   feedbackButtonLabel: string
   settingsTitle: string
   settingsLanguageLabel: string
+  settingsThemeLabel: string
+  settingsThemeLight: string
+  settingsThemeDark: string
   settingsSoundLabel: string
   settingsSoundDescription: string
   settingsSoundOn: string
@@ -468,6 +501,7 @@ export type UiText = {
   programErrorEmpty: string
   programErrorTooManyLines: string
   programErrorInvalidLine: string
+  programErrorDropBallArgs: string
   programErrorLockedConstruct: string
   programErrorUnsupportedForLoop: string
   programErrorForRangeLimit: string
@@ -583,6 +617,7 @@ export type UiText = {
   currentGoalCheckpointAction: string
   currentGoalCheckpointActiveAction: string
   currentGoalSpotlightAction: string
+  goalShowAnswerButton: string
   boardTitle: string
   boardSubtitle: string
   boardLaunchPlanLabel: string
@@ -648,7 +683,6 @@ export type UiText = {
   boardLegendTitle: string
   boardLegendLaneHelp: string
   boardLegendBonusHelp: string
-  challengeLabel: string
   challengeProgressValue: string
   taskReadLabel: string
   taskTraceLabel: string
@@ -673,6 +707,7 @@ export type UiText = {
   taskValidationNeedsRun: string
   taskValidationExpectedBehavior: string
   taskValidationCaseFailure: string
+  taskRevealAnswerButton: string
   taskFeedbackWrongChute: string
   taskFeedbackNeedChooseChute: string
   taskFeedbackNeedDropBall: string
@@ -750,7 +785,7 @@ export type UiText = {
   shopMultiplierValue: string
 }
 
-export type UnlockState = {
+type UnlockState = {
   editorEditable: boolean
   lineCapacity: number
   helperLineCapacity: number
@@ -758,12 +793,12 @@ export type UnlockState = {
   unlockedConstructs: LockedConstruct[]
 }
 
-export type BoardModuleState = {
+type BoardModuleState = {
   portalSide: PortalSide
-  bonusMap: number[]
+  bonusMap: BonusMap
 }
 
-export type MachineModuleState = {
+type MachineModuleState = {
   board: BoardModuleState
 }
 
@@ -831,6 +866,7 @@ export type GameState = {
   checkpointIndex: number
   activeTaskId: string | null
   solvedTaskIds: string[]
+  skippedTaskIds: string[]
   moduleStates: MachineModuleState
   activeScenario: PracticeGoalScenario | null
   supportUpgradeIds: SupportUpgradeId[]

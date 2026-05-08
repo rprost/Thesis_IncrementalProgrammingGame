@@ -1,5 +1,11 @@
 import { PointCostText } from './PointMark'
-import { canPurchaseShopNode, getShopNodeStatus, SHOP_NODES } from '../game/shop'
+import {
+  canPurchaseShopNode,
+  getShopNodeCost,
+  getShopNodeStatus,
+  getShopPurchaseCount,
+  SHOP_NODES,
+} from '../game/shop'
 import type {
   GameState,
   SupportUpgradeCopy,
@@ -37,7 +43,6 @@ export function ShopTree({
     <section className="shop-shell" aria-label={ui.shopTitle}>
       <div className="shop-header">
         <div>
-          <p className="panel-kicker">{ui.shopTitle}</p>
           <h2 className="shop-heading">{ui.shopSubtitle}</h2>
         </div>
       </div>
@@ -47,7 +52,11 @@ export function ShopTree({
           const copy = getNodeCopy(shopNodes, node.id)
           const status = getShopNodeStatus(gameState, node)
           const canPurchase = canPurchaseShopNode(gameState, node.id)
-          const isPurchased = gameState.supportUpgradeIds.includes(node.id)
+          const purchaseCount = getShopPurchaseCount(gameState.supportUpgradeIds, node.id)
+          const maxPurchaseCount = node.maxPurchaseCount ?? 1
+          const isRepeatable = node.repeatable === true
+          const isPurchased = status === 'completed'
+          const cost = getShopNodeCost(gameState, node)
 
           return (
             <article className={`skill-node ${status}`} key={node.id}>
@@ -61,6 +70,11 @@ export function ShopTree({
 
               <h3>{copy?.title ?? node.id}</h3>
               <p>{copy?.description ?? ''}</p>
+              {isRepeatable ? (
+                <p className="skill-node-progress">
+                  {purchaseCount}/{maxPurchaseCount}
+                </p>
+              ) : null}
 
               {status === 'available' ? (
                 <div className="skill-node-footer">
@@ -73,7 +87,7 @@ export function ShopTree({
                     {isPurchased ? (
                       ui.shopBoughtButton
                     ) : (
-                      <PointCostText amount={node.cost} template={ui.shopBuyButton} />
+                      <PointCostText amount={cost} template={ui.shopBuyButton} />
                     )}
                   </button>
                 </div>

@@ -20,9 +20,9 @@ export const INITIAL_HELPER_SOURCE = [
 ].join('\n')
 export const MAX_FOR_RANGE = 8
 export const MAX_STEPS_PER_RUN = 20
-export const MAX_HELPER_FUNCTIONS = 1
+const MAX_HELPER_FUNCTIONS = 1
 export const BASE_HELPER_LINE_LIMIT = 6
-export const MAX_LIST_LITERAL_ITEMS = 8
+const MAX_LIST_LITERAL_ITEMS = 8
 
 type ParsedLine = {
   raw: string
@@ -114,8 +114,14 @@ class ProgramEvaluationError extends Error {
   }
 }
 
+function assertUnreachable(value: never): never {
+  throw new Error(`Unhandled program state: ${JSON.stringify(value)}`)
+}
+
 function expressionUsesLists(node: ExprNode): boolean {
   switch (node.type) {
+    case 'number':
+      return false
     case 'identifier':
       return node.name === 'bonus_map'
     case 'list':
@@ -126,9 +132,9 @@ function expressionUsesLists(node: ExprNode): boolean {
       return expressionUsesLists(node.left) || expressionUsesLists(node.right)
     case 'unary':
       return expressionUsesLists(node.value)
-    default:
-      return false
   }
+
+  return assertUnreachable(node)
 }
 
 function conditionUsesLists(node: ConditionNode): boolean {
@@ -173,9 +179,10 @@ function getBallTypeValue(ballType: BallType): number {
     case 'plain':
       return 0
     case 'center':
-    default:
       return 1
   }
+
+  return assertUnreachable(ballType)
 }
 
 function peekBallType(planning: PlanningContext): BallType {
@@ -574,21 +581,22 @@ function evaluateExpression(
     case 'binary': {
       const left = evaluateNumericExpression(node.left, environment)
       const right = evaluateNumericExpression(node.right, environment)
+      const operator = node.operator
 
-      switch (node.operator) {
+      switch (operator) {
         case '+':
           return left + right
         case '-':
           return left - right
         case '*':
           return left * right
-        default:
-          return left
       }
+
+      return assertUnreachable(operator)
     }
-    default:
-      return 0
   }
+
+  return assertUnreachable(node)
 }
 
 function evaluateNumericExpression(
@@ -624,9 +632,9 @@ function evaluateCondition(
       return left > right
     case '>=':
       return left >= right
-    default:
-      return false
   }
+
+  return assertUnreachable(node.operator)
 }
 
 function detectLockedConstruct(line: string): LockedConstruct | null {
@@ -1173,9 +1181,14 @@ function parseStatements(
       const args = callMatch[2]?.trim() ?? ''
 
       if (name === 'drop_ball') {
-        if (args !== '' || !context.allowedCommands.includes('drop_ball')) {
+        if (!context.allowedCommands.includes('drop_ball')) {
           issues.push({
             code: 'invalid_command',
+            lineNumber: line.lineNumber,
+          })
+        } else if (args !== '') {
+          issues.push({
+            code: 'invalid_drop_ball_args',
             lineNumber: line.lineNumber,
           })
         } else {
@@ -1472,7 +1485,11 @@ function statementsContainHelperCall(statements: StatementNode[]): boolean {
       case 'for_range':
       case 'for_list':
         return statementsContainHelperCall(statement.body)
-      default:
+      case 'drop_ball':
+      case 'skip_ball':
+      case 'continue':
+      case 'choose_input':
+      case 'assign':
         return false
     }
   })
@@ -1707,27 +1724,19 @@ function executeStatements(
           }
           break
         }
-        default:
-          break
       }
     } catch (error) {
+      if (!(error instanceof ProgramEvaluationError)) {
+        throw error
+      }
+
       const issueSource = callStack.length > 0 ? 'helper' : 'main'
 
       issues.push({
-        code:
-          error instanceof ProgramEvaluationError
-            ? error.issueCode
-            : statement.type === 'if'
-              ? 'invalid_condition'
-              : statement.type === 'choose_input' ||
-                  statement.type === 'assign' ||
-                  statement.type === 'for_list'
-                ? 'invalid_expression'
-                : 'invalid_command',
+        code: error.issueCode,
         lineNumber: statement.lineNumber,
         source: issueSource,
         identifierName:
-          error instanceof ProgramEvaluationError &&
           error.issueCode === 'unknown_identifier'
             ? error.message
             : undefined,

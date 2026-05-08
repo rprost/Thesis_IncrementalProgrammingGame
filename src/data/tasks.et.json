@@ -9,8 +9,8 @@
         "title": "Stardijooks",
         "question": "Mida teeb näidisprogrammis rida 'drop_ball()'?",
         "code": "drop_ball()",
-        "boardHint": "Esimene jooks on ainult demo. Üks pall läheb lauale läbi praeguse sisendi.",
-        "unlockConnection": "Kõigepealt vaatad ühe jooksu ära, siis lahendad 2 lühikest ülesannet ja redigeerimine avaneb.",
+        "boardHint": "Esimene jooks on demo. Üks pall läheb lauale praeguse sisendi kaudu.",
+        "unlockConnection": "Kõigepealt vaatad ühe jooksu ära. Siis lahendad 2 lühiülesannet ja redigeerimine avaneb.",
         "options": [
             "See laseb vaikesisendist välja ühe palli.",
             "See laseb ühe palli välja sisendist 1.",
@@ -19,7 +19,7 @@
         ],
         "correctOption": 0,
         "successMessage": "Õige. 'drop_ball()' laseb välja ühe palli.",
-        "failureMessage": "See rida laseb välja ainult ühe palli. See ei jäta midagi vahele, ei muuda suunda ega ava poodi."
+        "failureMessage": "See rida laseb välja ühe palli. See ei jäta midagi vahele, ei muuda suunda ega ava poodi."
     },
     {
         "id": "onboarding-choose-lane",
@@ -54,7 +54,7 @@
         "question": "Kui omistuslause 'target = portal_side' käivitub olukorras, kus 'portal_side' on '3', siis millise sisendi see programm valib?",
         "code": "target = portal_side\nchoose_input(target)\ndrop_ball()",
         "boardHint": "Portaali silt näitab nii poole nime kui ka koodis nähtavat väärtust.",
-        "unlockConnection": "Omistuslause kopeerib nähtava 'portal_side' väärtuse sinu enda muutujasse, et saaksid seda sisendi valimiseks uuesti kasutada.",
+        "unlockConnection": "Omistuslause kopeerib nähtava 'portal_side' väärtuse sinu muutujasse, et saaksid seda sisendi valimiseks uuesti kasutada.",
         "options": [
             "Sisend 1",
             "Sisend 2",
@@ -73,10 +73,10 @@
         "topicOrder": 1,
         "taskOrder": 2,
         "title": "Paranda sisendi väärtus",
-        "question": "Milline omistuslause asendus (1. rida) parandab programmi nii, et pall kukuks sisendist, mis on portaali kohal?",
+        "question": "Milline omistuslause asendus 1. real parandab programmi nii, et pall läheks välja portaali kohal olevast sisendist?",
         "code": "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
         "boardHint": "Omistuslause peaks kopeerima 'portal_side' otse, ilma sellele midagi juurde liitmata.",
-        "unlockConnection": "See kontrollib, kas saad aru, et omistuslause peaks 'portal_side'-i otse kasutama.",
+        "unlockConnection": "Harjutad siin, et 'portal_side' sisaldab juba õiget sisendinumbrit ja seda ei pea ümber arvutama.",
         "options": [
             "target = 4 - portal_side",
             "target = portal_side + 1",
@@ -94,18 +94,18 @@
         "topicId": "variables",
         "topicOrder": 1,
         "taskOrder": 3,
-        "title": "Kirjuta üks pahupidi lask",
-        "question": "Kirjuta programm, mis salvestab 'portal_side' mingisse muutujasse ning kukutab palli hoopis teiselt poolt.\nKui portaal on paremal pool, peab pall kukkuma vasakpoolsest sisendist ja ka teistpidi.",
+        "title": "Kirjuta vastassuuna lask",
+        "question": "Kirjuta programm, mis loeb 'portal_side' väärtust ja laseb täpselt ühe palli välja vastaspoole sisendist.\nKui portaal on paremal, peab pall tulema vasakult. Kui portaal on vasakul, peab pall tulema paremalt.",
         "code": "",
-        "boardHint": "Alusta omistuslausest nagu 'target = portal_side'. Seejärel kasuta avaldist '4 - target', et vahetada vasak <-> parem.",
-        "unlockConnection": "See kontrollib, kas oskad kõigepealt kirjutada omistuslause ja siis kasutada salvestatud väärtust avaldise sees.",
+        "boardHint": "Võid kasutada 'portal_side' väärtust otse avaldises '4 - portal_side' või salvestada selle enne kujul 'target = portal_side' ja kasutada siis '4 - target'. Mõlemad vahetavad vasaku ja parema poole.",
+        "unlockConnection": "'portal_side' annab portaali poole. Avaldis '4 - portal_side' või '4 - target' leiab vastaspoole.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",
             "cases": [
                 {
                     "title": "Portaal vasakul",
-                    "requirement": "Pall peab kukkuma paremalt.",
+                    "requirement": "Pall peab tulema paremalt.",
                     "scenario": {
                         "portalSide": 1,
                         "previewQueue": [
@@ -114,7 +114,6 @@
                     },
                     "expectation": {
                         "requiredFeatures": [
-                            "usedVariables",
                             "usedChooseInput"
                         ],
                         "requiredIdentifiers": [
@@ -129,7 +128,7 @@
                 },
                 {
                     "title": "Portaal paremal",
-                    "requirement": "Pall peab kukkuma vasakult.",
+                    "requirement": "Pall peab tulema vasakult.",
                     "scenario": {
                         "portalSide": 3,
                         "previewQueue": [
@@ -138,7 +137,6 @@
                     },
                     "expectation": {
                         "requiredFeatures": [
-                            "usedVariables",
                             "usedChooseInput"
                         ],
                         "requiredIdentifiers": [
@@ -153,8 +151,8 @@
                 }
             ]
         },
-        "successMessage": "Õige. See kood salvestab nähtava väärtuse ja kasutab seda vastaspoole leidmiseks.",
-        "failureMessage": "Sinu vastus peab salvestama 'portal_side' oma muutujasse ja laskma täpselt ühe palli välja vastaspoolelt."
+        "successMessage": "Õige. See kood kasutab laual nähtavat väärtust vastaspoole leidmiseks.",
+        "failureMessage": "Vastus peab kasutama 'portal_side' väärtust, valima vastaspoole sisendi ja laskma täpselt ühe palli välja."
     },
     {
         "id": "conditions-repair",
@@ -166,7 +164,7 @@
         "title": "Paranda eelvaatereegel",
         "question": "Milline versioon jätab vahele ainult 'negative_ball'-i ja laseb teised pallid välja?",
         "code": "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-        "boardHint": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga ja jätma teistele pallidele alles päris laskmise.",
+        "boardHint": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga ja jätma teistele pallidele alles väljalaske.",
         "unlockConnection": "Tingimuslaused on olulised, sest masin saab reageerida eelvaatele enne, kui pall lauale läheb.",
         "options": [
             "if next_ball == center_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
@@ -176,7 +174,7 @@
         ],
         "correctOption": 3,
         "successMessage": "Õige. Parandatud versioon jätab vahele ainult 'negative_ball'-i ja laseb teised pallid välja.",
-        "failureMessage": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga, jätma selle vahele ja laskma teised pallid siiski välja."
+        "failureMessage": "Parandus peab võrdlema 'next_ball' väärtust 'negative_ball'-iga, jätma selle vahele ja laskma teised pallid välja."
     },
     {
         "id": "conditions-write",
@@ -186,10 +184,10 @@
         "topicOrder": 2,
         "taskOrder": 2,
         "title": "Paranda täielik eelvaatestrateegia",
-        "question": "Milline programm käsitleb eelvaadet õigesti: jätab 'negative_ball'-i vahele, saadab 'portal_ball'-i portaali ja kukutab 'center_ball'-i sisendist 2?",
+        "question": "Milline programm käsitleb eelvaadet õigesti: jätab 'negative_ball'-i vahele, saadab 'portal_ball'-i portaali ja laseb 'center_ball'-i välja sisendist 2?",
         "code": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(portal_side)\n    drop_ball()\nelse:\n    choose_input(2)\n    drop_ball()",
-        "boardHint": "Parandatud programm peab hoidma 3 tulemust lahus: negatiivne -> jäta vahele, portaal -> portal_side, kesk -> sisend 2.",
-        "unlockConnection": "See on esimene täielik eelvaatestrateegia, kuid siin piisab sellest, et tunned õige haruloogika ära ega pea seda veel nullist kirjutama.",
+        "boardHint": "Parandatud programm peab hoidma 3 tulemust lahus: negatiivne = jäta vahele, portaal = portal_side, kesk = sisend 2.",
+        "unlockConnection": "See on esimene täielik eelvaatestrateegia. Siin piisab sellest, et tunned õige haruloogika ära ega pea seda veel nullist kirjutama.",
         "options": [
             "if next_ball == portal_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
             "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
@@ -198,7 +196,7 @@
         ],
         "correctOption": 1,
         "successMessage": "Õige. See versioon hoiab kolm nähtavat juhtu lahus ja suunab igaühe õigesti.",
-        "failureMessage": "Õige versioon peaks jätma vahele ainult 'negative_ball'-i, saatma 'portal_ball'-i 'portal_side' väärtuse järgi ja kukutama 'center_ball'-i sisendist 2."
+        "failureMessage": "Õige versioon jätab vahele ainult 'negative_ball'-i, saadab 'portal_ball'-i 'portal_side' väärtuse järgi ja laseb 'center_ball'-i välja sisendist 2."
     },
     {
         "id": "conditions-review-variables",
@@ -208,14 +206,14 @@
         "topicOrder": 2,
         "taskOrder": 3,
         "reviewOriginTopicId": "variables",
-        "title": "Kordus: Portaali asukoht?",
+        "title": "Kordus: portaali asukoht",
         "question": "Kui 'portal_side' on '1', kust see programm palli välja laseb?",
         "code": "choose_input(portal_side)\ndrop_ball()",
-        "boardHint": "Varasemad teemad on endiselt tähtsad. Eelvaateloogika on kasulik ainult siis, kui loed portaali endiselt õigesti.",
+        "boardHint": "Varasemad teemad on endiselt tähtsad. Eelvaateloogika aitab ainult siis, kui loed portaali õigesti.",
         "unlockConnection": "See on muutujate teema hajutatud kordamine.",
         "options": [
             "Sisend 2, sest 'choose_input(...)' valib keskmise, kui väärtust ei tunta.",
-            "Sisend 2, sest keskmine sisend on vaikimisi rada.",
+            "Sisend 2, sest keskmine sisend on vaikimisi sisend.",
             "Sisend 3, sest 'portal_side' tuleks peegeldada vastaspooleks.",
             "Sisend 1, sest 'portal_side' läheb otse käsu 'choose_input(...)' sisse."
         ],
@@ -233,12 +231,12 @@
         "title": "Jälgi abifunktsiooni kutset",
         "question": "Mis juhtub, kui põhiprogramm kutsub välja 'follow_portal()'?",
         "code": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
-        "boardHint": "Abiredaktoris on üks abifunktsioon ja põhiprogramm saab selle nime järgi välja kutsuda.",
-        "unlockConnection": "Funktsioonid on tähtsad, sest üks nimega taktika saab juhtida korduvat käitumist laual.",
+        "boardHint": "Abiredaktoris on üks abifunktsioon ja põhiprogramm saab selle nime järgi käivitada.",
+        "unlockConnection": "Funktsioonid on tähtsad, sest nimega taktika saab juhtida korduvat käitumist laual.",
         "options": [
             "Abifunktsioon muudab enne väljalaset 'portal_side' väärtust.",
             "Alles salvestatakse abifunktsiooni definitsioon ja ühtegi palli välja ei lasta.",
-            "Abifunktsiooni keha käivitub ühe korra, aga 'portal_side' kopeeritakse enne abifunktsiooni enda skoopi.",
+            "Abifunktsiooni keha käivitub ühe korra, aga 'portal_side' tehakse enne eraldi koopiaks.",
             "Abifunktsiooni keha käivitatakse selles kohas ühe korra."
         ],
         "correctOption": 3,
@@ -256,7 +254,7 @@
         "question": "Kirjuta 'follow_portal()' nii, et see valib portaali kohal oleva sisendi ja laseb ühe palli välja.",
         "code": "Põhiprogramm:\nfollow_portal()",
         "boardHint": "See abifunktsioon peab lugema 'portal_side' väärtust, kasutama seda käsus 'choose_input(...)' ja kutsuma siis 'drop_ball()'.",
-        "unlockConnection": "See kontrollpunkt kontrollib, kas oskad ise kirjutada portaali jälgiva abifunktsiooni, mitte ainult etteantut välja kutsuda.",
+        "unlockConnection": "See kontrollpunkt vaatab, kas oskad ise kirjutada portaali jälgiva abifunktsiooni, mitte ainult etteantut välja kutsuda.",
         "writeValidation": {
             "target": "helper",
             "starterSource": "def follow_portal():\n    drop_ball()",
@@ -322,7 +320,7 @@
                 }
             ]
         },
-        "successMessage": "Õige. See abifunktsioon loeb 'portal_side' väärtust ja laseb ühe korra välja õigest sisendist.",
+        "successMessage": "Õige. See abifunktsioon loeb 'portal_side' väärtust ja laseb ühe palli välja õigest sisendist.",
         "failureMessage": "Abifunktsioon peab defineerima 'follow_portal()', valima sisendi 'portal_side' järgi ja laskma täpselt ühe palli välja."
     },
     {
@@ -359,7 +357,7 @@
         "question": "Milline versioon jätab 'negative_ball'-i vahele ja jätkab tsüklit turvaliselt?",
         "code": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
         "boardHint": "Pärast 'skip_ball()' peab praegune tsüklisamm lõppema enne, kui see jõuab 'follow_portal()'-ini.",
-        "unlockConnection": "See on peamine tsüklimuster, mis muudab ühe taktika turvaliseks automaatikaks.",
+        "unlockConnection": "See on peamine tsüklimuster, mis muudab ühe taktika turvaliseks automaatseks jooksuks.",
         "options": [
             "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
             "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    follow_portal()",
@@ -368,7 +366,7 @@
         ],
         "correctOption": 1,
         "successMessage": "Õige. 'continue' lõpetab selle tsüklisammu pärast negatiivse palli vahelejätmist.",
-        "failureMessage": "Turvaline versioon jätab negatiivse palli vahele ja kasutab 'continue', et tsükkel seda pärast enam välja ei laseks."
+        "failureMessage": "Turvaline versioon jätab negatiivse palli vahele ja kasutab 'continue', et tsükkel seda hiljem samas korduses välja ei laseks."
     },
     {
         "id": "loops-write",
@@ -378,10 +376,10 @@
         "topicOrder": 4,
         "taskOrder": 2,
         "title": "Kirjuta tulevaste pallide tsükkel",
-        "question": "Kirjuta üks tsükkel, mis töötleb reas \"Tulevased pallid\" näidatud 4 palli: suunab 'portal_ball'-i otse portaali, jätab 'negative_ball'-i vahele ja saadab iga 'center_ball'-i sisendisse 2.",
+        "question": "Kirjuta üks tsükkel, mis töötleb reas 'Tulevased pallid' näidatud 4 palli: suunab 'portal_ball'-i otse portaali, jätab 'negative_ball'-i vahele ja saadab iga 'center_ball'-i sisendisse 2.",
         "code": "",
         "boardHint": "Selles kontrollpunktis abifunktsiooni ei ole. Üks tsükkel peab töötama mõlema nähtava järjekorra puhul. 'elif' sobib siin hästi ja 'continue' on vabatahtlik, aga 'negative_ball'-i haru ei tohi sama tsüklisammu jooksul väljalaskeni jõuda. Lisakordused on lubatud, kui nähtav eelvaade saab õigesti töödeldud.",
-        "unlockConnection": "See on päris ülekandeülesanne: nüüd pead kogu portaali / negatiivse / kesk-palli loogika kirjutama otse tsükli sisse.",
+        "unlockConnection": "See on päris ülekandeülesanne: nüüd pead portaali, negatiivse palli ja keskpalli loogika kirjutama otse tsükli sisse.",
         "writeValidation": {
             "target": "main",
             "starterSource": "for shot in range(4):\n    drop_ball()",
@@ -480,7 +478,7 @@
                 }
             ]
         },
-        "successMessage": "Õige. See tsükkel saab hakkama pikema segatud eelvaatega ka ilma abifunktsioonita.",
+        "successMessage": "Õige. See tsükkel saab pikema segatud eelvaatega hakkama ka ilma abifunktsioonita.",
         "failureMessage": "Sinu tsükkel peab jätma 'negative_ball'-i vahele, saatma iga 'center_ball'-i sisendisse 2 ja suunama iga 'portal_ball'-i otse portaali."
     },
     {
@@ -492,7 +490,7 @@
         "taskOrder": 3,
         "reviewOriginTopicId": "functions",
         "title": "Kordus: mitu palli see programm välja laseb?",
-        "question": "Mitu palli laseb see terve programm välja?",
+        "question": "Mitu palli laseb terve programm välja?",
         "code": "def drop_multiple_balls():\n    drop_ball()\n    drop_ball()\n    drop_ball()\n\ndrop_multiple_balls()\ndrop_multiple_balls()",
         "boardHint": "Kõigepealt vaata läbi, mida teeb üks abifunktsiooni kutse. Seejärel loe kokku, mis juhtub siis, kui põhiprogramm kutsub sama abifunktsiooni välja kaks korda.",
         "unlockConnection": "See on funktsioonide teema hajutatud kordamine.",
@@ -517,7 +515,7 @@
         "question": "Kui 'bonus_map = [0.5, 1, 5]', siis millist kordajat loeb 'bonus_map[2]'?",
         "code": "bonus_map = [0.5, 1, 5]\nbonus_map[2]",
         "boardHint": "Indeks 0 on esimene element, seega indeks 2 on kolmas kordaja ja kuulub sisendile 3.",
-        "unlockConnection": "See kontrollib, kas oskad 'bonus_map'-ist ühe sisendi kordaja otse välja lugeda.",
+        "unlockConnection": "Siin harjutad 'bonus_map'-ist ühe sisendi kordaja otse välja lugemist.",
         "options": [
             "0.5",
             "1",
@@ -526,7 +524,7 @@
         ],
         "correctOption": 2,
         "successMessage": "Õige. 'bonus_map[2]' loeb kolmanda kordaja, 5.",
-        "failureMessage": "Pea meeles, et järjendi indeksid algavad nullist, nii et indeks 2 tähendab kolmandat elementi."
+        "failureMessage": "Järjendi indeksid algavad nullist, nii et indeks 2 tähendab kolmandat elementi."
     },
     {
         "id": "lists-repair",
@@ -536,10 +534,10 @@
         "topicOrder": 5,
         "taskOrder": 2,
         "title": "Paranda parima sisendi leidja",
-        "question": "Milline versioon kontrollib kõik kordajad läbi, jätab meelde tugevaima sisendi ja laseb sellest välja?",
+        "question": "Milline versioon kontrollib kõik kordajad läbi, jätab meelde tugevaima sisendi ja laseb sellest palli välja?",
         "code": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index)\ndrop_ball()",
         "boardHint": "Käi 'bonus_map'-ist otse läbi. Hoia meeles parim kordaja ja selle nullist algav indeks, siis lisa enne 'choose_input(...)'-i 1.",
-        "unlockConnection": "Indeksiga lugemine ja järjendi otse läbi käimine töötavad siin koos: loe iga kordaja, jäta parim meelde ja muuda selle indeks sisendinumbriks 1, 2 või 3.",
+        "unlockConnection": "Indeksiga lugemine ja järjendi läbimine töötavad siin koos: loe iga kordaja, jäta parim meelde ja muuda selle indeks sisendinumbriks 1, 2 või 3.",
         "options": [
             "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
             "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in range(3):\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = multiplier\nchoose_input(best_index + 1)\ndrop_ball()",
@@ -547,7 +545,7 @@
             "best_multiplier = bonus_map[0]\nbest_index = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()"
         ],
         "correctOption": 0,
-        "successMessage": "Õige. Parandatud versioon käib 'bonus_map'-i otse läbi, hoiab parimat kordajat meeles ja laseb välja sobiva raja.",
+        "successMessage": "Õige. Parandatud versioon käib 'bonus_map'-i otse läbi, hoiab parimat kordajat meeles ja laseb palli välja sobivast sisendist.",
         "failureMessage": "Õige lahendus peab käima 'bonus_map'-i läbi, jätma meelde tugevaima kordaja ja selle indeksi ning valima siis selle sisendi."
     },
     {
@@ -558,10 +556,10 @@
         "topicOrder": 5,
         "taskOrder": 3,
         "title": "Kirjuta nõrgima sisendi leidja",
-        "question": "Kirjuta üks programm, mis töötab kõigi all nähtavate juhtude puhul: kasuta 'bonus_map'-i, et leida nõrgim sisend, ja lase siis sellest sisendist üks pall välja.",
+        "question": "Kirjuta programm, mis töötab kõigi all nähtavate juhtude puhul: kasuta 'bonus_map'-i, et leida nõrgim sisend, ja lase siis sellest sisendist üks pall välja.",
         "code": "",
-        "boardHint": "Hoia meeles nõrgimat kordajat ja selle indeksi. 'worst_index = 0' on hea algus, et sisend 1 töötaks ka siis, kui see on juba nõrgim. Seejärel võid kas võrrelda kolme kohta otse või käia 'bonus_map'-i läbi tsükliga ning lõpetada reaga 'choose_input(worst_index + 1)'.",
-        "unlockConnection": "See kontrollib ülekannet: tugevaima raja korduva kasutamise asemel leia 'bonus_map'-ist nõrgim rada ja lase sellest üks kord välja.",
+        "boardHint": "Hoia meeles nõrgimat kordajat ja selle indeksit. 'worst_index = 0' on hea algus, et sisend 1 töötaks ka siis, kui see on juba nõrgim. Seejärel võid võrrelda kolme kohta otse või käia 'bonus_map'-i tsükliga läbi ning lõpetada reaga 'choose_input(worst_index + 1)'.",
+        "unlockConnection": "Nüüd kasutad sama kaardilugemise oskust teistpidi: leia 'bonus_map'-ist nõrgim sisend ja lase sellest üks pall välja.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",

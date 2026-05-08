@@ -2,15 +2,16 @@
 
 Live demo: [https://rprost.github.io/Thesis_IncrementalProgrammingGame/](https://rprost.github.io/Thesis_IncrementalProgrammingGame/)
 
-This project is a browser-based prototype for a thesis about using an incremental game to support learning and revising introductory programming concepts.
+CodePachinko is a browser-based thesis game about using incremental mechanics to support introductory programming practice.
 
-The current prototype includes:
+It includes:
 
-- a main progression loop with `Run program`
+- a pachinko board controlled by short Python-like programs
+- an incremental-style progression loop with points, unlocks, auto-run, and optional shop upgrades
 - bilingual English/Estonian UI
-- mini-tasks that interrupt progress
+- checkpoints that test understanding along the guided path
 - a player program editor with safe, limited syntax
-- a shop view with optional support upgrades
+- a guided path that opens into sandbox experimentation
 
 ## Local development
 

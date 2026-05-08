@@ -17,34 +17,34 @@
             "extra_line",
             "extra_portal_split"
         ],
-        "boardSubtitle": "Sihi algul kindlate sisenditega ja kasuta siis omistuslauset, et portaali pool salvestada ning uuesti kasutada.",
-        "unlockSpotlightText": "Muutuja laseb sul väärtuse mingisuguse nime alla salvestada.\n\nUus mänguelement: enne palli kukutamist kirjutades 'choose_input(...)' saad valida, mis sisendist pall kukub",
+        "boardSubtitle": "Alusta kindlate sisenditega. Seejärel salvesta portaali pool omistuslausega ja kasuta seda uuesti.",
+        "unlockSpotlightText": "Muutuja salvestab väärtuse nime alla, et saaksid seda hiljem uuesti kasutada.\n\nNüüd saad enne palli väljalaset käsuga 'choose_input(...)' valida, millisest sisendist pall tuleb.",
         "unlockPrimerCards": [
             {
                 "id": "variables-what",
                 "title": "Mis on muutuja",
-                "body": "Muutuja on programmijupp, mille alla saad väärtuse salvestada ja seda hiljem uuesti kasutada.",
+                "body": "Muutuja on nimi, mille alla saad väärtuse salvestada ja seda hiljem uuesti kasutada.",
                 "syntax": "muutujaNimi = 3"
             },
             {
                 "id": "variables-store",
                 "title": "Mida omistamine teeb",
-                "body": "'muutujaNimi = 3' on omistuslause. See salvestab väärtuse 3 muutujasse nimega 'muutujaNimi'. ",
+                "body": "'muutujaNimi = 3' on omistuslause. See salvestab väärtuse 3 muutujasse 'muutujaNimi'.",
                 "syntax": "muutujaNimi"
             },
             {
                 "id": "variables-use",
                 "title": "Mida mängus teha saab",
-                "body": "Palli suunamiseks saame kasutada näiteks 'choose_input(3)' (pall kukub parempoolsest sisendist). Selle asemel, kui meil on juba 'muutujaNimi' defineeritud numbriga 3, saame me selle muutuja nime hoopis 'choose_input(...)' sisse panna",
+                "body": "Palli suunamiseks saab kasutada näiteks käsku 'choose_input(3)', mis laseb palli paremast sisendist. Kui muutujas 'muutujaNimi' on väärtus 3, saad sama väärtust kasutada käsus 'choose_input(muutujaNimi)'.",
                 "syntax": "choose_input(muutujaNimi)"
             }
         ],
         "practiceGoals": [
             {
                 "id": "variables-aim-left",
-                "title": "Eesmärk 1: Kukuta pall sisendist 1 (vasak)",
-                "instruction": "Muuda põhiprogrammi koodi.\nlisa enne 'drop_ball()' rida 'choose_input(1)' ja käivita programm",
-                "boardHint": "Kood võiks näha välja siuke:\nchoose_input(1)\ndrop_ball()",
+                "title": "Eesmärk 1: Lase pall välja sisendist 1 (vasak)",
+                "instruction": "Muuda põhiprogrammi koodi.\nLisa enne 'drop_ball()' rida 'choose_input(1)' ja käivita programm.",
+                "boardHint": "Pane 'choose_input(1)' enne 'drop_ball()'. Esimene rida valib vasaku sisendi, teine laseb palli välja.\n\nKui paned 'choose_input(1)' pärast 'drop_ball()'-i, mõjutab see alles järgmist palli.",
                 "suggestedSnippet": "choose_input(1)\ndrop_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -65,9 +65,9 @@
             },
             {
                 "id": "variables-aim-right",
-                "title": "Eesmärk 2: Kukuta pall sisendist 3 (parem)",
-                "instruction": "Nüüd muuda 'choose_input(...)'-is numbrit",
-                "boardHint": "Kood võiks näha välja siuke:\nchoose_input(3)\ndrop_ball()",
+                "title": "Eesmärk 2: Lase pall välja sisendist 3 (parem)",
+                "instruction": "Muuda nüüd 'choose_input(...)'-i sees olevat numbrit.",
+                "boardHint": "Jäta kaks rida samaks, aga muuda 'choose_input(...)' sees olev number 3-ks.\n\nSisendid on 1 = vasak, 2 = kesk, 3 = parem.",
                 "suggestedSnippet": "choose_input(3)\ndrop_ball()",
                 "starterProgramSource": "choose_input(2)\ndrop_ball()",
                 "scenario": {
@@ -88,11 +88,11 @@
             },
             {
                 "id": "variables-store-target",
-                "title": "Eesmärk 3: Kukuta pall portaali suunas",
-                "instruction": "Uus mänguelement: Pachinkolauale tekkis 🟣portaal. Kui pall sinna siseneb, siis juhtub midagi põnevat.\n\nMärka ka seda, et pachinko alla tekkis paneel nimega 'LAUA SISESEIS'. Seal on märgitud infot pachinkolaua kohta, mida sa saad ära kasutada.\n\nSeal on kirjas, et muutuja nimega 'portal_side' märgistab sisendi numbrit, mille all portaal parasjagu viibib.\n\nÜlesanne: Kirjuta omistuslause nagu 'target = portal_side', kasuta seda muutujat siis 'choose_input(...)' sees ja kukuta pall portaali poole välja.",
-                "boardHint": "Selle eesmärgi tähtis samm on omistuslause 'target = portal_side' enne väljalaset:\ntarget = portal_side\nchoose_input(target)\ndrop_ball()",
+                "title": "Eesmärk 3: Lase pall välja portaali suunas",
+                "instruction": "Pachinko-lauale ilmus portaal. Kui pall jõuab portaali, jaguneb see mitmeks palliks.\n\nVaata laua all paneeli 'Laua olek'. Seal on väärtused, mida saad koodis kasutada.\n\n'portal_side' hoiab selle sisendi numbrit, mille all portaal parajasti asub.\n\nKasuta 'portal_side' väärtust käsus 'choose_input(...)' ja lase pall portaali suunas välja. Võid kasutada seda otse või salvestada enne kujul 'target = portal_side'.",
+                "boardHint": "'portal_side' on juba portaali sisendinumber. Võid kirjutada otse 'choose_input(portal_side)' või salvestada selle enne muutujasse: 'target = portal_side' ja siis 'choose_input(target)'.\n\nSelle eesmärgi mõte on näha, et kood saab laua seisu lugeda ega pea kasutama ainult kindlat numbrit.",
                 "suggestedSnippet": "target = portal_side\nchoose_input(target)\ndrop_ball()",
-                "starterProgramSource": "choose_input(portal_side)\ndrop_ball()",
+                "starterProgramSource": "drop_ball()",
                 "scenario": {
                     "portalSide": 3,
                     "previewQueue": [
@@ -101,7 +101,6 @@
                 },
                 "acceptance": {
                     "requiredFeatures": [
-                        "usedVariables",
                         "usedChooseInput"
                     ],
                     "requiredIdentifiers": [
@@ -147,12 +146,12 @@
             "center_bin_bonus"
         ],
         "boardSubtitle": "Loe enne väljalaset 'next_ball' ja vali õige reaktsioon.",
-        "unlockSpotlightText": "Uus mänguelement: Erilised pallid\nNüüdsest hakkavad kukkuma uued pallid.\n\nPalle on 3 tüüpi:\n🔴Negatiivne pall (negative_ball) - See pall annab miinuspunkte\n🟢Keskmine pall (center_ball) - See pall annab boonuspunkte, kui see kukutada keskmisest sisendist\n🔵Portaali pall (portal_ball) - Sellel pallil on võimendatud efekt, kui ta portaali kukub\n\nIgal pallil on oma sünergia.\n'LAUA SISESEIS' näitab nüüd ette, mis pall järgmisena tuleb. See väärtus on salvestatud muutujasse 'next_ball'.\nPalle on võimalik vahele jätta kirjutades 'skip_ball()'.\nKasutades 'if', 'elif' ja 'else' harusid, saame me 'next_ball'-i kontrollida ja käituda erinevate pallidega erinevalt.",
+        "unlockSpotlightText": "Lauale lisandusid eripallid.\n\nPalle on 3 tüüpi:\n🔴 Negatiivne pall (negative_ball): annab miinuspunkte, kui lased selle lauale.\n🟢 Keskpall (center_ball): annab boonuse, kui lased selle välja sisendist 2.\n🔵 Portaalipall (portal_ball): jaguneb portaalis tavalisest rohkemateks pallideks.\n\n'Laua olek' näitab nüüd, milline pall tuleb järgmisena. Sama väärtus on koodis muutujas 'next_ball'.\nPalli saab vahele jätta käsuga 'skip_ball()'.\nHarud 'if', 'elif' ja 'else' aitavad eri pallidele eri viisil reageerida.",
         "unlockPrimerCards": [
             {
                 "id": "conditions-what",
                 "title": "Mida 'if', 'elif' ja 'else' teevad",
-                "body": "'if' kontrollib esimest tingimust. 'elif' lubab kontrollida järgmist tingimust siis, kui esimene oli väär, ja 'else' püüab kõik ülejäänud juhud kinni.",
+                "body": "'if' kontrollib esimest tingimust. 'elif' kontrollib järgmist tingimust siis, kui eelmine oli väär. 'else' püüab kinni kõik ülejäänud juhud.",
                 "syntax": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()"
             },
             {
@@ -164,7 +163,7 @@
             {
                 "id": "conditions-use",
                 "title": "Mida mängus teha saab",
-                "body": "1. Jäta 'negative_ball' vahele\n2. Kukuta 'portal_ball' portaalile vastavast sisendist\n3. Kukuta 'center_ball' välja sisendist 2",
+                "body": "1. Jäta 'negative_ball' vahele\n2. Lase 'portal_ball' välja portaali kohal olevast sisendist\n3. Lase 'center_ball' välja sisendist 2",
                 "syntax": "skip_ball()"
             }
         ],
@@ -172,8 +171,8 @@
             {
                 "id": "conditions-skip-negative",
                 "title": "Eesmärk 1: Jäta 'negative_ball' vahele",
-                "instruction": "Järgmine pall on 'negative_ball'.\nKasuta 'if'-lauset, et seda kontrollida ja jätta vahele käsuga 'skip_ball()'.\nSee eesmärk on õige ainult siis, kui ühtegi palli välja ei lasta. Vajuta siiski 'Käivita programm', aga ära lisa 'if'-i järele 'drop_ball()'. 'else' tuleb järgmises eesmärgis.",
-                "boardHint": "'skip_ball()' eemaldab selle halva palli järjekorrast. Jooks peab ikkagi toimuma, aga selles eesmärgis ei tohi ükski pall välja lennata.",
+                "instruction": "Järgmine pall on 'negative_ball'.\nKirjuta 'if'-lause, mis kontrollib 'next_ball == negative_ball', ja jäta see pall käsuga 'skip_ball()' vahele.\nSee eesmärk on õige ainult siis, kui ühtegi palli välja ei lasta. Käivita programm ikkagi, aga ära lisa 'if'-i järele 'drop_ball()'. 'else' tuleb järgmises eesmärgis.",
+                "boardHint": "Lühim töötav kuju:\nif next_ball == negative_ball:\n    skip_ball()\n\n'skip_ball()' eemaldab halva palli järjekorrast. Jooks peab ikkagi toimuma, aga selles eesmärgis ei tohi ükski pall välja minna.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -205,9 +204,9 @@
             },
             {
                 "id": "conditions-send-portal",
-                "title": "Eesmärk 2: Suuna ülejäänud pallid portaali suunas",
-                "instruction": "Hoia negatiivse palli vahelejätmise reegel alles.\nLisa teine haru ülejäänud pallide jaoks. Võid kasutada 'else'-haru või hakata juba kasutama ka 'elif' + 'else' kuju.\nKukuta ülejäänud pallid portaali kohal olevast sisendist.",
-                "boardHint": "Negatiivse palli haru jätab palli endiselt vahele. Teine haru peab portaali sihtima ja palli välja laskma. Lühike variant võiks välja näha selline\n\nelse:\n\tchoose_input(portal_side)\n\tdrop_ball()",
+                "title": "Eesmärk 2: Suuna ülejäänud pallid portaali",
+                "instruction": "Hoia negatiivse palli vahelejätmise reegel alles.\nLisa teine haru ülejäänud pallide jaoks. Võid kasutada 'else'-haru või kuju 'elif' + 'else'.\nLase ülejäänud pallid välja portaali kohal olevast sisendist.",
+                "boardHint": "Hoia esimene haru negatiivse palli jaoks alles. Lisa selle alla 'else:', mis käivitub siis, kui pall ei ole negatiivne.\n\n'else'-haru sees vali 'portal_side' ja lase pall välja.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()",
                 "scenario": {
@@ -242,9 +241,9 @@
             },
             {
                 "id": "conditions-center-rule",
-                "title": "Eesmärk 3: Kukuta 'center_ball' sisendist 2",
-                "instruction": "Selles olukorras on järgmine pall 'center_ball'.\nKustuta praegune kood ära ja lase see sisendist 2 välja.",
-                "boardHint": "Selles ühe palli olukorras on juba ette teada, et tegemist on kesk-palliga, seega piisab otsesest väljalaskest.",
+                "title": "Eesmärk 3: Lase 'center_ball' välja sisendist 2",
+                "instruction": "Selles olukorras on järgmine pall 'center_ball'.\nKustuta praegune kood ja lase see pall välja sisendist 2.",
+                "boardHint": "Selles eesmärgis on järgmine pall kindlasti 'center_ball'. Sa ei pea siin kõiki harusid alles jätma.\n\nVali sisend 2 käsuga 'choose_input(2)' ja lase pall välja.",
                 "suggestedSnippet": "choose_input(2)\ndrop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
@@ -291,8 +290,8 @@
         "supportUpgradeIds": [
             "helper_line_capacity"
         ],
-        "boardSubtitle": "Hoia üks abifunktsioon abiredaktoris ja kutsu see põhiprogrammist välja.",
-        "unlockSpotlightText": "Avanes abiredaktor. Saad sinna samuti koodi kirjutada.\nSinna oleks mõtekas kirjutada abifunktsioon. Pärast saad põhiprogrammist seda abifunktsiooni välja kutsuda. Niimoodi saad sa koodi taaskasutada.",
+        "boardSubtitle": "Hoia üht abifunktsiooni abiredaktoris ja kutsu see põhiprogrammist välja.",
+        "unlockSpotlightText": "Avanes abiredaktor. Sinna saad kirjutada ühe abifunktsiooni ja kutsuda seda põhiprogrammist välja.\nNii saad sama taktikat mitu korda kasutada ilma samu ridu uuesti kirjutamata.",
         "unlockPrimerCards": [
             {
                 "id": "functions-what",
@@ -303,13 +302,13 @@
             {
                 "id": "functions-game",
                 "title": "Mida see mängus teeb",
-                "body": "Abiredaktoris saad hoida üht abifunktsiooni. Põhiprogrammist saad selle käivitada ühe käsuga.",
+                "body": "Abiredaktoris saad hoida üht abifunktsiooni. Põhiprogrammist saad selle ühe käsuga käivitada.",
                 "syntax": "funktsiooni_nimi()"
             },
             {
                 "id": "functions-use",
                 "title": "Mida mängus teha saab",
-                "body": "Näiteks saad kirjutada abifunktsiooni, mis alati kukutab palle portaali kohal olevast sisendist.",
+                "body": "Näiteks saad kirjutada abifunktsiooni, mis laseb pallid alati välja portaali kohal olevast sisendist.",
                 "syntax": "choose_input(portal_side)"
             }
         ],
@@ -318,7 +317,7 @@
                 "id": "functions-call-helper-left",
                 "title": "Eesmärk 1: Kasuta abifunktsiooni",
                 "instruction": "Kutsu 'follow_portal()' üks kord välja.\nAbifunktsioon loeb ise laualt 'portal_side' väärtuse, seega sina ei pea külge eraldi valima.",
-                "boardHint": "Abiredaktoris on taktika juba olemas. Põhiprogrammis on vaja ainult rida 'follow_portal()'.",
+                "boardHint": "Ära kirjuta abifunktsiooni sisu põhiprogrammi ümber. Abiredaktoris on 'follow_portal()' juba defineeritud.\n\nPõhiprogrammis piisab ühest reast: 'follow_portal()'.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "drop_ball()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -349,8 +348,8 @@
             {
                 "id": "functions-call-helper-right",
                 "title": "Eesmärk 2: Kasuta sama abifunktsiooni uuesti",
-                "instruction": "Kasuta sama abifunktsiooni uuesti.\nSeekord on portaal teisel pool, aga abifunktsioon loeb 'portal_side' väärtust dünaamiliselt, nii et sama väljakutse peaks endiselt töötama.",
-                "boardHint": "Kui su abifunktsioon loeb juba 'portal_side' väärtust, ei pea sa abifunktsiooni keha ega põhiprogrammi väljakutset ümber kirjutama.",
+                "instruction": "Kasuta sama abifunktsiooni uuesti.\nSeekord on portaal teisel pool, aga abifunktsioon loeb 'portal_side' väärtust jooksu ajal. Sama väljakutse peaks endiselt töötama.",
+                "boardHint": "Abifunktsioon peab lugema 'portal_side' väärtust jooksu ajal. Kui abifunktsioon kasutab 'choose_input(portal_side)', töötab sama 'follow_portal()' kutse ka siis, kui portaal liigub teisele poole.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -381,8 +380,8 @@
             {
                 "id": "functions-write-skip-helper",
                 "title": "Eesmärk 3: Kirjuta 'skip_negative()'",
-                "instruction": "Muuda abifunktsiooni.\nPane ta nimeks 'skip_negative()'.\nTa peaks kontrollima järgmist palli ning kui see pall on 'negative_ball', siis jätma selle palli vahele.\nSelles olukorras on nähtav järgmine pall negatiivne, seega õige jooks ei tohiks ühtegi palli välja lasta. Vajuta siiski 'Käivita programm', et halb pall järjekorrast eemaldada.\nÄra unusta siis põhiprogrammis teda uue nime alt välja kutsuda.",
-                "boardHint": "See abifunktsioon peaks kutsuma ühe korra 'skip_ball()'. Sisendit valida ega palli välja lasta siin vaja ei ole.",
+                "instruction": "Muuda abifunktsiooni.\nPane selle nimeks 'skip_negative()'.\nSee peab kontrollima järgmist palli ja jätma 'negative_ball'-i käsuga 'skip_ball()' vahele.\nSelles olukorras on järgmine pall negatiivne, seega õige jooks ei lase ühtegi palli välja. Käivita programm ikkagi, et halb pall järjekorrast eemaldada.\nÄra unusta põhiprogrammis uut nime välja kutsuda.",
+                "boardHint": "Muuda abiredaktorit, mitte põhiprogrammi. Funktsiooni nimi peab olema 'skip_negative', sest põhiprogramm kutsub 'skip_negative()'.\n\nSelles funktsioonis piisab käsust 'skip_ball()'. Ära lisa 'drop_ball()'-i.",
                 "suggestedSnippet": "def skip_negative():\n    skip_ball()",
                 "starterProgramSource": "skip_negative()",
                 "starterHelperSource": "def skip_negative():\n    drop_ball()",
@@ -434,7 +433,7 @@
             "portal_chain_once"
         ],
         "boardSubtitle": "Kasuta tsüklit, et töödelda lühike pallijada automaatselt.",
-        "unlockSpotlightText": "Tsükkel kordab enda sees olevat koodi mitu korda. Nii saad ühe tsükliga töödelda ja kukutada mitu palli ühe jooksutamisega.\nTsükli sees saad erinevate pallide jaoks kasutada ka 'if', 'elif' ja 'else' harusid.\nKui jätad palli vahele, on mõistlik kasutada käsku 'continue', see katkestab praeguse tsüklisammu ning kood hakkab tsükli algusest uuesti jooksma.",
+        "unlockSpotlightText": "Tsükkel kordab enda sees olevat koodi mitu korda. Nii saad ühe tsükliga töödelda ja välja lasta mitu palli ühe käivitusega.\nTsükli sees saad eri pallide jaoks kasutada ka 'if', 'elif' ja 'else' harusid.\nKui jätad palli vahele, on mõistlik kasutada käsku 'continue'. See lõpetab praeguse tsüklisammu ja kood jätkub tsükli algusest.",
         "unlockPrimerCards": [
             {
                 "id": "loops-what",
@@ -445,22 +444,22 @@
             {
                 "id": "loops-game",
                 "title": "Mida mängus teha saab",
-                "body": "Üks tsükkel saab töödelda mitu tulevast palli järjest ja viia mängu samm-sammult automatiseerituse poole.",
+                "body": "Üks tsükkel saab töödelda mitu tulevast palli järjest ja viia mängu samm-sammult automaatsemaks.",
                 "syntax": "for shot in range(3):\n\tfollow_portal()"
             },
             {
                 "id": "loops-safety",
                 "title": "Mida jälgida",
-                "body": "Kui kasutad 'skip_ball()'-i, peab selle haru tegevus lõppema enne, kui sama tsüklisamm jõuab järgmise väljalaskeni. Selleks sobib 'continue'",
+                "body": "Kui kasutad 'skip_ball()'-i, peab selle haru tegevus lõppema enne, kui sama tsüklisamm jõuab järgmise väljalaskeni. Selleks sobib 'continue'.",
                 "syntax": "if next_ball == negative_ball:\n\tskip_ball()\n\tcontinue"
             }
         ],
         "practiceGoals": [
             {
                 "id": "loops-repeat-three",
-                "title": "Eesm\u00e4rk 1: Korda abifunktsiooni v\u00e4hemalt kolm korda",
-                "instruction": "Kasuta p\u00f5hiprogrammis 'for ... in range(3)' ja lisa ts\u00fckli kehasse 'follow_portal()', et abifunktsioon laseks \u00fche k\u00e4ivituse ajal v\u00e4lja v\u00e4hemalt kolm palli.",
-                "boardHint": "Alusta sellest, et muudad ühe väljakutse tsükliks:\nfor shot in range(3):\n    follow_portal()\nSissetõmmatud rida käivitub igal tsüklisammul ühe korra.",
+                "title": "Eesmärk 1: Korda abifunktsiooni vähemalt kolm korda",
+                "instruction": "Kasuta põhiprogrammis 'for ... in range(3)' ja lisa tsükli kehasse 'follow_portal()', et abifunktsioon laseks ühe käivituse ajal välja vähemalt kolm palli.",
+                "boardHint": "Kirjuta 'for shot in range(3):' ja tõsta 'follow_portal()' selle alla taandega.\n\nTaandega rida käivitub kolm korda, seega laseb abifunktsioon välja vähemalt kolm palli.",
                 "suggestedSnippet": "for shot in range(3):\n    follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -490,9 +489,9 @@
             },
             {
                 "id": "loops-repeat-four",
-                "title": "Eesm\u00e4rk 2: Korda abifunktsiooni v\u00e4hemalt neli korda",
-                "instruction": "Uus m\u00e4nguelement: automaatk\u00e4ivitus\nNupust 'K\u00e4ivita programm' vasakul on n\u00fc\u00fcd automaatk\u00e4ivituse nupp. Proovi seda: see jooksutab koodi v\u00e4ikeste vahedega sinu eest.\n\nSuurenda korduste arvu nii, et sama abifunktsioon laseks \u00fche k\u00e4ivituse ajal v\u00e4lja v\u00e4hemalt neli palli.",
-                "boardHint": "Muuda arvu 'range(...)' sees. 'range(4)' on siin v\u00e4ikseim toimiv variant.",
+                "title": "Eesmärk 2: Korda abifunktsiooni vähemalt neli korda",
+                "instruction": "Avanes automaatkäivitus.\nNupust 'Käivita programm' vasakul on nüüd automaatkäivituse nupp. Proovi seda: see jooksutab koodi väikeste vahedega sinu eest.\n\nSuurenda korduste arvu nii, et sama abifunktsioon laseks ühe käivituse ajal välja vähemalt neli palli.",
+                "boardHint": "Eelmises eesmärgis oli 'range(3)'. Nüüd on vaja vähemalt nelja kordust, seega muuda see kujuks 'range(4)'.\n\nMuud koodi pole vaja muuta.",
                 "suggestedSnippet": "for shot in range(4):\n    follow_portal()",
                 "starterProgramSource": "for shot in range(3):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -519,9 +518,9 @@
             },
             {
                 "id": "loops-mixed-strategy",
-                "title": "Eesmärk 3: Töötle tsükliga kõik võimalikud pallid",
-                "instruction": "Vaata 3 nähtavat tulevast palli ja töötle need ühe tsükli sees.\nIga korduse ajal kontrolli 'next_ball' väärtust:\nkui see on 'portal_ball', kutsu 'follow_portal()'\nkui see on 'negative_ball', jäta see vahele\nkui see on 'center_ball', saada see sisendisse 2.",
-                "boardHint": "Selge kuju on selline: portaali haru -> abifunktsiooni väljakutse, negatiivse palli haru -> skip + continue, kesk-palli haru -> choose_input(2) + drop_ball(). 'elif' aitab need kontrollid ühte ahelasse hoida.",
+                "title": "Eesmärk 3: Töötle tsükliga kõik nähtavad pallid",
+                "instruction": "Vaata 3 tulevast palli ja töötle need ühe tsükli sees.\nIga korduse ajal kontrolli 'next_ball' väärtust:\nkui see on 'portal_ball', kutsu 'follow_portal()'\nkui see on 'negative_ball', jäta see vahele\nkui see on 'center_ball', saada see sisendisse 2.",
+                "boardHint": "Tee tsükli sisse üks 'if / elif / else' ahel.\n\nNegatiivse palli harus kasuta 'skip_ball()' ja 'continue', et sama tsüklisamm ei laseks palli kogemata välja. Keskpalli harus vali sisend 2. Kõik ülejäänud pallid võib saata portaali abifunktsiooniga.",
                 "suggestedSnippet": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    elif next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
                 "starterProgramSource": "for shot in range(4):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -586,13 +585,13 @@
             "bonus_map"
         ],
         "supportUpgradeIds": [],
-        "boardSubtitle": "Loe 3 sisendi kordajad, leia neist tugevaim ja kasuta seda sisendit.",
-        "unlockSpotlightText": "Uus mänguelement: Nüüd on igal sisendil oma kordaja.\n'LAUA SISESEIS' ja pachinko laud näitab neid sisendite 1, 2 ja 3 all.\nNende kordajate väärtused on salvestatud järjendis 'bonus_map'.\n\n'bonus_map[0]' - viitab 1. elemendile selles järjendis (sisend 1)\n'bonus_map[1]' - viitab 2. elemendile selles järjendis (sisend 2)\n'bonus_map[2]' - viitab 3. elemendile selles järjendis (sisend 3)\n\nSelle järjendi väätused muutuvad iga programmi jooksutamisega.\nKuna kordaja on väga võimas, siis sinu ülesanne on palle kukutada sisendist, millel on kõige kõvem kordaja.",
+        "boardSubtitle": "Loe 3 sisendi kordajad, leia tugevaim ja kasuta seda sisendit.",
+        "unlockSpotlightText": "Igal sisendil on nüüd oma kordaja.\n'Laua olek' ja pachinko-laud näitavad kordajaid sisendite 1, 2 ja 3 all. Need väärtused on salvestatud järjendis 'bonus_map'.\n\n'bonus_map[0]' viitab sisendi 1 kordajale.\n'bonus_map[1]' viitab sisendi 2 kordajale.\n'bonus_map[2]' viitab sisendi 3 kordajale.\n\nJärjendi väärtused muutuvad iga programmi käivitusega. Kuna kordaja mõjutab punkte tugevalt, tasub pallid lasta välja sisendist, mille kordaja on suurim.",
         "unlockPrimerCards": [
             {
                 "id": "lists-what",
                 "title": "Mida järjend hoiab",
-                "body": "'bonus_map' hoiab õiges järjekorras 3 sisendi kordajad.",
+                "body": "'bonus_map' hoiab 3 sisendi kordajad õiges järjekorras.",
                 "syntax": "bonus_map"
             },
             {
@@ -604,7 +603,7 @@
             {
                 "id": "lists-loop",
                 "title": "Kuidas leida parim kordaja",
-                "body": "Tsükli abil saab läbida 'bonus_map'-i, vaadata tema väärtuseid ning jätta meelde, mis sisend on suurima kordajaga.",
+                "body": "Tsükliga saab 'bonus_map'-i läbi käia, vaadata selle väärtusi ja jätta meelde, millisel sisendil on suurim kordaja.",
                 "syntax": "for multiplier in bonus_map:"
             }
         ],
@@ -612,8 +611,8 @@
             {
                 "id": "lists-read-right-step",
                 "title": "Eesmärk 1: Võrdle kahte kordajat",
-                "instruction": "Võrdle 'bonus_map[0]' ja 'bonus_map[2]' kordajaid.\nHoia suurema kordaja indeks muutujas 'best_index' ja lase siis vastavast sisendist üks pall välja.\nVõrdlemiseks saab kasutada 'if bonus_map[0] < bonus_map[2]:'",
-                "boardHint": "'bonus_map[2]' annab kordaja väärtuse, mitte sisendi numbri. Kui parim koht on indeks 2, siis vastav sisend on 'best_index + 1', ehk sisend 3.",
+                "instruction": "Võrdle 'bonus_map[0]' ja 'bonus_map[2]' kordajaid.\nHoia suurema kordaja indeks muutujas 'best_index' ja lase siis vastavast sisendist üks pall välja.\nVõrdlemiseks saab kasutada 'if bonus_map[0] < bonus_map[2]:'.",
+                "boardHint": "Alusta eeldusest, et parim indeks on 0. Siis võrdle, kas 'bonus_map[2]' on suurem kui 'bonus_map[0]'. Kui on, pane 'best_index = 2'.\n\n'choose_input(...)' vajab sisendinumbrit 1-3, seega kasuta lõpus 'best_index + 1'.",
                 "suggestedSnippet": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
                 "starterProgramSource": "best_index = 0\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
@@ -643,8 +642,8 @@
             {
                 "id": "lists-track-best-value",
                 "title": "Eesmärk 2: Leia parim kordaja kõigi 3 seast",
-                "instruction": "Muuda kahe koha võrdlus päris otsinguks 'for'-tsükliga. See eesmärk eeldabki, et otsid kõik 3 kordajat läbi tsükli abil, jätad meelde nii suurima kordaja kui ka selle indeksi ja lased siis vastavast sisendist ühe palli välja.",
-                "boardHint": "See eesmärk loeb ainult siis, kui kasutad tsüklit. Alusta ridadest 'best_multiplier = bonus_map[0]', 'best_index = 0' ja 'index = 0'. Kui tsükkel leiab suurema kordaja, salvesta nii väärtus kui ka indeks.",
+                "instruction": "Muuda kahe koha võrdlus päris otsinguks 'for'-tsükliga. Otsi kõik 3 kordajat läbi, jäta meelde suurim kordaja ja selle indeks ning lase siis vastavast sisendist üks pall välja.",
+                "boardHint": "See eesmärk vajab tsüklit üle kogu 'bonus_map'-i. Hoia korraga meeles kolme asja: seni parim kordaja, selle indeks ja praegune indeks.\n\nKui 'multiplier > best_multiplier', uuenda nii 'best_multiplier' kui ka 'best_index'.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "starterProgramSource": "best_index = 0\nif bonus_map[2] > bonus_map[0]:\n    best_index = 2\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {
@@ -675,8 +674,8 @@
             {
                 "id": "lists-launch-best-lane",
                 "title": "Eesmärk 3: Kasuta parimat sisendit tsüklis",
-                "instruction": "Kasuta sama parima sisendi otsingut ja kukuta sellest sisendist ts\u00fckli abil v\u00e4lja v\u00e4hemalt 3 palli.",
-                "boardHint": "Hoia 'best_index = 0' enne otsingut alles, et sisend 1 töötaks ka siis, kui see on juba parim. Seejärel lisa teine ts\u00fckkel, mis laseb 'best_index + 1' kaudu v\u00e4lja v\u00e4hemalt 3 palli. 'range(3)' on siin v\u00e4ikseim toimiv variant.",
+                "instruction": "Kasuta sama parima sisendi otsingut ja lase sellest sisendist tsükli abil välja vähemalt 3 palli.",
+                "boardHint": "Esimene osa leiab parima indeksi samamoodi nagu eelmises eesmärgis. Pärast otsingut lisa teine tsükkel.\n\nTeise tsükli sees kasuta iga kord 'choose_input(best_index + 1)' ja 'drop_ball()', et sama parim sisend töötaks vähemalt kolm korda.",
                 "suggestedSnippet": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nfor shot in range(3):\n    choose_input(best_index + 1)\n    drop_ball()",
                 "starterProgramSource": "best_multiplier = bonus_map[0]\nbest_index = 0\nindex = 0\nfor multiplier in bonus_map:\n    if multiplier > best_multiplier:\n        best_multiplier = multiplier\n        best_index = index\n    index = index + 1\nchoose_input(best_index + 1)\ndrop_ball()",
                 "scenario": {

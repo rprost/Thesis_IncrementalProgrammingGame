@@ -1,5 +1,10 @@
 import { formatText } from '../content'
-import type { BallType, PortalSide, UiText } from '../types'
+import {
+  formatBonusMapValue,
+  formatNumber,
+  getBallTypeConstant,
+} from '../game/formatting'
+import type { BallType, BonusMap, PortalSide, UiText } from '../types'
 
 type BoardInternalsPanelProps = {
   ui: UiText
@@ -7,7 +12,7 @@ type BoardInternalsPanelProps = {
   portalSide: PortalSide
   upcomingBalls: BallType[]
   scenarioPreviewCount: number | null
-  bonusMap: number[] | null
+  bonusMap: BonusMap | null
 }
 
 function getBallTypeLabel(ballType: BallType, ui: UiText): string {
@@ -24,30 +29,8 @@ function getBallTypeLabel(ballType: BallType, ui: UiText): string {
   }
 }
 
-function getBallTypeConstant(ballType: BallType): string {
-  switch (ballType) {
-    case 'plain':
-      return 'ball'
-    case 'portal':
-      return 'portal_ball'
-    case 'negative':
-      return 'negative_ball'
-    case 'center':
-    default:
-      return 'center_ball'
-  }
-}
-
 function getLaneLabel(lane: PortalSide, ui: UiText): string {
   return lane === 1 ? ui.boardLaneLeft : ui.boardLaneRight
-}
-
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(value)
-}
-
-function formatBonusMap(values: number[]): string {
-  return `[${values.map((value) => formatNumber(value)).join(', ')}]`
 }
 
 export function BoardInternalsPanel({
@@ -161,7 +144,7 @@ export function BoardInternalsPanel({
             </div>
             <code className="board-internal-code">
               {formatText(ui.boardBonusMapCodeValue, {
-                value: formatBonusMap(bonusMap),
+                value: formatBonusMapValue(bonusMap),
               })}
             </code>
           </article>

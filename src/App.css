@@ -6,6 +6,7 @@
 
 .app-topbar {
   display: flex;
+  position: relative;
   justify-content: space-between;
   gap: 0.8rem 1rem;
   align-items: center;
@@ -29,6 +30,21 @@
   gap: 0.65rem;
   flex-wrap: wrap;
   margin-left: auto;
+}
+
+.topbar-brand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  transform: translate(-50%, -50%);
+  color: #172033;
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .topbar-primary-cluster,
@@ -370,6 +386,42 @@
   white-space: pre-wrap;
 }
 
+.objective-stuck-card {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(248, 250, 252, 0.78);
+}
+
+.objective-stuck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.objective-answer-list {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.objective-answer {
+  display: grid;
+  gap: 0.34rem;
+}
+
+.objective-answer strong {
+  color: #172033;
+  font-size: 0.82rem;
+}
+
+.objective-answer code {
+  display: block;
+  padding: 0.62rem 0.7rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.86);
+  color: #172033;
+  white-space: pre-wrap;
+}
+
 .objective-primer-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -378,6 +430,8 @@
 
 .objective-primer-card {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.5rem;
   padding: 0.72rem 0.78rem;
   border-radius: 0.5rem;
@@ -398,11 +452,14 @@
 
 .objective-primer-syntax {
   display: grid;
+  align-self: end;
+  width: 100%;
   gap: 0.28rem;
 }
 
 .objective-primer-syntax code {
   display: block;
+  min-height: 2.65rem;
   overflow-x: auto;
   border-radius: 0.5rem;
   padding: 0.42rem 0.54rem;
@@ -2018,7 +2075,7 @@
 
 .board-bucket-points {
   fill: #4f3320;
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -2164,23 +2221,33 @@
 .skill-tree {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 1.05rem;
 }
 
 .skill-node {
   display: grid;
+  align-content: start;
   gap: 0.68rem;
-  padding: 0.88rem 1rem;
-  border-radius: 1.2rem;
-  background: rgba(255, 255, 255, 0.72);
+  min-height: 11.4rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(134, 150, 163, 0.5);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 251, 0.94));
+  box-shadow:
+    0 12px 24px rgba(36, 48, 58, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .skill-node.locked {
   opacity: 0.74;
+  background: rgba(244, 247, 248, 0.78);
 }
 
 .skill-node.completed {
-  border: 1px solid rgba(44, 93, 80, 0.22);
+  border-color: rgba(44, 93, 80, 0.35);
+  background:
+    linear-gradient(180deg, rgba(239, 249, 245, 0.98), rgba(232, 244, 240, 0.92));
 }
 
 .skill-node-top,
@@ -2203,8 +2270,20 @@
   margin: 0;
 }
 
+.skill-node-progress {
+  justify-self: start;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid rgba(44, 93, 80, 0.18);
+  border-radius: 999px;
+  background: rgba(44, 93, 80, 0.08);
+  color: #244f48;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
 .skill-node-footer {
   align-items: flex-start;
+  margin-top: auto;
 }
 
 .skill-node-cost .point-cost-value,
@@ -2690,6 +2769,13 @@
   margin: 0.35rem 0 0.9rem;
 }
 
+.task-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
 .help-fab {
   position: relative;
   z-index: 1;
@@ -3034,7 +3120,828 @@
   background: linear-gradient(180deg, #362b23 0%, #221914 100%);
 }
 
+.topbar-primary-cluster,
+.topbar-utility-cluster,
+.objective-bar,
+.editor-toolbar,
+.goal-band,
+.editor-shell,
+.controls,
+.shop-shell,
+.syntax-card,
+.board-shell,
+.board-internals-panel,
+.settings-panel,
+.task-sheet,
+.modal-card,
+.help-center {
+  border-color: rgba(155, 169, 184, 0.58);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 16px 40px rgba(34, 44, 56, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.objective-bar,
+.editor-toolbar,
+.task-sheet,
+.help-center,
+.settings-panel,
+.modal-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 252, 0.96) 100%);
+}
+
+.controls,
+.shop-shell,
+.goal-band,
+.next-step-card,
+.intro-modal {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 250, 252, 0.92) 100%);
+}
+
+.goal-band-chip,
+.goal-band-meter,
+.goal-band-details div,
+.goal-band-values,
+.goal-band-snippet,
+.control-stats div,
+.next-step-detail-card,
+.next-step-snippet,
+.board-risk,
+.shop-score-card,
+.skill-node,
+.intro-checklist,
+.task-guidance-card,
+.feedback-box,
+.option-card,
+.help-center-sidebar,
+.help-center-body,
+.help-entry-button,
+.coachmark-bubble {
+  border-radius: 0.5rem;
+}
+
+.objective-spotlight-card,
+.modal-card,
+.settings-panel,
+.help-center {
+  border-radius: 0.5rem;
+}
+
+.panel-kicker,
+.modal-kicker,
+.objective-detail-card span,
+.objective-progress-head,
+.next-step-detail-card span,
+.next-step-snippet span,
+.intro-checklist span,
+.goal-band-module span,
+.goal-band-chip span,
+.goal-band-meter span,
+.goal-band-details dt,
+.goal-band-values span,
+.goal-band-snippet span,
+.control-stats dt,
+.run-summary span,
+.syntax-group-label,
+.board-preview-label,
+.board-risk span,
+.board-internal-label,
+.shop-score-card span,
+.task-cases-label,
+.task-context-block span,
+.task-answer-header span,
+.task-guidance-card span,
+.help-center-sidebar-label,
+.help-entry-button span {
+  color: #71808f;
+  letter-spacing: 0.035em;
+}
+
+.eyebrow {
+  color: #b35228;
+  font-size: 0.78rem;
+  letter-spacing: 0.075em;
+}
+
+.view-tab,
+.settings-button,
+.settings-toggle,
+.language-button,
+.help-fab,
+.topbar-utility-cluster .help-fab,
+.topbar-utility-cluster .settings-trigger {
+  color: #42515e;
+  font-weight: 650;
+}
+
+.view-tab.active,
+.settings-button.active,
+.settings-toggle.active,
+.language-button.active,
+.topbar-utility-cluster .help-fab.active,
+.topbar-utility-cluster .settings-trigger.active,
+.topbar-utility-cluster .settings-trigger[aria-expanded='true'] {
+  background: #245f55;
+  border-color: #245f55;
+}
+
+.objective-stage,
+.editor-stat,
+.auto-run-toggle,
+.syntax-chip,
+.goal-band-value,
+.task-case-state-list span,
+.board-preview-pill,
+.task-modal-badge {
+  background: rgba(36, 95, 85, 0.085);
+  color: #244f48;
+}
+
+.run-button {
+  background: linear-gradient(180deg, #e27637 0%, #c85a28 100%);
+  box-shadow:
+    0 12px 22px rgba(191, 91, 35, 0.22),
+    inset 0 1px 0 rgba(255, 236, 220, 0.28);
+}
+
+.run-button:hover {
+  background: linear-gradient(180deg, #e77d3f 0%, #cf612e 100%);
+  box-shadow:
+    0 16px 28px rgba(191, 91, 35, 0.28),
+    inset 0 1px 0 rgba(255, 238, 225, 0.3);
+}
+
+.secondary-button {
+  background: #245f55;
+  box-shadow: 0 12px 22px rgba(36, 95, 85, 0.18);
+}
+
+.ghost-button {
+  border: 1px solid rgba(155, 169, 184, 0.5);
+  background: rgba(255, 255, 255, 0.78);
+  color: #42515e;
+}
+
+.view-tab:focus-visible,
+.language-button:focus-visible,
+.settings-button:focus-visible,
+.settings-toggle:focus-visible,
+.run-button:focus-visible,
+.secondary-button:focus-visible,
+.ghost-button:focus-visible,
+.help-fab:focus-visible,
+.help-entry-button:focus-visible,
+.reference-summary:focus-visible,
+.task-code-entry:focus-visible {
+  outline: 2px solid rgba(36, 95, 85, 0.48);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(36, 95, 85, 0.12);
+}
+
+.terminal-bar {
+  background: linear-gradient(180deg, #eaf0f2 0%, #dfe7ea 100%);
+}
+
+.terminal-bar span {
+  background: #8ca2ac;
+}
+
+.terminal-bar span:nth-child(2) {
+  background: #d99454;
+}
+
+.terminal-bar span:nth-child(3) {
+  background: #3f8d7c;
+}
+
+.code-editor .cm-editor {
+  background: #fbfdfe;
+}
+
+.code-editor .cm-focused {
+  outline: 2px solid rgba(36, 95, 85, 0.46);
+  outline-offset: -2px;
+}
+
+.code-editor .cm-line.cm-executing-line {
+  background: rgba(226, 118, 55, 0.13);
+  box-shadow: inset 3px 0 0 #e27637;
+}
+
+.editor-feedback {
+  font-weight: 600;
+}
+
+.board-shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 248, 249, 0.94) 100%);
+}
+
+.board-stage {
+  border: 1px solid rgba(80, 104, 111, 0.26);
+  background:
+    linear-gradient(180deg, rgba(238, 244, 245, 0.92) 0%, rgba(226, 235, 236, 0.96) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.72),
+    inset 0 -16px 34px rgba(36, 95, 85, 0.08);
+}
+
+.board-pin {
+  fill: #8799a3;
+}
+
+.board-bucket-shape {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: #b76235;
+}
+
+.board-bucket-points,
+.board-overlay-label,
+.board-score-line {
+  fill: #31414a;
+}
+
+.board-preview-strip,
+.board-ball-guide-card,
+.board-internal-card,
+.reference-value-card,
+.reference-example-card,
+.task-case-card,
+.developer-topic-card {
+  border-color: rgba(155, 169, 184, 0.42);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.reference-inline-example,
+.reference-example-code,
+.objective-primer-syntax code,
+.goal-band-snippet pre,
+.next-step-snippet pre,
+.help-center-snippet,
+.modal-code,
+.objective-answer code {
+  border: 1px solid rgba(131, 146, 160, 0.26);
+  border-radius: 0.5rem;
+  background: #f4f7f8;
+  color: #26323a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.task-code-entry {
+  border-color: rgba(62, 82, 94, 0.44);
+  background: linear-gradient(180deg, #22303a 0%, #17232b 100%);
+  color: #f4f8f6;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 22px rgba(32, 43, 51, 0.1);
+}
+
+.task-code-entry::placeholder {
+  color: rgba(244, 248, 246, 0.56);
+}
+
+.task-sheet {
+  box-shadow:
+    0 34px 92px rgba(30, 39, 48, 0.28),
+    0 14px 36px rgba(30, 39, 48, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.62);
+}
+
+.task-sheet-sticky {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom-color: rgba(155, 169, 184, 0.42);
+}
+
+.modal-backdrop,
+.help-center-backdrop {
+  background: rgba(22, 30, 36, 0.38);
+  backdrop-filter: blur(5px);
+}
+
+.help-center-sidebar,
+.help-center-body {
+  border: 1px solid rgba(155, 169, 184, 0.34);
+}
+
+.help-entry-button.active {
+  border-color: rgba(36, 95, 85, 0.28);
+  background: rgba(232, 244, 240, 0.82);
+}
+
+.task-guidance-card {
+  border: 1px solid rgba(155, 169, 184, 0.38);
+  background: rgba(248, 251, 252, 0.92);
+}
+
+.task-answer-reveal {
+  background: rgba(232, 244, 240, 0.88);
+  border-color: rgba(36, 95, 85, 0.2);
+}
+
+.feedback-box.success {
+  background: #e9f6ef;
+}
+
+.feedback-box.error {
+  background: #faeeeb;
+}
+
+:root[data-theme='dark'] .app-shell {
+  color: #e8edf0;
+}
+
+:root[data-theme='dark'] .topbar-brand,
+:root[data-theme='dark'] .objective-title,
+:root[data-theme='dark'] .goal-band-title,
+:root[data-theme='dark'] .editor-title,
+:root[data-theme='dark'] .board-title,
+:root[data-theme='dark'] .shop-heading,
+:root[data-theme='dark'] .settings-title,
+:root[data-theme='dark'] .modal-title,
+:root[data-theme='dark'] .task-modal-title,
+:root[data-theme='dark'] .help-center-title,
+:root[data-theme='dark'] .reference-title,
+:root[data-theme='dark'] .skill-node h3,
+:root[data-theme='dark'] .option-card strong,
+:root[data-theme='dark'] .task-case-card strong,
+:root[data-theme='dark'] .objective-primer-card h3 {
+  color: #f6f8f7;
+}
+
+:root[data-theme='dark'] .objective-body,
+:root[data-theme='dark'] .next-step-body,
+:root[data-theme='dark'] .editor-subtitle,
+:root[data-theme='dark'] .modal-question,
+:root[data-theme='dark'] .run-summary,
+:root[data-theme='dark'] .goal-band-body,
+:root[data-theme='dark'] .goal-band-details dd,
+:root[data-theme='dark'] .board-subtitle,
+:root[data-theme='dark'] .board-risk p,
+:root[data-theme='dark'] .board-internal-value,
+:root[data-theme='dark'] .shop-score-meta,
+:root[data-theme='dark'] .skill-node p,
+:root[data-theme='dark'] .settings-progress-note,
+:root[data-theme='dark'] .settings-progress-status,
+:root[data-theme='dark'] .task-modal-subtitle,
+:root[data-theme='dark'] .task-case-card p,
+:root[data-theme='dark'] .task-guidance-card p,
+:root[data-theme='dark'] .feedback-box p,
+:root[data-theme='dark'] .help-center-body p,
+:root[data-theme='dark'] .help-entry-button strong,
+:root[data-theme='dark'] .help-entry-button p,
+:root[data-theme='dark'] .reference-value-card p,
+:root[data-theme='dark'] .reference-example-card p,
+:root[data-theme='dark'] .objective-primer-card p,
+:root[data-theme='dark'] .intro-body,
+:root[data-theme='dark'] .intro-checklist p {
+  color: #cbd5d9;
+}
+
+:root[data-theme='dark'] .panel-kicker,
+:root[data-theme='dark'] .modal-kicker,
+:root[data-theme='dark'] .objective-detail-card span,
+:root[data-theme='dark'] .objective-progress-head,
+:root[data-theme='dark'] .next-step-detail-card span,
+:root[data-theme='dark'] .next-step-snippet span,
+:root[data-theme='dark'] .intro-checklist span,
+:root[data-theme='dark'] .goal-band-module span,
+:root[data-theme='dark'] .goal-band-chip span,
+:root[data-theme='dark'] .goal-band-meter span,
+:root[data-theme='dark'] .goal-band-details dt,
+:root[data-theme='dark'] .goal-band-values span,
+:root[data-theme='dark'] .goal-band-snippet span,
+:root[data-theme='dark'] .control-stats dt,
+:root[data-theme='dark'] .run-summary span,
+:root[data-theme='dark'] .syntax-group-label,
+:root[data-theme='dark'] .board-preview-label,
+:root[data-theme='dark'] .board-risk span,
+:root[data-theme='dark'] .board-internal-label,
+:root[data-theme='dark'] .shop-score-card span,
+:root[data-theme='dark'] .task-cases-label,
+:root[data-theme='dark'] .task-context-block span,
+:root[data-theme='dark'] .task-answer-header span,
+:root[data-theme='dark'] .task-guidance-card span,
+:root[data-theme='dark'] .help-center-sidebar-label,
+:root[data-theme='dark'] .help-entry-button span,
+:root[data-theme='dark'] .settings-section-label {
+  color: #91a4ae;
+}
+
+:root[data-theme='dark'] .topbar-primary-cluster,
+:root[data-theme='dark'] .topbar-utility-cluster,
+:root[data-theme='dark'] .objective-bar,
+:root[data-theme='dark'] .editor-toolbar,
+:root[data-theme='dark'] .goal-band,
+:root[data-theme='dark'] .editor-shell,
+:root[data-theme='dark'] .controls,
+:root[data-theme='dark'] .shop-shell,
+:root[data-theme='dark'] .syntax-card,
+:root[data-theme='dark'] .board-shell,
+:root[data-theme='dark'] .board-internals-panel,
+:root[data-theme='dark'] .settings-panel,
+:root[data-theme='dark'] .task-sheet,
+:root[data-theme='dark'] .modal-card,
+:root[data-theme='dark'] .help-center {
+  border-color: rgba(123, 146, 156, 0.42);
+  background:
+    linear-gradient(180deg, rgba(26, 35, 42, 0.96) 0%, rgba(18, 27, 34, 0.94) 100%);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='dark'] .topbar-utility-cluster::after {
+  background: rgba(123, 146, 156, 0.38);
+}
+
+:root[data-theme='dark'] .view-tab,
+:root[data-theme='dark'] .settings-button,
+:root[data-theme='dark'] .settings-toggle,
+:root[data-theme='dark'] .language-button,
+:root[data-theme='dark'] .help-fab,
+:root[data-theme='dark'] .topbar-utility-cluster .help-fab,
+:root[data-theme='dark'] .topbar-utility-cluster .settings-trigger {
+  border-color: rgba(123, 146, 156, 0.44);
+  background: rgba(20, 29, 36, 0.72);
+  color: #dbe4e6;
+}
+
+:root[data-theme='dark'] .view-tab:not(.active):hover,
+:root[data-theme='dark'] .topbar-utility-cluster .settings-trigger:not(.active):hover,
+:root[data-theme='dark'] .topbar-utility-cluster .help-fab:not(.active):hover,
+:root[data-theme='dark'] .language-button:not(.active):hover {
+  color: #f6f8f7;
+  background: rgba(42, 58, 68, 0.82);
+}
+
+:root[data-theme='dark'] .view-tab.active,
+:root[data-theme='dark'] .settings-button.active,
+:root[data-theme='dark'] .settings-toggle.active,
+:root[data-theme='dark'] .language-button.active,
+:root[data-theme='dark'] .topbar-utility-cluster .help-fab.active,
+:root[data-theme='dark'] .topbar-utility-cluster .settings-trigger.active,
+:root[data-theme='dark'] .topbar-utility-cluster .settings-trigger[aria-expanded='true'] {
+  color: #f8fffc;
+  background: #2f7b6d;
+  border-color: #2f7b6d;
+}
+
+:root[data-theme='dark'] .feedback-link {
+  color: #fff8f1;
+  background: linear-gradient(135deg, #d76532 0%, #f08b45 100%);
+  border-color: rgba(240, 139, 69, 0.78);
+}
+
+:root[data-theme='dark'] .points-chip,
+:root[data-theme='dark'] .goal-band-chip,
+:root[data-theme='dark'] .goal-band-meter,
+:root[data-theme='dark'] .goal-band-details div,
+:root[data-theme='dark'] .goal-band-values,
+:root[data-theme='dark'] .control-stats div,
+:root[data-theme='dark'] .next-step-detail-card,
+:root[data-theme='dark'] .board-risk,
+:root[data-theme='dark'] .shop-score-card,
+:root[data-theme='dark'] .intro-checklist,
+:root[data-theme='dark'] .task-guidance-card,
+:root[data-theme='dark'] .feedback-box,
+:root[data-theme='dark'] .option-card,
+:root[data-theme='dark'] .help-center-sidebar,
+:root[data-theme='dark'] .help-center-body,
+:root[data-theme='dark'] .help-entry-button,
+:root[data-theme='dark'] .coachmark-bubble,
+:root[data-theme='dark'] .task-case-card,
+:root[data-theme='dark'] .reference-value-card,
+:root[data-theme='dark'] .reference-example-card,
+:root[data-theme='dark'] .board-preview-strip,
+:root[data-theme='dark'] .board-ball-guide-card,
+:root[data-theme='dark'] .board-internal-card,
+:root[data-theme='dark'] .developer-topic-card {
+  border-color: rgba(123, 146, 156, 0.34);
+  background: rgba(22, 32, 39, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme='dark'] .skill-node {
+  border-color: rgba(123, 146, 156, 0.46);
+  background:
+    linear-gradient(180deg, rgba(27, 39, 47, 0.94) 0%, rgba(18, 27, 34, 0.9) 100%);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='dark'] .skill-node.completed {
+  border-color: rgba(67, 148, 130, 0.58);
+  background:
+    linear-gradient(180deg, rgba(29, 58, 55, 0.94) 0%, rgba(19, 39, 41, 0.9) 100%);
+}
+
+:root[data-theme='dark'] .skill-node.locked {
+  background: rgba(18, 25, 31, 0.78);
+  opacity: 0.76;
+}
+
+:root[data-theme='dark'] .skill-node-progress,
+:root[data-theme='dark'] .objective-stage,
+:root[data-theme='dark'] .editor-stat,
+:root[data-theme='dark'] .auto-run-toggle,
+:root[data-theme='dark'] .syntax-chip,
+:root[data-theme='dark'] .goal-band-value,
+:root[data-theme='dark'] .task-case-state-list span,
+:root[data-theme='dark'] .board-preview-pill,
+:root[data-theme='dark'] .task-modal-badge {
+  background: rgba(57, 141, 124, 0.18);
+  color: #9ee0d0;
+}
+
+:root[data-theme='dark'] .editor-feedback.success,
+:root[data-theme='dark'] .feedback-box.success {
+  color: #a6e9bc;
+  background: rgba(54, 119, 78, 0.2);
+}
+
+:root[data-theme='dark'] .editor-feedback.warning {
+  color: #ffd08a;
+  background: rgba(190, 121, 39, 0.18);
+}
+
+:root[data-theme='dark'] .editor-feedback.error,
+:root[data-theme='dark'] .feedback-box.error {
+  color: #ffb4ac;
+  background: rgba(174, 66, 60, 0.2);
+}
+
+:root[data-theme='dark'] .ghost-button,
+:root[data-theme='dark'] .secondary-button {
+  border-color: rgba(123, 146, 156, 0.48);
+  color: #e3ecee;
+}
+
+:root[data-theme='dark'] .ghost-button {
+  background: rgba(23, 33, 40, 0.82);
+}
+
+:root[data-theme='dark'] .secondary-button {
+  background: #2f7b6d;
+}
+
+:root[data-theme='dark'] .run-button {
+  color: #fff8f1;
+  background: linear-gradient(180deg, #e07038 0%, #c75b2b 100%);
+  box-shadow:
+    0 12px 28px rgba(199, 91, 43, 0.22),
+    inset 0 1px 0 rgba(255, 237, 221, 0.24);
+}
+
+:root[data-theme='dark'] .terminal-bar {
+  background: linear-gradient(180deg, #24313a 0%, #19242b 100%);
+}
+
+:root[data-theme='dark'] .code-editor .cm-editor {
+  background: #101820;
+  color: #eef5f4;
+}
+
+:root[data-theme='dark'] .code-editor .cm-gutters {
+  background: #101820;
+  color: #7e929d;
+  border-right-color: rgba(123, 146, 156, 0.25);
+}
+
+:root[data-theme='dark'] .code-editor .cm-activeLine,
+:root[data-theme='dark'] .code-editor .cm-activeLineGutter {
+  background: rgba(61, 91, 106, 0.28);
+}
+
+:root[data-theme='dark'] .code-editor .cm-line.cm-executing-line {
+  background: rgba(224, 112, 56, 0.18);
+  box-shadow: inset 3px 0 0 #e07038;
+}
+
+:root[data-theme='dark'] .task-code-entry {
+  border-color: rgba(123, 146, 156, 0.46);
+  background: linear-gradient(180deg, #0f171e 0%, #0b1218 100%);
+  color: #f4f8f6;
+}
+
+:root[data-theme='dark'] .reference-inline-example,
+:root[data-theme='dark'] .reference-example-code,
+:root[data-theme='dark'] .objective-primer-syntax code,
+:root[data-theme='dark'] .goal-band-snippet pre,
+:root[data-theme='dark'] .next-step-snippet pre,
+:root[data-theme='dark'] .help-center-snippet,
+:root[data-theme='dark'] .modal-code,
+:root[data-theme='dark'] .objective-answer code {
+  border-color: rgba(123, 146, 156, 0.34);
+  background: #111a21;
+  color: #e6eef0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .board-stage {
+  border-color: rgba(123, 146, 156, 0.34);
+  background:
+    linear-gradient(180deg, rgba(29, 42, 50, 0.96) 0%, rgba(19, 30, 38, 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 -16px 34px rgba(47, 123, 109, 0.1);
+}
+
+:root[data-theme='dark'] .board-pin {
+  fill: #748a95;
+}
+
+:root[data-theme='dark'] .board-bucket-shape {
+  fill: rgba(13, 21, 27, 0.36);
+  stroke: #d3834b;
+}
+
+:root[data-theme='dark'] .board-bucket-points,
+:root[data-theme='dark'] .board-overlay-label,
+:root[data-theme='dark'] .board-score-line {
+  fill: #edf5f6;
+}
+
+:root[data-theme='dark'] .task-sheet-sticky {
+  background: rgba(20, 29, 36, 0.98);
+  border-bottom-color: rgba(123, 146, 156, 0.34);
+}
+
+:root[data-theme='dark'] .modal-backdrop,
+:root[data-theme='dark'] .help-center-backdrop {
+  background: rgba(3, 7, 10, 0.62);
+}
+
+:root[data-theme='dark'] .help-entry-button.active,
+:root[data-theme='dark'] .task-answer-reveal {
+  border-color: rgba(63, 151, 132, 0.42);
+  background: rgba(47, 123, 109, 0.18);
+}
+
+:root[data-theme='dark'] .point-cost-value,
+:root[data-theme='dark'] .shop-score-card strong,
+:root[data-theme='dark'] .control-stats dd,
+:root[data-theme='dark'] .goal-band-details dd,
+:root[data-theme='dark'] .goal-band-values strong {
+  color: #f6f8f7;
+}
+
+:root[data-theme='dark'] .objective-progress-head strong,
+:root[data-theme='dark'] .next-step-progress-header strong,
+:root[data-theme='dark'] .reference-title,
+:root[data-theme='dark'] .reference-value-header code,
+:root[data-theme='dark'] .help-entry-title,
+:root[data-theme='dark'] .objective-primer-card strong,
+:root[data-theme='dark'] .objective-answer strong,
+:root[data-theme='dark'] .task-answer-header strong,
+:root[data-theme='dark'] .modal-question strong {
+  color: #f6f8f7;
+}
+
+:root[data-theme='dark'] .objective-detail-card,
+:root[data-theme='dark'] .objective-stuck-card,
+:root[data-theme='dark'] .objective-primer-card,
+:root[data-theme='dark'] .reference-section,
+:root[data-theme='dark'] .help-entry-primer-shell {
+  border: 1px solid rgba(137, 160, 171, 0.36);
+  background:
+    linear-gradient(180deg, rgba(24, 36, 44, 0.96) 0%, rgba(18, 29, 36, 0.94) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme='dark'] .objective-detail-card p,
+:root[data-theme='dark'] .objective-primer-card p,
+:root[data-theme='dark'] .help-entry-copy,
+:root[data-theme='dark'] .syntax-empty {
+  color: #d6e0e3;
+}
+
+:root[data-theme='dark'] .objective-progress-track,
+:root[data-theme='dark'] .next-step-progress-track {
+  background: rgba(151, 169, 177, 0.32);
+}
+
+:root[data-theme='dark'] .objective-progress-fill,
+:root[data-theme='dark'] .next-step-progress-fill {
+  background: linear-gradient(135deg, #ff8748 0%, #ffd166 100%);
+}
+
+:root[data-theme='dark'] .reference-summary {
+  color: #e8f0f1;
+  background: rgba(18, 29, 36, 0.62);
+}
+
+:root[data-theme='dark'] .reference-summary:hover {
+  color: #ffffff;
+  background: rgba(35, 52, 62, 0.76);
+}
+
+:root[data-theme='dark'] .reference-summary::after {
+  color: #ffb36f;
+}
+
+:root[data-theme='dark'] .reference-section[open] .reference-summary {
+  border-bottom: 1px solid rgba(137, 160, 171, 0.26);
+}
+
+:root[data-theme='dark'] .reference-value-header code,
+:root[data-theme='dark'] .syntax-chip {
+  border: 1px solid rgba(83, 170, 150, 0.28);
+  background: rgba(47, 123, 109, 0.2);
+  color: #c8fff1;
+}
+
+:root[data-theme='dark'] .reference-value-card.tone-center_ball,
+:root[data-theme='dark'] .objective-spotlight-card.tone-center_ball {
+  background:
+    radial-gradient(circle at top right, rgba(95, 217, 132, 0.18), transparent 50%),
+    rgba(20, 35, 35, 0.96);
+}
+
+:root[data-theme='dark'] .reference-value-card.tone-portal_ball,
+:root[data-theme='dark'] .objective-spotlight-card.tone-portal_ball,
+:root[data-theme='dark'] .reference-value-card.tone-blue_portal,
+:root[data-theme='dark'] .objective-spotlight-card.tone-blue_portal {
+  background:
+    radial-gradient(circle at top right, rgba(100, 195, 255, 0.18), transparent 50%),
+    rgba(19, 32, 43, 0.96);
+}
+
+:root[data-theme='dark'] .reference-value-card.tone-negative_ball,
+:root[data-theme='dark'] .objective-spotlight-card.tone-negative_ball {
+  background:
+    radial-gradient(circle at top right, rgba(245, 112, 104, 0.18), transparent 50%),
+    rgba(41, 28, 32, 0.96);
+}
+
+:root[data-theme='dark'] .run-button:disabled,
+:root[data-theme='dark'] .secondary-button:disabled,
+:root[data-theme='dark'] .ghost-button:disabled {
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .run-button:disabled {
+  color: #ffe9dc;
+  background: linear-gradient(180deg, rgba(169, 82, 44, 0.9) 0%, rgba(127, 61, 37, 0.9) 100%);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .secondary-button:disabled,
+:root[data-theme='dark'] .ghost-button:disabled {
+  color: #bdd0d4;
+  background: rgba(34, 54, 61, 0.88);
+  border-color: rgba(137, 160, 171, 0.44);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .coachmark-target {
+  box-shadow:
+    0 0 0 4px rgba(255, 150, 92, 0.34),
+    0 0 0 10px rgba(255, 150, 92, 0.16),
+    0 20px 36px rgba(255, 134, 72, 0.16);
+}
+
+:root[data-theme='dark'] .coachmark-bubble {
+  border-color: rgba(255, 181, 116, 0.72);
+  background:
+    linear-gradient(180deg, rgba(30, 43, 51, 0.98) 0%, rgba(20, 31, 38, 0.98) 100%);
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='dark'] .coachmark-bubble p {
+  color: #f3f8f7;
+}
+
+:root[data-theme='dark'] .board-stage {
+  background:
+    linear-gradient(180deg, rgba(45, 60, 67, 0.98) 0%, rgba(34, 49, 56, 0.98) 100%);
+}
+
+:root[data-theme='dark'] .board-pin {
+  fill: #9bb0bb;
+}
+
+:root[data-theme='dark'] .board-bucket-shape {
+  fill: rgba(22, 32, 38, 0.58);
+  stroke: #ff9a5d;
+}
+
+:root[data-theme='dark'] .board-bucket-points,
+:root[data-theme='dark'] .board-overlay-label,
+:root[data-theme='dark'] .board-score-line {
+  fill: #ffffff;
+}
+
 @media (max-width: 1180px) {
+  .topbar-brand {
+    display: none;
+  }
+
   .goal-band {
     grid-template-columns: 1fr;
   }
@@ -3175,6 +4082,7 @@
   }
 
   .objective-primer-syntax code {
+    min-height: 2.3rem;
     padding: 0.34rem 0.44rem;
     font-size: 0.76rem;
     line-height: 1.28;

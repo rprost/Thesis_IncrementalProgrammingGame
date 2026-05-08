@@ -7,13 +7,19 @@ import {
   BOARD_PIN_ROWS,
   BOARD_PORTALS,
   BOARD_VIEWBOX,
+  DEFAULT_PORTAL_CHILD_COUNT,
+  PORTAL_BALL_CHILD_COUNT,
   getBallRenderState,
 } from '../game/pachinko'
 import type {
   ActiveBall,
+  AimLevel,
+  BonusMap,
   PortalSide,
   UiText,
 } from '../types'
+
+const BOARD_INPUT_AIMS = [1, 2, 3] as const satisfies readonly AimLevel[]
 
 type PachinkoBoardProps = {
   ui: UiText
@@ -21,7 +27,8 @@ type PachinkoBoardProps = {
   portalSide: PortalSide
   portalActive: boolean
   extraPortalChildren: number
-  bonusMap: number[] | null
+  bucketValueMultiplier: number
+  bonusMap: BonusMap | null
   now: number
   reducedMotion: boolean
 }
@@ -66,12 +73,22 @@ function formatMultiplier(value: number): string {
   return Number.isInteger(value) ? String(value) : String(value)
 }
 
+function formatBucketValue(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    const compact = value / 1000
+    return `${Number.isInteger(compact) ? String(compact) : compact.toFixed(1)}k`
+  }
+
+  return Number.isInteger(value) ? String(value) : String(value)
+}
+
 export function PachinkoBoard({
   ui,
   activeBalls,
   portalSide,
   portalActive,
   extraPortalChildren,
+  bucketValueMultiplier,
   bonusMap,
   now,
   reducedMotion,
@@ -95,18 +112,18 @@ export function PachinkoBoard({
             <text className="board-overlay-label" textAnchor="middle" x="230" y="18">
               {ui.boardMainLauncherLabel}
             </text>
-            {[1, 2, 3].map((aim) => (
+            {BOARD_INPUT_AIMS.map((aim) => (
               <g key={`main-input-${aim}`}>
                 <circle
                   className="board-launcher-cap"
-                  cx={BOARD_MAIN_INPUT_X[aim as 1 | 2 | 3]}
+                  cx={BOARD_MAIN_INPUT_X[aim]}
                   cy="34"
                   r="11"
                 />
                 <text
                   className="board-launcher-label"
                   textAnchor="middle"
-                  x={BOARD_MAIN_INPUT_X[aim as 1 | 2 | 3]}
+                  x={BOARD_MAIN_INPUT_X[aim]}
                   y="39"
                 >
                   {aim}
@@ -167,19 +184,25 @@ export function PachinkoBoard({
             />
           ))}
 
-          {BOARD_BUCKETS.map((bucket) => (
-            <g key={bucket.id}>
-              <path className="board-bucket-shape" d={getBucketPath(bucket.x)} />
-              <text
-                className="board-bucket-points"
-                textAnchor="middle"
-                x={bucket.x}
-                y={BOARD_BUCKET_TOP + 34}
-              >
-                {bucket.points}
-              </text>
-            </g>
-          ))}
+          {BOARD_BUCKETS.map((bucket) => {
+            const label = formatBucketValue(bucket.points * bucketValueMultiplier)
+
+            return (
+              <g key={bucket.id}>
+                <path className="board-bucket-shape" d={getBucketPath(bucket.x)} />
+                <text
+                  className="board-bucket-points"
+                  lengthAdjust="spacingAndGlyphs"
+                  textAnchor="middle"
+                  textLength={label.length > 2 ? 34 : undefined}
+                  x={bucket.x}
+                  y={BOARD_BUCKET_TOP + 34}
+                >
+                  {label}
+                </text>
+              </g>
+            )
+          })}
 
           {activeBalls.map((ball) => {
             const renderState = getBallRenderState(ball, now, reducedMotion)
@@ -189,7 +212,11 @@ export function PachinkoBoard({
             const breakdownY = clamp(renderState.y - 78 - breakdownHeight / 2, 52, 188)
             const portalSplitLabel = formatText(ui.boardPortalSplitLabel, {
               count: String(
-                (ball.ballType === 'portal' ? 4 : 2) + extraPortalChildren,
+                (
+                  ball.ballType === 'portal'
+                    ? PORTAL_BALL_CHILD_COUNT
+                    : DEFAULT_PORTAL_CHILD_COUNT
+                ) + extraPortalChildren,
               ),
             })
 

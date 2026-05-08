@@ -1,14 +1,6 @@
 import type { RefObject } from 'react'
-import type { UiText, UnlockPrimerCard } from '../types'
+import type { HelpEntry, UiText } from '../types'
 import { useDialogFocusTrap } from '../useAccessibility'
-
-export type HelpEntry = {
-  id: string
-  title: string
-  body: string
-  stageLabel?: string | null
-  primerCards?: UnlockPrimerCard[]
-}
 
 type HelpCenterProps = {
   ui: UiText
@@ -127,13 +119,6 @@ export function HelpCenter({
               <div className="help-center-body">
                 {activeEntry !== null ? (
                   <div className="help-entry-panel">
-                    <div className="objective-meta">
-                      <p className="panel-kicker">{ui.nextStepLabel}</p>
-                      {activeEntry.stageLabel ? (
-                        <span className="objective-stage">{activeEntry.stageLabel}</span>
-                      ) : null}
-                    </div>
-
                     <h3 className="help-entry-title" id="help-entry-title">
                       {activeEntry.title}
                     </h3>

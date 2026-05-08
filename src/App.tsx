@@ -10,7 +10,7 @@ import './App.css'
 import { AvailableSyntaxCard } from './components/AvailableSyntaxCard'
 import { BoardInternalsPanel } from './components/BoardInternalsPanel'
 import { CoachmarkBubble } from './components/CoachmarkBubble'
-import { HelpCenter, type HelpEntry } from './components/HelpCenter'
+import { HelpCenter } from './components/HelpCenter'
 import { IntroModal } from './components/IntroModal'
 import { NextStepCard } from './components/NextStepCard'
 import { PachinkoBoard } from './components/PachinkoBoard'
@@ -25,6 +25,10 @@ import {
 } from './content'
 import { buildEditorCompletions } from './game/editorCompletions'
 import {
+  formatBonusMapValue,
+  getBallTypeConstant,
+} from './game/formatting'
+import {
   advanceProgramRun,
   applyTaskResult,
   dismissUnlockSpotlight,
@@ -38,7 +42,6 @@ import {
   setCurrentView,
   setAutoRunEnabled,
   setSoundEnabled,
-  spawnAmbientPlainBall,
   startCheckpoint,
   startProgramRun,
   updateHelperProgramSource,
@@ -50,9 +53,10 @@ import { canOpenShop, getSupportUpgradeEffects } from './game/shop'
 import { usePrefersReducedMotion } from './useAccessibility'
 import { useGameAudio } from './useGameAudio'
 import type {
-  BallType,
   GameTask,
   GameState,
+  GoalAnswerSection,
+  HelpEntry,
   Locale,
   LockedConstruct,
   PracticeGoalDefinition,
@@ -87,6 +91,26 @@ type HelpEntryId =
   | 'unlock-lists'
 
 type ProgressCopyStatus = 'copied' | 'manual' | null
+type ColorMode = 'light' | 'dark'
+
+const THEME_STORAGE_KEY = 'incremental-programming-game.theme'
+
+function isColorMode(value: string | null): value is ColorMode {
+  return value === 'light' || value === 'dark'
+}
+
+function getInitialColorMode(): ColorMode {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  try {
+    const storedMode = window.localStorage.getItem(THEME_STORAGE_KEY)
+    return isColorMode(storedMode) ? storedMode : 'light'
+  } catch {
+    return 'light'
+  }
+}
 
 function getCurrentTopic(
   gameState: GameState,
@@ -143,6 +167,7 @@ function getProgramValidationMessage(
     validation.issues.find((issue) => issue.code === 'for_body_required') ??
     validation.issues.find((issue) => issue.code === 'invalid_for_body') ??
     validation.issues.find((issue) => issue.code === 'unexpected_indentation') ??
+    validation.issues.find((issue) => issue.code === 'invalid_drop_ball_args') ??
     validation.issues.find((issue) => issue.code === 'invalid_command') ??
     validation.issues.find((issue) => issue.code === 'line_capacity_exceeded') ??
     validation.issues[0]
@@ -160,6 +185,10 @@ function getProgramValidationMessage(
       })
     case 'invalid_command':
       return withHelperPrefix(formatText(ui.programErrorInvalidLine, {
+        line: String(prioritizedIssue.lineNumber ?? 1),
+      }))
+    case 'invalid_drop_ball_args':
+      return withHelperPrefix(formatText(ui.programErrorDropBallArgs, {
         line: String(prioritizedIssue.lineNumber ?? 1),
       }))
     case 'locked_construct':
@@ -265,28 +294,6 @@ function getCurrentPracticeGoal(
   return currentTopic.practiceGoals[gameState.topicMeter] ?? null
 }
 
-function getBallTypeConstant(ballType: BallType): string {
-  switch (ballType) {
-    case 'plain':
-      return 'ball'
-    case 'portal':
-      return 'portal_ball'
-    case 'negative':
-      return 'negative_ball'
-    case 'center':
-    default:
-      return 'center_ball'
-  }
-}
-
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(value)
-}
-
-function formatBonusMapValue(values: number[]): string {
-  return `[${values.map((value) => formatNumber(value)).join(', ')}]`
-}
-
 function formatSummaryList(values: readonly string[]): string {
   return values.length > 0 ? values.join(',') : 'none'
 }
@@ -316,6 +323,8 @@ function buildProgressSummary(
     `learned_topic_ids=${formatSummaryList(gameState.learnedTopicIds)}`,
     `mastered_topic_ids=${formatSummaryList(gameState.masteredTopicIds)}`,
     `solved_task_count=${String(gameState.solvedTaskIds.length)}`,
+    `skipped_task_count=${String(gameState.skippedTaskIds.length)}`,
+    `skipped_task_ids=${formatSummaryList(gameState.skippedTaskIds)}`,
     `score=${String(gameState.score)}`,
     `resolved_drop_count=${String(gameState.resolvedDropCount)}`,
     `support_upgrade_ids=${formatSummaryList(gameState.supportUpgradeIds)}`,
@@ -414,6 +423,46 @@ function sourceUsesHelperCall(source: string, helperNames: string[]): boolean {
   return helperNames.some((name) =>
     new RegExp(`\\b${escapeRegex(name)}\\s*\\(`).test(source),
   )
+}
+
+function getGoalMainAnswer(goal: PracticeGoalDefinition): string {
+  return goal.changeTarget === 'helper'
+    ? goal.starterProgramSource
+    : goal.suggestedSnippet
+}
+
+function getGoalHelperAnswer(goal: PracticeGoalDefinition): string | null {
+  if (goal.changeTarget === 'helper') {
+    return goal.suggestedSnippet
+  }
+
+  return goal.starterHelperSource ?? null
+}
+
+function buildGoalAnswerSections(
+  goal: PracticeGoalDefinition | null,
+  ui: UiText,
+): GoalAnswerSection[] {
+  if (goal === null) {
+    return []
+  }
+
+  const helperAnswer = getGoalHelperAnswer(goal)
+
+  return [
+    {
+      label: ui.editorTitle,
+      code: getGoalMainAnswer(goal),
+    },
+    ...(helperAnswer !== null
+      ? [
+          {
+            label: ui.helperEditorTitle,
+            code: helperAnswer,
+          },
+        ]
+      : []),
+  ]
 }
 
 function buildNextStepModel(
@@ -550,7 +599,6 @@ function buildHelpCatalog(
       id,
       title: topic?.title ?? ui.nextStepLearningTitle,
       body: topic?.unlockSpotlightText ?? '',
-      stageLabel: ui.nextStepStageUnlocked,
       primerCards: topic?.unlockPrimerCards ?? [],
     }
   }
@@ -560,7 +608,6 @@ function buildHelpCatalog(
       id: 'welcome',
       title: ui.guideWelcomeTitle,
       body: ui.guideWelcomeBody,
-      stageLabel: ui.nextStepStageOnboarding,
       primerCards: [],
     },
     'unlock-variables': buildTopicEntry('unlock-variables', 'variables'),
@@ -646,6 +693,11 @@ function buildReferencePatterns(
   return [
     ...(portalActive
       ? [
+          {
+            id: 'variables-example-direct',
+            label: ui.referenceExampleVariablesLabel,
+            code: 'choose_input(portal_side)\ndrop_ball()',
+          },
           {
             id: 'variables-example-store',
             label: ui.referenceExampleVariablesLabel,
@@ -789,6 +841,9 @@ function App() {
   const [isHelpCoachmarkDismissed, setIsHelpCoachmarkDismissed] = useState(false)
   const [isReferenceCoachmarkDismissed, setIsReferenceCoachmarkDismissed] =
     useState(false)
+  const [colorMode, setColorMode] = useState<ColorMode>(() =>
+    getInitialColorMode(),
+  )
   const settingsRef = useRef<HTMLDivElement | null>(null)
   const helpButtonRef = useRef<HTMLButtonElement | null>(null)
   const referenceCardRef = useRef<HTMLElement | null>(null)
@@ -840,6 +895,8 @@ function App() {
     gameState.activeTaskId === null
       ? null
       : tasks.find((task) => task.id === gameState.activeTaskId) ?? null
+  const currentGoal = getCurrentPracticeGoal(gameState, topics)
+  const currentGoalAnswerSections = buildGoalAnswerSections(currentGoal, ui)
   const copyProgressStatusMessage =
     copyProgressStatus === 'copied'
       ? ui.settingsCopyProgressCopied
@@ -866,6 +923,11 @@ function App() {
   const functionsUnlocked =
     gameState.unlocks.unlockedConstructs.includes('functions')
   const isSpotlight = gameState.topicStage === 'new_unlock_spotlight'
+  const canUseCurrentGoalStuckActions =
+    gameState.topicStage === 'topic_active' &&
+    currentGoal !== null &&
+    activeTask === null &&
+    !gameState.isRunning
   const helperNames = getHelperNames(gameState.helperProgramSource)
   const mainUsesHelperCall = sourceUsesHelperCall(
     gameState.programSource,
@@ -952,7 +1014,7 @@ function App() {
   const portalActive = isBluePortalActive(gameState)
   const availableStructures = [
     ...(gameState.unlocks.unlockedConstructs.includes('variables') && portalActive
-      ? ['target = portal_side']
+      ? ['choose_input(portal_side)', 'target = portal_side']
       : []),
     ...(gameState.unlocks.unlockedConstructs.includes('if')
       ? [
@@ -1034,8 +1096,23 @@ function App() {
   }, [activeTaskId])
 
   useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
+    } catch {
+      // Locale persistence is best-effort when browser storage is unavailable.
+    }
   }, [locale])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = colorMode
+    document.documentElement.style.colorScheme = colorMode
+
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, colorMode)
+    } catch {
+      // Theme persistence is best-effort when browser storage is unavailable.
+    }
+  }, [colorMode])
 
   useEffect(() => {
     latestGameStateRef.current = gameState
@@ -1090,34 +1167,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (
-      supportEffects.ambientDropIntervalMs === null ||
-      gameState.currentView !== 'play' ||
-      gameState.topicStage !== 'completed' ||
-      gameState.activeTaskId !== null ||
-      gameState.isRunning ||
-      gameState.activeBalls.length > 0 ||
-      !gameState.introDismissed
-    ) {
-      return
-    }
-
-    const intervalId = window.setInterval(() => {
-      setGameState((currentState) => spawnAmbientPlainBall(currentState))
-    }, supportEffects.ambientDropIntervalMs)
-
-    return () => window.clearInterval(intervalId)
-  }, [
-    gameState.activeBalls.length,
-    gameState.activeTaskId,
-    gameState.currentView,
-    gameState.introDismissed,
-    gameState.isRunning,
-    gameState.topicStage,
-    supportEffects.ambientDropIntervalMs,
-  ])
-
-  useEffect(() => {
     if (!isSettingsOpen) {
       return
     }
@@ -1154,6 +1203,10 @@ function App() {
   }, [isSettingsOpen])
 
   useEffect(() => {
+    if (!import.meta.env.DEV) {
+      return undefined
+    }
+
     const handleDeveloperKeyDown = (event: KeyboardEvent) => {
       if (
         event.ctrlKey &&
@@ -1236,8 +1289,7 @@ function App() {
       const hasNewLaunch = gameState.activeBalls.some(
         (ball) =>
           !previousBallIds.has(ball.id) &&
-          ball.spawnKind === 'direct' &&
-          ball.source !== 'ambient',
+          ball.spawnKind === 'direct',
       )
       const boughtUpgrade =
         snapshot.supportUpgradeCount > previousSnapshot.supportUpgradeCount
@@ -1314,9 +1366,23 @@ function App() {
     setGameState((currentState) => startProgramRun(currentState))
   }
 
-  const handleTaskResolved = (wasCorrect: boolean, task: GameTask) => {
+  const handleTaskResolved = (
+    result: 'solved' | 'skipped' | 'retry',
+    task: GameTask,
+  ) => {
+    if (result === 'retry') {
+      return
+    }
+
     setGameState((currentState) =>
-      applyTaskResult(currentState, task, wasCorrect, tasks, topics),
+      applyTaskResult(
+        currentState,
+        task,
+        result === 'solved',
+        result === 'skipped',
+        tasks,
+        topics,
+      ),
     )
   }
 
@@ -1347,6 +1413,10 @@ function App() {
     setLocale(nextLocale)
   }
 
+  const handleSetColorMode = (nextColorMode: ColorMode) => {
+    setColorMode(nextColorMode)
+  }
+
   const handleToggleSettings = () => {
     setIsHelpManuallyOpen(false)
     setIsSettingsOpen((current) => !current)
@@ -1356,7 +1426,7 @@ function App() {
     setGameState((currentState) =>
       jumpToDeveloperGoal(currentState, topicId, goalIndex, topics),
     )
-    setSessionStartedAt(Date.now())
+    setSessionStartedAt(() => Date.now())
     setIsHelpManuallyOpen(false)
     setIsSettingsOpen(false)
     setIsDeveloperMenuOpen(false)
@@ -1366,20 +1436,25 @@ function App() {
     const copiedAt = Date.now()
     const summary = buildProgressSummary(gameState, sessionStartedAt, copiedAt)
 
-    try {
-      if (
-        typeof navigator === 'undefined' ||
-        navigator.clipboard === undefined ||
-        typeof navigator.clipboard.writeText !== 'function'
-      ) {
-        throw new Error('clipboard unavailable')
-      }
+    const showManualCopyPrompt = () => {
+      window.prompt(ui.settingsCopyProgressManualPrompt, summary)
+      setCopyProgressStatus('manual')
+    }
 
+    if (
+      typeof navigator === 'undefined' ||
+      navigator.clipboard === undefined ||
+      typeof navigator.clipboard.writeText !== 'function'
+    ) {
+      showManualCopyPrompt()
+      return
+    }
+
+    try {
       await navigator.clipboard.writeText(summary)
       setCopyProgressStatus('copied')
     } catch {
-      window.prompt(ui.settingsCopyProgressManualPrompt, summary)
-      setCopyProgressStatus('manual')
+      showManualCopyPrompt()
     }
   }
 
@@ -1539,6 +1614,10 @@ function App() {
           </div>
         </div>
 
+        <div className="topbar-brand" aria-label="CodePachinko">
+          <span>CodePachinko</span>
+        </div>
+
         <div className="topbar-right" ref={settingsRef}>
           <a
             className="settings-button feedback-link"
@@ -1604,6 +1683,28 @@ function App() {
                 </div>
               </div>
 
+              <div className="settings-section settings-section-progress">
+                <span className="settings-section-label">{ui.settingsThemeLabel}</span>
+                <div className="language-switcher" aria-label={ui.settingsThemeLabel}>
+                  <button
+                    className={`language-button${colorMode === 'light' ? ' active' : ''}`}
+                    onClick={() => handleSetColorMode('light')}
+                    type="button"
+                    aria-pressed={colorMode === 'light'}
+                  >
+                    {ui.settingsThemeLight}
+                  </button>
+                  <button
+                    className={`language-button${colorMode === 'dark' ? ' active' : ''}`}
+                    onClick={() => handleSetColorMode('dark')}
+                    type="button"
+                    aria-pressed={colorMode === 'dark'}
+                  >
+                    {ui.settingsThemeDark}
+                  </button>
+                </div>
+              </div>
+
               <div className="settings-section">
                 <div className="settings-row">
                   <span className="settings-section-label">{ui.settingsSoundLabel}</span>
@@ -1658,7 +1759,7 @@ function App() {
         </div>
       </section>
 
-      {isDeveloperMenuOpen ? (
+      {import.meta.env.DEV && isDeveloperMenuOpen ? (
         <div
           className="modal-backdrop developer-menu-backdrop"
           onMouseDown={() => setIsDeveloperMenuOpen(false)}
@@ -1722,13 +1823,18 @@ function App() {
                 ui={ui}
                 title={nextStep.title}
                 body={nextStep.body}
-                stageLabel={nextStep.stageLabel}
                 progressText={nextStep.progressText}
                 progressValue={nextStep.progressValue}
                 hintText={nextStep.hintText}
                 primerCards={nextStep.primerCards}
                 actionLabel={nextStepActionLabel}
                 onAction={nextStepAction}
+                answerSections={
+                  canUseCurrentGoalStuckActions
+                    ? currentGoalAnswerSections
+                    : []
+                }
+                onShowAnswer={null}
                 highlightAction={
                   nextStep.actionKind === 'checkpoint' ||
                   (activeTask !== null && !isTaskModalOpen)
@@ -1827,6 +1933,7 @@ function App() {
                 portalSide={gameState.moduleStates.board.portalSide}
                 portalActive={portalActive}
                 extraPortalChildren={supportEffects.extraPortalChildren}
+                bucketValueMultiplier={supportEffects.bucketValueMultiplier}
                 bonusMap={
                   gameState.learnedTopicIds.includes('lists')
                     ? gameState.moduleStates.board.bonusMap

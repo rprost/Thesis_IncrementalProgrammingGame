@@ -2,6 +2,7 @@ import type {
   ActiveBall,
   AimLevel,
   BallType,
+  BonusMap,
   BoardOutcome,
   BoardPathNode,
   PortalSide,
@@ -12,11 +13,11 @@ export const BALL_FALL_DURATION_MS = 920
 export const BALL_SETTLE_HOLD_MS = 900
 export const BALL_CANCEL_DURATION_MS = 180
 export const BALL_QUEUE_LENGTH = 24
-export const DEFAULT_CENTER_BONUS = 6
+const DEFAULT_CENTER_BONUS = 6
 export const DEFAULT_NEGATIVE_PENALTY = 10
 export const DEFAULT_PORTAL_CHILD_COUNT = 2
 export const PORTAL_BALL_CHILD_COUNT = 4
-export const BONUS_MAP_TEMPLATE = [0.5, 1, 5] as const
+const BONUS_MAP_TEMPLATE: BonusMap = [0.5, 1, 5]
 
 const BOARD_CENTER_X = 230
 const BUCKET_SPACING = 46
@@ -73,7 +74,7 @@ export const BOARD_MAIN_INPUT_X: Record<AimLevel, number> = {
   3: BOARD_PIN_ROWS[3]?.[3]?.x ?? 299,
 }
 
-export const BOARD_PORTAL_TRIGGER_PEGS: Record<PortalSide, { x: number; y: number }> = {
+const BOARD_PORTAL_TRIGGER_PEGS: Record<PortalSide, { x: number; y: number }> = {
   1: BOARD_PIN_ROWS[6]?.[1] ?? { x: 138, y: 232 },
   3: BOARD_PIN_ROWS[6]?.[5] ?? { x: 322, y: 232 },
 }
@@ -308,8 +309,8 @@ export function rollPortalSide(): PortalSide {
   return Math.random() < 0.5 ? 1 : 3
 }
 
-export function rollBonusMap(): number[] {
-  const values = [...BONUS_MAP_TEMPLATE]
+export function rollBonusMap(): BonusMap {
+  const values: BonusMap = [...BONUS_MAP_TEMPLATE]
 
   for (let index = values.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1))
@@ -331,6 +332,7 @@ export function createBallOutcome(
     portalDepth: number
     maxPortalDepth: number
     extraCenterBinBonus: number
+    bucketValueMultiplier: number
     laneMultiplier: number
   },
 ): BoardOutcome {
@@ -368,7 +370,7 @@ export function createBallOutcome(
     }
   }
 
-  const basePoints = BOARD_BUCKETS[bucketIndex]?.points ?? 1
+  const basePoints = (BOARD_BUCKETS[bucketIndex]?.points ?? 1) * options.bucketValueMultiplier
   const centerBonusValue =
     (ballType === 'center' && aim === 2 ? DEFAULT_CENTER_BONUS : 0) +
     (ballType === 'center' && bucketIndex === Math.floor(BOARD_BUCKETS.length / 2)

@@ -76,7 +76,7 @@
         "question": "Which assignment replacement fixes the program so it follows the portal safely?",
         "code": "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
         "boardHint": "The assignment should copy 'portal_side' directly, without adding to it.",
-        "unlockConnection": "This checks whether you understand that the assignment should reuse 'portal_side' directly.",
+        "unlockConnection": "'portal_side' already points to the portal input. Reusing it directly keeps the launch in range.",
         "options": [
             "target = 4 - portal_side",
             "target = portal_side + 1",
@@ -95,17 +95,17 @@
         "topicOrder": 1,
         "taskOrder": 3,
         "title": "Write one opposite-side launch",
-        "question": "Write one short program that works for every visible case below: use an assignment to store 'portal_side' in your own variable, then launch exactly one ball through the opposite side.",
+        "question": "Write one short program that works for every visible case below: read 'portal_side' and launch exactly one ball through the opposite side.",
         "code": "",
-        "boardHint": "Start with an assignment such as 'target = portal_side'. Then use '4 - target' to switch left <-> right.",
-        "unlockConnection": "This checks whether you can write an assignment first and then use the stored value inside an expression.",
+        "boardHint": "You can use 'portal_side' directly as '4 - portal_side', or first store it with 'target = portal_side' and then use '4 - target'. Both switch left <-> right.",
+        "unlockConnection": "Board data can drive strategy: 'portal_side' gives one side, and '4 - portal_side' or '4 - target' gives the opposite side.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",
             "cases": [
                 {
                     "title": "Portal left",
-                    "requirement": "Store 'portal_side' in your own variable, then launch exactly one ball through the right side.",
+                    "requirement": "Use 'portal_side' directly or store it first, then launch exactly one ball through the right side.",
                     "scenario": {
                         "portalSide": 1,
                         "previewQueue": [
@@ -114,7 +114,6 @@
                     },
                     "expectation": {
                         "requiredFeatures": [
-                            "usedVariables",
                             "usedChooseInput"
                         ],
                         "requiredIdentifiers": [
@@ -129,7 +128,7 @@
                 },
                 {
                     "title": "Portal right",
-                    "requirement": "Store 'portal_side' in your own variable, then launch exactly one ball through the left side.",
+                    "requirement": "Use 'portal_side' directly or store it first, then launch exactly one ball through the left side.",
                     "scenario": {
                         "portalSide": 3,
                         "previewQueue": [
@@ -138,7 +137,6 @@
                     },
                     "expectation": {
                         "requiredFeatures": [
-                            "usedVariables",
                             "usedChooseInput"
                         ],
                         "requiredIdentifiers": [
@@ -154,7 +152,7 @@
             ]
         },
         "successMessage": "Correct. That code stores the visible value and uses it to flip to the opposite side.",
-        "failureMessage": "Your answer should use an assignment to store 'portal_side' in your own variable and launch exactly one ball through the opposite side."
+        "failureMessage": "Your answer should use 'portal_side' to choose the opposite input and launch exactly one ball."
     },
     {
         "id": "conditions-repair",
@@ -189,7 +187,7 @@
         "question": "Which program correctly handles the preview: skip 'negative_ball', send 'portal_ball' to the portal, and send 'center_ball' to input 2?",
         "code": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(portal_side)\n    drop_ball()\nelse:\n    choose_input(2)\n    drop_ball()",
         "boardHint": "The repaired program should keep 3 outcomes distinct: negative -> skip, portal -> portal_side, center -> input 2.",
-        "unlockConnection": "This is the first full preview strategy, but here you only need to recognize the correct branching logic instead of writing it from scratch.",
+        "unlockConnection": "A full preview strategy keeps each ball type in its own branch.",
         "options": [
             "if next_ball == portal_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
             "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
@@ -256,7 +254,7 @@
         "question": "Write 'follow_portal()' so it chooses the input above the portal and launches one ball.",
         "code": "Main program:\nfollow_portal()",
         "boardHint": "This helper should read 'portal_side', use it inside 'choose_input(...)', and then call 'drop_ball()'.",
-        "unlockConnection": "This checkpoint checks whether you can write your own portal-following helper instead of only calling one that was already given to you.",
+        "unlockConnection": "This checkpoint asks you to build the portal-following helper yourself.",
         "writeValidation": {
             "target": "helper",
             "starterSource": "def follow_portal():\n    drop_ball()",
@@ -378,10 +376,10 @@
         "topicOrder": 4,
         "taskOrder": 2,
         "title": "Write the repeated preview loop",
-        "question": "Write one loop that handles the 4 upcoming balls shown in the preview: send 'portal_ball' to the portal directly, skip 'negative_ball', and send every 'center_ball' to input 2.",
+        "question": "Write one loop that handles the 4 preview balls: send 'portal_ball' to the portal directly, skip 'negative_ball', and send every 'center_ball' to input 2.",
         "code": "",
         "boardHint": "This checkpoint removes the helper. One loop should still work for both visible queues. 'elif' is a good fit here, and 'continue' is optional, but the negative-ball branch must not fall through into a launch. Extra repetitions are okay as long as the visible preview is handled correctly.",
-        "unlockConnection": "This checks real transfer: you now have to write the full portal / negative / center strategy directly inside the loop.",
+        "unlockConnection": "Now the whole portal, negative-ball, and center-ball strategy has to live inside your own loop.",
         "writeValidation": {
             "target": "main",
             "starterSource": "for shot in range(4):\n    drop_ball()",
@@ -517,7 +515,7 @@
         "question": "If 'bonus_map = [0.5, 1, 5]', what multiplier does 'bonus_map[2]' read?",
         "code": "bonus_map = [0.5, 1, 5]\nbonus_map[2]",
         "boardHint": "Index 0 is the first item, so index 2 is the third multiplier, which belongs to input 3.",
-        "unlockConnection": "This checks whether you can read one input multiplier directly out of 'bonus_map'.",
+        "unlockConnection": "Reading 'bonus_map' by index lets you target one input multiplier.",
         "options": [
             "0.5",
             "1",
@@ -561,7 +559,7 @@
         "question": "Write one program that works for every visible case below: use 'bonus_map' to find the weakest input, then launch one ball from that input.",
         "code": "",
         "boardHint": "Keep track of the weakest multiplier and the matching index. 'worst_index = 0' is a good start so input 1 still works when it is already the weakest. Then either compare the three slots directly or walk through 'bonus_map' with a loop, and finish with 'choose_input(worst_index + 1)'.",
-        "unlockConnection": "This checks transfer: instead of farming the strongest lane, use 'bonus_map' to find the weakest one and launch from it once.",
+        "unlockConnection": "The same map-reading skill can find any target input, not just the strongest one.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",

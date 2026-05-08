@@ -1,13 +1,20 @@
 import { useState, type KeyboardEvent } from 'react'
-import type { GameTask, ProgramValidation, TaskArchetype, UiText } from '../types'
+import type {
+  GameTask,
+  ProgramValidation,
+  TaskArchetype,
+  UiText,
+} from '../types'
 import { useDialogFocusTrap } from '../useAccessibility'
+import { getSuggestedTaskAnswer } from '../game/suggestedAnswers'
+import { formatBonusMapValue } from '../game/formatting'
 
 type TaskModalProps = {
   task: GameTask | null
   isOpen: boolean
   ui: UiText
   progressText: string | null
-  onResolved: (wasCorrect: boolean, task: GameTask) => void
+  onResolved: (result: 'solved' | 'skipped' | 'retry', task: GameTask) => void
   onClose: () => void
   onEvaluated?: (wasCorrect: boolean) => void
   validateWriteAnswer: (
@@ -42,14 +49,6 @@ function getArchetypeLabel(archetype: TaskArchetype, ui: UiText): string {
   }
 }
 
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(value)
-}
-
-function formatBonusMap(values: number[]): string {
-  return `[${values.map((value) => formatNumber(value)).join(', ')}]`
-}
-
 export function TaskModal({
   task,
   isOpen,
@@ -68,7 +67,8 @@ export function TaskModal({
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [codeAnswer, setCodeAnswer] = useState(task?.writeValidation?.starterSource ?? '')
   const [feedback, setFeedback] = useState<TaskFeedback | null>(null)
-  const [showHints, setShowHints] = useState(false)
+  const [openGuidance, setOpenGuidance] = useState<'hint' | 'answer' | null>(null)
+  const [revealedAnswer, setRevealedAnswer] = useState<string | null>(null)
 
   if (task === null || !isOpen) {
     return null
@@ -180,10 +180,6 @@ export function TaskModal({
         wasCorrect: result.passed,
       })
 
-      if (!result.passed) {
-        setShowHints(true)
-      }
-
       onEvaluated?.(result.passed)
       return
     }
@@ -200,10 +196,6 @@ export function TaskModal({
       wasCorrect,
     })
 
-    if (!wasCorrect) {
-      setShowHints(true)
-    }
-
     onEvaluated?.(wasCorrect)
   }
 
@@ -212,12 +204,25 @@ export function TaskModal({
       return
     }
 
-    onResolved(feedback.wasCorrect, task)
-
-    if (!feedback.wasCorrect) {
-      setSelectedOption(null)
-      setFeedback(null)
+    if (feedback.wasCorrect) {
+      onResolved('solved', task)
+      return
     }
+
+    onResolved('retry', task)
+    setSelectedOption(null)
+    setFeedback(null)
+  }
+
+  const handleRevealAnswer = () => {
+    const answer = getSuggestedTaskAnswer(task)
+
+    if (answer === null) {
+      return
+    }
+
+    setRevealedAnswer(answer)
+    setOpenGuidance((current) => (current === 'answer' ? null : 'answer'))
   }
 
   const targetLabel =
@@ -226,6 +231,10 @@ export function TaskModal({
       : ui.taskMainProgramLabel
   const options = task.options ?? []
   const isWriteTask = task.archetype === 'write'
+  const suggestedAnswer = getSuggestedTaskAnswer(task)
+  const handleToggleHint = () => {
+    setOpenGuidance((current) => (current === 'hint' ? null : 'hint'))
+  }
   const writeCases = task.writeValidation?.cases ?? []
   const visibleWriteCases = writeCases.filter(
     (validationCase) => validationCase.hiddenFromPrompt !== true,
@@ -245,7 +254,6 @@ export function TaskModal({
         <div className="task-sheet-sticky">
           <div className="task-modal-header">
             <div>
-              <p className="modal-kicker">{ui.challengeLabel}</p>
               <h2 id="task-title">{task.title}</h2>
             </div>
             <div className="task-modal-badges">
@@ -301,7 +309,7 @@ export function TaskModal({
                     {hasStateDetails ? (
                       <div className="task-case-state-list">
                       {validationCase.scenario.bonusMap !== undefined ? (
-                        <span>{`${ui.boardMultipliersLabel}: ${formatBonusMap(
+                        <span>{`${ui.boardMultipliersLabel}: ${formatBonusMapValue(
                           validationCase.scenario.bonusMap,
                         )}`}</span>
                       ) : null}
@@ -318,22 +326,40 @@ export function TaskModal({
         <div className="task-hint-toggle-row">
           <button
             className="ghost-button task-hint-toggle"
-            onClick={() => setShowHints((current) => !current)}
+            onClick={handleToggleHint}
             type="button"
           >
-            {showHints ? ui.taskHideHintButton : ui.taskShowHintButton}
+            {openGuidance === 'hint' ? ui.taskHideHintButton : ui.taskShowHintButton}
           </button>
+          {suggestedAnswer !== null ? (
+            <button
+              className="ghost-button task-hint-toggle"
+              onClick={handleRevealAnswer}
+              type="button"
+            >
+              {ui.taskRevealAnswerButton}
+            </button>
+          ) : null}
         </div>
 
-        {showHints ? (
+        {openGuidance !== null ? (
           <div className="task-guidance">
-            <article className="task-guidance-card">
+            {openGuidance === 'hint' ? (
+              <article className="task-guidance-card">
               <p>{task.boardHint}</p>
-            </article>
-            {task.unlockConnection.trim().length > 0 ? (
+              </article>
+            ) : null}
+            {openGuidance === 'hint' && task.unlockConnection.trim().length > 0 ? (
               <article className="task-guidance-card">
                 <span>{ui.taskUnlockConnectionLabel}</span>
                 <p>{task.unlockConnection}</p>
+              </article>
+            ) : null}
+            {openGuidance === 'answer' && revealedAnswer !== null ? (
+              <article className="task-guidance-card task-answer-reveal">
+                <pre className="modal-code">
+                  <code>{revealedAnswer}</code>
+                </pre>
               </article>
             ) : null}
           </div>
@@ -393,9 +419,11 @@ export function TaskModal({
           >
             <strong>{feedback.title}</strong>
             <p>{feedback.description}</p>
-            <button className="secondary-button" onClick={handleContinue} type="button">
-              {feedback.wasCorrect ? ui.continueButton : ui.retryButton}
-            </button>
+            <div className="task-feedback-actions">
+              <button className="secondary-button" onClick={handleContinue} type="button">
+                {feedback.wasCorrect ? ui.continueButton : ui.retryButton}
+              </button>
+            </div>
           </div>
         ) : (
           <button

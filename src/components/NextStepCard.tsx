@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import type { UiText, UnlockPrimerCard } from '../types'
+import type { GoalAnswerSection, UiText, UnlockPrimerCard } from '../types'
 
 type NextStepCardProps = {
   ui: UiText
   title: string
   body: string
-  stageLabel: string
   progressText: string | null
   progressValue: number | null
   hintText: string | null
   primerCards: UnlockPrimerCard[]
   actionLabel: string | null
   onAction: (() => void) | null
+  answerSections?: GoalAnswerSection[]
+  onShowAnswer?: (() => void) | null
   highlightAction?: boolean
 }
 
@@ -19,25 +20,37 @@ export function NextStepCard({
   ui,
   title,
   body,
-  stageLabel,
   progressText,
   progressValue,
   hintText,
   primerCards,
   actionLabel,
   onAction,
+  answerSections = [],
+  onShowAnswer = null,
   highlightAction = false,
 }: NextStepCardProps) {
-  const [showHint, setShowHint] = useState(false)
+  const [openPanel, setOpenPanel] = useState<'hint' | 'answer' | null>(null)
+  const hasAnswer = answerSections.length > 0
+
+  const handleShowAnswer = () => {
+    if (openPanel === 'answer') {
+      setOpenPanel(null)
+      return
+    }
+
+    onShowAnswer?.()
+    setOpenPanel('answer')
+  }
+
+  const handleToggleHint = () => {
+    setOpenPanel((current) => (current === 'hint' ? null : 'hint'))
+  }
 
   return (
     <section className="objective-bar" aria-label={ui.nextStepLabel}>
       <div className="objective-main">
         <div className="objective-copy">
-          <div className="objective-meta">
-            <p className="panel-kicker">{ui.nextStepLabel}</p>
-            <span className="objective-stage">{stageLabel}</span>
-          </div>
           <h2 className="objective-title">{title}</h2>
           <p className="objective-body">{body}</p>
         </div>
@@ -94,23 +107,49 @@ export function NextStepCard({
         </div>
       ) : null}
 
-      {hintText !== null ? (
+      {hintText !== null || hasAnswer ? (
         <div className="objective-toggle-row">
-          <button
-            className="ghost-button objective-toggle"
-            onClick={() => setShowHint((current) => !current)}
-            type="button"
-          >
-            {showHint ? ui.objectiveHideHintButton : ui.objectiveShowHintButton}
-          </button>
+          {hintText !== null ? (
+            <button
+              className="ghost-button objective-toggle"
+              onClick={handleToggleHint}
+              type="button"
+            >
+              {openPanel === 'hint'
+                ? ui.objectiveHideHintButton
+                : ui.objectiveShowHintButton}
+            </button>
+          ) : null}
+          {hasAnswer ? (
+            <button
+              className="ghost-button objective-toggle"
+              onClick={handleShowAnswer}
+              type="button"
+            >
+              {ui.goalShowAnswerButton}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
-      {showHint ? (
+      {openPanel !== null ? (
         <div className="objective-detail-row">
-          {hintText !== null ? (
+          {openPanel === 'hint' && hintText !== null ? (
             <article className="objective-detail-card">
               <p>{hintText}</p>
+            </article>
+          ) : null}
+
+          {openPanel === 'answer' && hasAnswer ? (
+            <article className="objective-detail-card objective-stuck-card">
+              <div className="objective-answer-list">
+                {answerSections.map((section) => (
+                  <div className="objective-answer" key={section.label}>
+                    {answerSections.length > 1 ? <strong>{section.label}</strong> : null}
+                    <code>{section.code}</code>
+                  </div>
+                ))}
+              </div>
             </article>
           ) : null}
         </div>

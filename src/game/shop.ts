@@ -22,6 +22,16 @@ export const SHOP_NODES: SupportUpgradeDefinition[] = [
     extraPortalChildren: 1,
   },
   {
+    id: 'bucket_value_doubler',
+    kind: 'scoring',
+    cost: 10,
+    requiredTopicId: 'variables',
+    repeatable: true,
+    maxPurchaseCount: 6,
+    costScale: 5,
+    bucketValueMultiplier: 2,
+  },
+  {
     id: 'queue_peek',
     kind: 'visibility',
     cost: 90,
@@ -56,9 +66,29 @@ const BASE_SUPPORT_EFFECTS: SupportUpgradeEffects = {
   helperLineCapacityBonus: 0,
   previewCount: 1,
   extraPortalChildren: 0,
+  bucketValueMultiplier: 1,
   extraCenterBinBonus: 0,
   maxPortalDepth: 1,
-  ambientDropIntervalMs: null,
+}
+
+export function getShopPurchaseCount(
+  upgradeIds: SupportUpgradeId[],
+  nodeId: SupportUpgradeId,
+): number {
+  return upgradeIds.filter((upgradeId) => upgradeId === nodeId).length
+}
+
+export function getShopNodeCost(
+  state: Pick<GameState, 'supportUpgradeIds'>,
+  node: SupportUpgradeDefinition,
+): number {
+  const purchaseCount = getShopPurchaseCount(state.supportUpgradeIds, node.id)
+
+  if (!node.repeatable) {
+    return node.cost
+  }
+
+  return Math.round(node.cost * Math.pow(node.costScale ?? 1, purchaseCount))
 }
 
 export function getSupportUpgradeEffects(
@@ -79,14 +109,14 @@ export function getSupportUpgradeEffects(
       previewCount: effects.previewCount + (node.previewCountBonus ?? 0),
       extraPortalChildren:
         effects.extraPortalChildren + (node.extraPortalChildren ?? 0),
+      bucketValueMultiplier:
+        effects.bucketValueMultiplier * (node.bucketValueMultiplier ?? 1),
       extraCenterBinBonus:
         effects.extraCenterBinBonus + (node.extraCenterBinBonus ?? 0),
       maxPortalDepth: Math.max(
         effects.maxPortalDepth,
         node.maxPortalDepth ?? effects.maxPortalDepth,
       ),
-      ambientDropIntervalMs:
-        node.ambientDropIntervalMs ?? effects.ambientDropIntervalMs,
     }
   }, BASE_SUPPORT_EFFECTS)
 }
@@ -106,7 +136,13 @@ export function getShopNodeStatus(
   state: GameState,
   node: SupportUpgradeDefinition,
 ): ShopNodeStatus {
-  if (state.supportUpgradeIds.includes(node.id)) {
+  const purchaseCount = getShopPurchaseCount(state.supportUpgradeIds, node.id)
+
+  if (
+    node.repeatable
+      ? purchaseCount >= (node.maxPurchaseCount ?? 1)
+      : purchaseCount > 0
+  ) {
     return 'completed'
   }
 
@@ -131,5 +167,5 @@ export function canPurchaseShopNode(
     return false
   }
 
-  return state.score >= node.cost
+  return state.score >= getShopNodeCost(state, node)
 }

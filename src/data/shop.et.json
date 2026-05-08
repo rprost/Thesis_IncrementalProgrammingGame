@@ -2,31 +2,36 @@
     {
         "id": "extra_line",
         "title": "Põhiprogrammi lisarida",
-        "description": "Lisa põhiprogrammile +1 max rida"
+        "description": "Lisa põhiprogrammile 1 rida juurde."
     },
     {
         "id": "extra_portal_split",
-        "title": "Võimsam portaal",
-        "description": "Pallid jagunevad portaalis +1 lisapalliks"
+        "title": "Portaali lisapall",
+        "description": "Portaalis jagunedes tekib 1 lisapall."
+    },
+    {
+        "id": "bucket_value_doubler",
+        "title": "Korvide väärtus x2",
+        "description": "Kahekordista korvide punktid."
     },
     {
         "id": "queue_peek",
-        "title": "Tulevaste pallide järjekorra võimendus",
-        "description": "Näed nüüd korraga 3 järgmist palli"
+        "title": "Tulevaste pallide eelvaade",
+        "description": "Näed korraga 3 järgmist palli."
     },
     {
         "id": "center_bin_bonus",
-        "title": "Keskmise kasti boonus",
-        "description": "Kui 'center_ball' maandub keskmisse kasti, saab see pall +5 lisapunkti"
+        "title": "Keskkorvi boonus",
+        "description": "Kui 'center_ball' maandub keskmisse korvi, saab see pall +5 lisapunkti."
     },
     {
         "id": "helper_line_capacity",
-        "title": "Abiredaktori lisarida",
-        "description": "Lisa abiredaktorile +2 max rida"
+        "title": "Abiredaktori lisaread",
+        "description": "Lisa abiredaktorile 2 rida juurde."
     },
     {
         "id": "portal_chain_once",
         "title": "Portaaliahel",
-        "description": "Portaalist tekkinud lisapallid saavad portaali sattudes +1 korra jaguneda"
+        "description": "Portaalist tekkinud lisapallid saavad portaalis veel 1 korra jaguneda."
     }
 ]
