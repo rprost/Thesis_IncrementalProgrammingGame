@@ -1043,6 +1043,31 @@ function parseStatements(
         continue
       }
 
+      const unsupportedRangeMatch = line.trimmed.match(
+        /^for [A-Za-z_]\w* in range\(.+\):$/,
+      )
+
+      if (unsupportedRangeMatch !== null) {
+        issues.push({
+          code: 'unsupported_for_loop',
+          lineNumber: line.lineNumber,
+        })
+
+        const block = parseIndentedBlock(
+          lines,
+          index + 1,
+          currentIndent,
+          {
+            ...context,
+            insideLoop: true,
+          },
+          'for_body_required',
+        )
+        issues.push(...block.issues)
+        index = block.nextIndex
+        continue
+      }
+
       const iterableMatch = line.trimmed.match(/^for ([A-Za-z_]\w*) in (.+):$/)
 
       if (iterableMatch === null) {

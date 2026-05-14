@@ -33,12 +33,6 @@ export function ShopTree({
   ui,
   onPurchase,
 }: ShopTreeProps) {
-  const visibleNodes = SHOP_NODES.filter(
-    (node) =>
-      gameState.learnedTopicIds.includes(node.requiredTopicId) ||
-      gameState.supportUpgradeIds.includes(node.id),
-  )
-
   return (
     <section className="shop-shell" aria-label={ui.shopTitle}>
       <div className="shop-header">
@@ -48,7 +42,7 @@ export function ShopTree({
       </div>
 
       <div className="skill-tree">
-        {visibleNodes.map((node) => {
+        {SHOP_NODES.map((node) => {
           const copy = getNodeCopy(shopNodes, node.id)
           const status = getShopNodeStatus(gameState, node)
           const canPurchase = canPurchaseShopNode(gameState, node.id)
@@ -90,6 +84,9 @@ export function ShopTree({
                       <PointCostText amount={cost} template={ui.shopBuyButton} />
                     )}
                   </button>
+                  {!canPurchase ? (
+                    <p className="skill-node-hint">{ui.shopAvailableHint}</p>
+                  ) : null}
                 </div>
               ) : status === 'locked' ? (
                 <p className="skill-node-hint">{ui.shopLockedHint}</p>

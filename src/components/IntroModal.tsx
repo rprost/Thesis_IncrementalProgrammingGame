@@ -37,12 +37,9 @@ export function IntroModal({ ui, isOpen, onStart }: IntroModalProps) {
             <li>{ui.introChecklistOne}</li>
             <li>{ui.introChecklistTwo}</li>
             <li>{ui.introChecklistThree}</li>
+            <li>{ui.introChecklistFour}</li>
+            <li>{ui.introChecklistFive}</li>
           </ul>
-        </div>
-
-        <div className="intro-reminder">
-          <span>{ui.introFeedbackReminderLabel}</span>
-          <p>{ui.introFeedbackReminder}</p>
         </div>
 
         <button

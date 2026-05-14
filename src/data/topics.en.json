@@ -18,13 +18,13 @@
             "extra_portal_split"
         ],
         "boardSubtitle": "Aim with fixed inputs first, then use an assignment to store and reuse the portal side.",
-        "unlockSpotlightText": "A variable lets you store a value under a name.\n\nNew game action: before dropping the ball, write 'choose_input(...)' to choose which input the ball launches from.",
+        "unlockSpotlightText": "Variables let you store values under names you choose. This can make code easier to read.\n\nNew: 'choose_input(...)' - choose which input the ball launches from.",
         "unlockPrimerCards": [
             {
                 "id": "variables-what",
                 "title": "What a variable is",
                 "body": "A variable is a named place in the program where you can store a value and use it again later.",
-                "syntax": "variable_name = 3"
+                "syntax": "variable_name"
             },
             {
                 "id": "variables-store",
@@ -35,7 +35,7 @@
             {
                 "id": "variables-use",
                 "title": "Use the stored value",
-                "body": "'choose_input(3)' launches from the right input. If 'variable_name' stores 3, 'choose_input(variable_name)' does the same thing.",
+                "body": "To aim the ball, you can write 'choose_input(3)', which sets the input to 3. After that, dropped balls come from that input. You can also write 'input = 3' and then 'choose_input(input)'.",
                 "syntax": "choose_input(variable_name)"
             }
         ],
@@ -44,7 +44,7 @@
                 "id": "variables-aim-left",
                 "title": "Goal 1: Drop a ball from input 1 (left)",
                 "instruction": "Change the main program.\nAdd the line 'choose_input(1)' before 'drop_ball()' and run the program.",
-                "boardHint": "Put 'choose_input(1)' before 'drop_ball()'. The first line selects the left input, and the second line launches the ball.\n\nIf 'choose_input(1)' comes after 'drop_ball()', it is too late for this ball.",
+                "boardHint": "Use 'choose_input(number)' to set the input.\nThe number must be between 1 and 3.\nIf 'choose_input(number)' comes after 'drop_ball()', it only affects the next ball.",
                 "suggestedSnippet": "choose_input(1)\ndrop_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -67,7 +67,7 @@
                 "id": "variables-aim-right",
                 "title": "Goal 2: Drop a ball from input 3 (right)",
                 "instruction": "Now change the number inside 'choose_input(...)'.",
-                "boardHint": "Keep the two-line shape, but change the number inside 'choose_input(...)' to 3.\n\nThe inputs are 1 = left, 2 = center, 3 = right.",
+                "boardHint": "The code can stay the same. You only need to change the number inside 'choose_input(...)'.",
                 "suggestedSnippet": "choose_input(3)\ndrop_ball()",
                 "starterProgramSource": "choose_input(2)\ndrop_ball()",
                 "scenario": {
@@ -89,16 +89,8 @@
             {
                 "id": "variables-store-target",
                 "title": "Goal 3: Drop the ball toward the portal",
-                "instruction": "A portal is on the board. Balls that reach it split for extra value.\n\nThe Board data panel shows 'portal_side': the input number under the portal.\n\nUse 'portal_side' in 'choose_input(...)' and launch one ball toward the portal. You may use it directly or store it first with 'target = portal_side'.",
-                "boardHint": "'portal_side' is already the portal input number. You can write 'choose_input(portal_side)' directly, or first store it as 'target = portal_side' and then write 'choose_input(target)'.\n\nGood code can read the board instead of relying on fixed inputs.",
-                "primerCards": [
-                    {
-                        "id": "variables-goal-3-board",
-                        "title": "What the board gives you",
-                        "body": "The board shows you which side the portal is on. Python reads that same side as 'portal_side'.",
-                        "syntax": "portal_side"
-                    }
-                ],
+                "instruction": "Now use the value 'portal_side' inside 'choose_input(...)' instead of a fixed number. You can write 'choose_input(portal_side)' directly, or save it into your own variable first, for example 'target = portal_side'.\n\n* New: portal - when a ball enters it, several new balls appear.\n* New: board state - under the pachinko board you can see game-defined variables that may help you.\n* New: 'portal_side' variable - its value is the input number currently under the portal.",
+                "boardHint": "This goal is about using the value 'portal_side'. You can use it directly in 'choose_input(portal_side)' or save it into your own variable first.",
                 "suggestedSnippet": "target = portal_side\nchoose_input(target)\ndrop_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -146,7 +138,7 @@
             "center_bin_bonus"
         ],
         "boardSubtitle": "Read 'next_ball' before the launch and choose the right response.",
-        "unlockSpotlightText": "Special balls are now in the queue.\n\n🔴 Negative ball (negative_ball): costs points if launched\n🟢 Center ball (center_ball): earns a bonus from input 2\n🔵 Portal ball (portal_ball): splits harder in the portal\n\nBoard data shows the next ball as 'next_ball'. Use 'if', 'elif', and 'else' to route each type, and use 'skip_ball()' to discard negative balls.",
+        "unlockSpotlightText": "Instead of regular balls, the game now has balls with special properties.\n\nThere are 3 ball types:\n🔴 Negative ball (negative_ball): you should avoid this ball because it gives negative points.\n🟢 Center ball (center_ball): this ball gives bonus points if you drop it from input 2.\n🔵 Portal ball (portal_ball): this ball has a stronger portal effect, so launch it toward the portal.\n\n* New: Board state - the variable 'next_ball' was added. It shows which ball will drop next.\n* New: 'skip_ball()' - this command skips the next ball and updates the ball queue.\n* New: conditionals ('if', 'elif', and 'else') - these let you react to different situations.",
         "unlockPrimerCards": [
             {
                 "id": "conditions-what",
@@ -155,24 +147,18 @@
                 "syntax": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()"
             },
             {
-                "id": "conditions-board",
-                "title": "What the board gives you",
-                "body": "The board shows the next ball before the launch. The same value is stored in the variable 'next_ball' in code.",
-                "syntax": "next_ball"
-            },
-            {
                 "id": "conditions-use",
                 "title": "Your routing plan",
-                "body": "1. Skip 'negative_ball'\n2. Send 'portal_ball' to the portal\n3. Send 'center_ball' to input 2",
-                "syntax": "skip_ball()"
+                "body": "Use the value 'next_ball' to decide which ball is coming next.\n\n1. Skip 'negative_ball'\n2. Send 'portal_ball' to the portal\n3. Send 'center_ball' to input 2",
+                "syntax": "next_ball\nskip_ball()"
             }
         ],
         "practiceGoals": [
             {
                 "id": "conditions-skip-negative",
                 "title": "Goal 1: Skip 'negative_ball'",
-                "instruction": "The next ball is 'negative_ball'.\nWrite an 'if' statement that checks 'next_ball == negative_ball' and skips it with 'skip_ball()'.\nRun the program, but launch no ball. The launch branch comes in the next goal.",
-                "boardHint": "Smallest working shape:\nif next_ball == negative_ball:\n    skip_ball()\n\n'skip_ball()' removes this bad ball from the queue. The run should happen, but this goal should launch no balls.",
+                "instruction": "The next ball is 'negative_ball'.\nWrite an 'if' statement that reads 'next_ball' and skips this ball with 'skip_ball()'.\nDo not drop any balls.",
+                "boardHint": "An 'if' statement runs its body when the condition is true. For example:\nif 1 == 1:\n    drop_ball()\n\nThis drops a ball because '1 == 1' is true. Use '==' for comparison, not '='.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()",
                 "starterProgramSource": "drop_ball()",
                 "scenario": {
@@ -205,8 +191,8 @@
             {
                 "id": "conditions-send-portal",
                 "title": "Goal 2: Send the remaining balls toward the portal",
-                "instruction": "Keep the rule for skipping the negative ball.\nAdd another branch for the safe balls. You can use 'else', or you can already start using 'elif' and 'else'.\nLaunch the remaining balls from the input above the portal.",
-                "boardHint": "Keep the first branch for the negative ball. Add an 'else:' below it, which runs when the ball is not negative.\n\nInside the 'else' branch, choose 'portal_side' and launch the ball.",
+                "instruction": "The next ball is 'portal_ball'.\nKeep the negative-ball 'if' statement and add an 'else' branch.\nIn the 'else' branch, drop the ball toward the portal.",
+                "boardHint": "'else' runs when the previous 'if' in the same chain was not true. Use a board value for the portal direction, not a fixed number.",
                 "suggestedSnippet": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()",
                 "scenario": {
@@ -242,8 +228,8 @@
             {
                 "id": "conditions-center-rule",
                 "title": "Goal 3: Launch 'center_ball' from input 2",
-                "instruction": "In this situation the next ball is 'center_ball'.\nDelete the current code and launch it from input 2.",
-                "boardHint": "The next ball is definitely 'center_ball', so a direct center launch is enough.\n\nChoose input 2 with 'choose_input(2)', then launch.",
+                "instruction": "The next ball is 'center_ball'.\nWrite a program that drops this ball from input 2.",
+                "boardHint": "'center_ball' gives a bonus when you choose the center input before dropping the ball.",
                 "suggestedSnippet": "choose_input(2)\ndrop_ball()",
                 "starterProgramSource": "if next_ball == negative_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
                 "scenario": {
@@ -291,33 +277,33 @@
             "helper_line_capacity"
         ],
         "boardSubtitle": "Store one reusable tactic in the helper editor and call it from the main program.",
-        "unlockSpotlightText": "The helper editor is unlocked.\nStore one helper function there, then call it from the main program whenever you need the same tactic again.",
+        "unlockSpotlightText": "A function is a named block of code that can be run again later. In this topic, you write one helper function and call it from the main program.\n\n* New: helper editor - write one helper function here.\n* New: 'def' - starts a function definition, for example 'def follow_portal():'.\n* New: function call - run the helper from the main program by writing its name, for example 'follow_portal()'.",
         "unlockPrimerCards": [
             {
                 "id": "functions-what",
-                "title": "What a function is",
-                "body": "A function is a named block of code that you can run again later.",
-                "syntax": "def follow_portal():"
+                "title": "1. Define the function",
+                "body": "A function starts with 'def name():'. The indented lines below it are the function body.",
+                "syntax": "def follow_portal():\n  choose_input(portal_side)\n  drop_ball()"
             },
             {
                 "id": "functions-game",
-                "title": "Helper editor role",
-                "body": "Keep one helper function in the helper editor. Run it from the main program with one command.",
+                "title": "2. Call the function",
+                "body": "In the main program, run the function by writing its name. The call runs every line inside the function body.",
                 "syntax": "follow_portal()"
             },
             {
                 "id": "functions-use",
-                "title": "Portal tactic",
-                "body": "Write a helper that launches from the input above the portal.",
-                "syntax": "choose_input(portal_side)"
+                "title": "3. Reuse the tactic",
+                "body": "Put repeated behavior in the helper function. Then you can use the same tactic without rewriting the same lines.",
+                "syntax": "follow_portal()\nfollow_portal()"
             }
         ],
         "practiceGoals": [
             {
                 "id": "functions-call-helper-left",
                 "title": "Goal 1: Call the helper",
-                "instruction": "Call 'follow_portal()' once.\nThe helper reads 'portal_side' from the board, so you do not choose the side yourself.",
-                "boardHint": "The helper editor already defines 'follow_portal()'.\n\nIn the main program, call it with one line: 'follow_portal()'.",
+                "instruction": "One function is defined in the helper editor.\nRead it and try to understand what the code does. Then call that function from the main program.",
+                "boardHint": "To run a function, write its name with parentheses in the main program. Do not copy the helper function body into the main program.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "drop_ball()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -348,8 +334,8 @@
             {
                 "id": "functions-call-helper-right",
                 "title": "Goal 2: Reuse the helper",
-                "instruction": "Use the same helper again.\nThe portal is on the other side this time, but the helper still reads 'portal_side' dynamically, so the same call should still work.",
-                "boardHint": "A helper that reads 'portal_side' at run time still works when the portal moves. The main program can stay as 'follow_portal()'.",
+                "instruction": "The portal moved to the other side.\nCall the same helper function again and see whether it still works.",
+                "boardHint": "If the helper reads 'portal_side' when it runs, the main program does not need to know where the portal is.",
                 "suggestedSnippet": "follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -380,9 +366,9 @@
             {
                 "id": "functions-write-skip-helper",
                 "title": "Goal 3: Write 'skip_negative()'",
-                "instruction": "Edit the helper function.\nRename it to 'skip_negative()'.\nIt should skip the visible 'negative_ball' and launch nothing.\nCall it from the main program with the new name.",
-                "boardHint": "Edit the helper editor. The function name must be 'skip_negative' because the main program calls 'skip_negative()'.\n\nInside that function, use 'skip_ball()' only.",
-                "suggestedSnippet": "def skip_negative():\n    skip_ball()",
+                "instruction": "Edit the function in the helper editor.\nPut 'def skip_negative():' on the first line.\nChange the function body so it checks whether the next ball is 'negative_ball', and if it is, skips the ball.\nCall this new function from the main program.\nYou do not need to drop any balls in this task.",
+                "boardHint": "The function needs one 'if' branch. In the condition, read the next ball value, and inside the branch use the command that skips a ball.",
+                "suggestedSnippet": "def skip_negative():\n    if next_ball == negative_ball:\n        skip_ball()",
                 "starterProgramSource": "skip_negative()",
                 "starterHelperSource": "def skip_negative():\n    drop_ball()",
                 "scenario": {
@@ -399,10 +385,13 @@
                 },
                 "acceptance": {
                     "requiredFeatures": [
-                        "usedHelperCall"
+                        "usedHelperCall",
+                        "usedIf"
                     ],
                     "requiredIdentifiers": [
-                        "skip_negative"
+                        "skip_negative",
+                        "next_ball",
+                        "negative_ball"
                     ],
                     "maxMainLaunchCount": 0,
                     "maxHelperLaunchCount": 0,
@@ -433,33 +422,33 @@
             "portal_chain_once"
         ],
         "boardSubtitle": "Use a loop to automate a short preview response.",
-        "unlockSpotlightText": "A loop repeats the code inside it several times. That means one loop can handle and launch multiple balls in a single run.\nInside that loop you can also use 'if', 'elif', and 'else' to react to different balls.\nIf you skip a ball, it is smart to use 'continue'. That stops the current loop step and starts the next one.",
+        "unlockSpotlightText": "A loop repeats the code inside it several times. This lets one run handle multiple balls in a row.\n\n* New: 'for ... in range(...)' - repeats the indented code a set number of times.\n* New: auto-run - run the program repeatedly without pressing the button every time.\n* New: 'continue' - ends the current loop step and moves to the next repetition.",
         "unlockPrimerCards": [
             {
                 "id": "loops-what",
-                "title": "What a loop is",
-                "body": "A loop repeats the code inside it, so one tactic can run several times.",
-                "syntax": "for shot in range(3):\n    drop_ball()"
+                "title": "1. Start the loop",
+                "body": "'for' creates a repetition. 'range(3)' means the loop body runs three times.",
+                "syntax": "for shot in range(3):"
             },
             {
                 "id": "loops-game",
-                "title": "Automation value",
-                "body": "One loop can handle several preview balls in a row.",
-                "syntax": "for shot in range(3):\n    follow_portal()"
+                "title": "2. Add the loop body",
+                "body": "The loop body is the indented lines under the loop. Those lines run again on each repetition.",
+                "syntax": "for shot in range(3):\n  follow_portal()"
             },
             {
                 "id": "loops-safety",
-                "title": "Skip safely",
-                "body": "If you use 'skip_ball()', that branch must end before the same loop step reaches another launch. 'continue' works well for that.",
-                "syntax": "if next_ball == negative_ball:\n    skip_ball()\n    continue"
+                "title": "3. End a step early",
+                "body": "When you skip a ball, 'continue' helps move straight to the next repetition.",
+                "syntax": "skip_ball()\ncontinue"
             }
         ],
         "practiceGoals": [
             {
                 "id": "loops-repeat-three",
-                "title": "Goal 1: Repeat the helper at least three times",
-                "instruction": "Use 'for ... in range(3)' in the main program and put 'follow_portal()' inside the loop body so the helper launches at least three balls in one run.",
-                "boardHint": "Write 'for shot in range(3):' and indent 'follow_portal()' underneath it.\n\nThe indented line runs three times, so the helper launches at least three balls.",
+                "title": "Goal 1: Repeat the helper 3 times",
+                "instruction": "In the main program, write a loop that calls 'follow_portal()' 3 times.\nOne run should drop at least 3 balls.",
+                "boardHint": "'range(3)' gives three repetitions. The line inside the loop must be indented.",
                 "suggestedSnippet": "for shot in range(3):\n    follow_portal()",
                 "starterProgramSource": "follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -489,9 +478,9 @@
             },
             {
                 "id": "loops-repeat-four",
-                "title": "Goal 2: Repeat the helper at least four times",
-                "instruction": "Auto-run is now available beside 'Run program'. It repeats runs for you.\n\nIncrease the loop count so the helper launches at least four balls in one run.",
-                "boardHint": "The previous goal used 'range(3)'. Change it to 'range(4)' for four launches.",
+                "title": "Goal 2: Repeat the helper 4 times",
+                "instruction": "In this goal, change the number of loop repetitions. One run should drop at least 4 balls.\n\n* New: auto-run - use the auto-run button to run the program repeatedly.",
+                "boardHint": "In the previous goal, 'range(3)' gave three repetitions. For four repetitions, change only that number.",
                 "suggestedSnippet": "for shot in range(4):\n    follow_portal()",
                 "starterProgramSource": "for shot in range(3):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -518,9 +507,9 @@
             },
             {
                 "id": "loops-mixed-strategy",
-                "title": "Goal 3: Handle every possible ball with a loop",
-                "instruction": "Handle the 3 preview balls inside one loop.\nOn each repetition, check 'next_ball':\nif it is 'portal_ball', call 'follow_portal()'\nif it is 'negative_ball', skip it\nif it is 'center_ball', send it to input 2.",
-                "boardHint": "Put one 'if / elif / else' chain inside the loop.\n\nIn the negative-ball branch, use 'skip_ball()' and 'continue' so the same loop step does not accidentally launch. In the center-ball branch, choose input 2. Every remaining ball can go through the portal helper.",
+                "title": "Goal 3: Handle 3 balls with a loop",
+                "instruction": "Write a loop that handles the next 3 balls.\n\nOn each repetition, check 'next_ball':\n* 'portal_ball' - call 'follow_portal()'\n* 'negative_ball' - skip the ball\n* 'center_ball' - drop the ball from input 2",
+                "boardHint": "An 'if / elif / else' chain works well inside the loop. If you skip a ball, use 'continue' after 'skip_ball()' so the current repetition ends immediately and does not move on to later commands in the same loop step.",
                 "suggestedSnippet": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n        continue\n    elif next_ball == center_ball:\n        choose_input(2)\n        drop_ball()\n    else:\n        follow_portal()",
                 "starterProgramSource": "for shot in range(4):\n    follow_portal()",
                 "starterHelperSource": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()",
@@ -586,24 +575,24 @@
         ],
         "supportUpgradeIds": [],
         "boardSubtitle": "Read the 3 input multipliers, find the strongest one, and farm that input.",
-        "unlockSpotlightText": "Each input now has its own multiplier.\nThe board and Board data panel show the three values in 'bonus_map'.\n\n'bonus_map[0]' matches input 1\n'bonus_map[1]' matches input 2\n'bonus_map[2]' matches input 3\n\nThe values change every run. Find the highest multiplier and farm that input.",
+        "unlockSpotlightText": "Each input now has its own multiplier. The higher the multiplier, the more points a ball dropped from that input gives. For a negative ball, the multiplier also makes the penalty stronger.\n\n* New: 'bonus_map' - a list that stores the multipliers for inputs 1, 2, and 3.\n* New: indexes - 'bonus_map[0]' is input 1, 'bonus_map[1]' is input 2, and 'bonus_map[2]' is input 3.\n* New: best-input search - the multipliers change every run, so it is worth finding the highest multiplier and using that input.",
         "unlockPrimerCards": [
             {
                 "id": "lists-what",
-                "title": "What the list stores",
-                "body": "'bonus_map' stores the three input multipliers in order.",
+                "title": "1. Read the list",
+                "body": "'bonus_map' stores the three input multipliers in the same order as the inputs on the board.",
                 "syntax": "bonus_map"
             },
             {
                 "id": "lists-index",
-                "title": "How indexes match inputs",
-                "body": "'bonus_map[0]' matches input 1, 'bonus_map[1]' matches input 2, and 'bonus_map[2]' matches input 3.",
+                "title": "2. Use an index",
+                "body": "List indexes start from zero. That is why 'bonus_map[2]' matches input 3.",
                 "syntax": "bonus_map[2]"
             },
             {
                 "id": "lists-loop",
-                "title": "How to search the map",
-                "body": "With a loop you can go through 'bonus_map', inspect its values, and remember which input has the highest multiplier.",
+                "title": "3. Find the highest value",
+                "body": "With a loop, you can inspect the multipliers and remember which input has the highest multiplier so far.",
                 "syntax": "for multiplier in bonus_map:"
             }
         ],
@@ -625,7 +614,6 @@
                 "acceptance": {
                     "requiredFeatures": [
                         "usedLists",
-                        "usedVariables",
                         "usedIf",
                         "usedChooseInput"
                     ],

@@ -100,6 +100,28 @@ export function TaskModal({
       return
     }
 
+    if (event.key === 'Backspace' && selectionStart === selectionEnd) {
+      const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+      const linePrefix = value.slice(lineStart, selectionStart)
+
+      if (/^ +$/.test(linePrefix)) {
+        event.preventDefault()
+
+        const previousIndentStop = Math.floor((linePrefix.length - 1) / 4) * 4
+        const removableIndent = linePrefix.length - previousIndentStop
+        const nextCaret = selectionStart - removableIndent
+        const nextValue = value.slice(0, nextCaret) + value.slice(selectionEnd)
+
+        setCodeAnswer(nextValue)
+        requestAnimationFrame(() => {
+          textarea.selectionStart = nextCaret
+          textarea.selectionEnd = nextCaret
+        })
+      }
+
+      return
+    }
+
     if (event.key !== 'Tab') {
       return
     }
@@ -347,12 +369,6 @@ export function TaskModal({
             {openGuidance === 'hint' ? (
               <article className="task-guidance-card">
               <p>{task.boardHint}</p>
-              </article>
-            ) : null}
-            {openGuidance === 'hint' && task.unlockConnection.trim().length > 0 ? (
-              <article className="task-guidance-card">
-                <span>{ui.taskUnlockConnectionLabel}</span>
-                <p>{task.unlockConnection}</p>
               </article>
             ) : null}
             {openGuidance === 'answer' && revealedAnswer !== null ? (

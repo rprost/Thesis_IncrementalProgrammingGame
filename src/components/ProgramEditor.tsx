@@ -76,6 +76,11 @@ function createExecutionHighlightExtension(
 const readOnlyExtensions = [
   python(),
   EditorView.lineWrapping,
+  autocompletion({
+    override: [],
+    activateOnTyping: false,
+    icons: false,
+  }),
   EditorState.readOnly.of(true),
   EditorView.editable.of(false),
 ]

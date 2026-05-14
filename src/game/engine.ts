@@ -201,7 +201,7 @@ function applyTopicUnlocks(
     case 'conditions':
       return {
         ...unlocks,
-        lineCapacity: Math.max(unlocks.lineCapacity, 5),
+        lineCapacity: Math.max(unlocks.lineCapacity, 8),
         allowedCommands: unlocks.allowedCommands.includes('skip_ball')
           ? unlocks.allowedCommands
           : [...unlocks.allowedCommands, 'skip_ball'],

@@ -2,17 +2,17 @@
     {
         "id": "extra_line",
         "title": "Põhiprogrammi lisarida",
-        "description": "Lisa põhiprogrammile 1 rida juurde."
+        "description": "Lisab põhiprogrammile 1 rea võrra ruumi."
     },
     {
         "id": "extra_portal_split",
         "title": "Portaali lisapall",
-        "description": "Portaalis jagunedes tekib 1 lisapall."
+        "description": "Portaalis jagunemisel tekib 1 lisapall."
     },
     {
         "id": "bucket_value_doubler",
         "title": "Korvide väärtus x2",
-        "description": "Kahekordista korvide punktid."
+        "description": "Kahekordistab korvide punktiväärtused."
     },
     {
         "id": "queue_peek",
@@ -22,16 +22,16 @@
     {
         "id": "center_bin_bonus",
         "title": "Keskkorvi boonus",
-        "description": "Kui 'center_ball' maandub keskmisse korvi, saab see pall +5 lisapunkti."
+        "description": "Kui 'center_ball' maandub keskmisse korvi, annab see +5 lisapunkti."
     },
     {
         "id": "helper_line_capacity",
         "title": "Abiredaktori lisaread",
-        "description": "Lisa abiredaktorile 2 rida juurde."
+        "description": "Lisa abiredaktorisse 2 rida."
     },
     {
         "id": "portal_chain_once",
         "title": "Portaaliahel",
-        "description": "Portaalist tekkinud lisapallid saavad portaalis veel 1 korra jaguneda."
+        "description": "Portaalist tekkinud lisapallid saavad portaalis veel ühe korra jaguneda."
     }
 ]

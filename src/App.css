@@ -39,12 +39,38 @@
   display: block;
   transform: translate(-50%, -50%);
   color: #172033;
-  font-size: 1.08rem;
+  font-size: 1.22rem;
   font-weight: 900;
   letter-spacing: 0;
   pointer-events: none;
   text-align: center;
   white-space: nowrap;
+}
+
+.topbar-brand span {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.12rem 0.1rem;
+  color: transparent;
+  background: linear-gradient(105deg, #164c97 0%, #267c68 42%, #f16f2d 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.82))
+    drop-shadow(0 7px 12px rgba(45, 80, 102, 0.18));
+  transform: rotate(-1deg);
+}
+
+.topbar-brand span::after {
+  content: "";
+  position: absolute;
+  left: 0.18rem;
+  right: 0.1rem;
+  bottom: 0;
+  height: 0.17rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(38, 124, 104, 0.88), rgba(241, 111, 45, 0.92));
+  box-shadow: 0 5px 12px rgba(241, 111, 45, 0.2);
+  transform: skewX(-18deg);
 }
 
 .topbar-primary-cluster,
@@ -309,7 +335,6 @@
 @keyframes checkpoint-button-glow {
   0%,
   100% {
-    transform: scale(1);
     box-shadow:
       0 22px 40px rgba(191, 91, 35, 0.36),
       0 10px 20px rgba(191, 91, 35, 0.22),
@@ -318,7 +343,6 @@
   }
 
   50% {
-    transform: scale(1.045);
     box-shadow:
       0 28px 52px rgba(191, 91, 35, 0.46),
       0 14px 28px rgba(191, 91, 35, 0.28),
@@ -3142,6 +3166,16 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
+.syntax-card.coachmark-target {
+  border-color: rgba(255, 149, 149, 0.78);
+  box-shadow:
+    0 0 0 4px rgba(255, 149, 149, 0.28),
+    0 0 0 10px rgba(255, 149, 149, 0.14),
+    0 22px 38px rgba(255, 149, 149, 0.16),
+    0 16px 40px rgba(34, 44, 56, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
 .objective-bar,
 .editor-toolbar,
 .task-sheet,
@@ -3469,6 +3503,19 @@
 :root[data-theme='dark'] .task-case-card strong,
 :root[data-theme='dark'] .objective-primer-card h3 {
   color: #f6f8f7;
+}
+
+:root[data-theme='dark'] .topbar-brand span {
+  background: linear-gradient(105deg, #7db9ff 0%, #62d0b1 44%, #ff9a5d 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 1px 0 rgba(10, 15, 18, 0.82))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, 0.36));
+}
+
+:root[data-theme='dark'] .topbar-brand span::after {
+  background: linear-gradient(90deg, rgba(98, 208, 177, 0.9), rgba(255, 154, 93, 0.94));
+  box-shadow: 0 6px 14px rgba(255, 154, 93, 0.26);
 }
 
 :root[data-theme='dark'] .objective-body,

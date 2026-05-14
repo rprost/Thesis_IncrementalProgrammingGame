@@ -9,7 +9,7 @@
         "title": "Starter run",
         "question": "What does the line 'drop_ball()' do in the demo program?",
         "code": "drop_ball()",
-        "boardHint": "The first run is only a demo. One ball enters the board through the current input.",
+        "boardHint": "It drops 1 ball, but from where?",
         "unlockConnection": "You watch one run first, then clear two quick checks before the editor unlocks.",
         "options": [
             "It launches one ball through the current input.",
@@ -31,7 +31,7 @@
         "title": "Input numbers",
         "question": "Which input number is the center input?",
         "code": "1 = Left\n2 = Center\n3 = Right",
-        "boardHint": "The same numbers appear later in 'choose_input(...)'.",
+        "boardHint": "You can look at the pachinko board.",
         "unlockConnection": "Knowing the input numbers makes the first editable programs easier to read.",
         "options": [
             "1",
@@ -51,14 +51,14 @@
         "topicOrder": 1,
         "taskOrder": 1,
         "title": "Trace 'portal_side'",
-        "question": "If the assignment 'target = portal_side' runs while 'portal_side' is '3', which input does this program use?",
+        "question": "Which input does the program choose if 'portal_side = 3'?",
         "code": "target = portal_side\nchoose_input(target)\ndrop_ball()",
-        "boardHint": "The portal label shows both the side name and the code value.",
+        "boardHint": "Look at the pachinko board to see how the inputs are ordered.",
         "unlockConnection": "An assignment can copy the visible 'portal_side' value into your own variable so you can reuse it for input choice.",
         "options": [
-            "Input 1",
-            "Input 2",
-            "Input 3",
+            "Left input",
+            "Center input",
+            "Right input",
             "No ball launches, because 'target' is only a variable name."
         ],
         "correctOption": 2,
@@ -72,20 +72,20 @@
         "topicId": "variables",
         "topicOrder": 1,
         "taskOrder": 2,
-        "title": "Repair the input value",
-        "question": "Which assignment replacement fixes the program so it follows the portal safely?",
-        "code": "target = portal_side + 1\nchoose_input(target)\ndrop_ball()",
-        "boardHint": "The assignment should copy 'portal_side' directly, without adding to it.",
-        "unlockConnection": "'portal_side' already points to the portal input. Reusing it directly keeps the launch in range.",
+        "title": "Fix the variable name",
+        "question": "How should line 1 be changed so the ball launches from the input under the portal?",
+        "code": "input = 3\nchoose_input(target)\ndrop_ball()",
+        "boardHint": "On the first line, both the variable name and the value assigned to it are wrong.",
+        "unlockConnection": "The program uses 'target' inside 'choose_input(target)', so line 1 needs to give 'target' the value 'portal_side'.",
         "options": [
-            "target = 4 - portal_side",
-            "target = portal_side + 1",
+            "input = portal_side",
+            "input = 1",
             "target = portal_side",
-            "target = 2"
+            "target = 3"
         ],
         "correctOption": 2,
-        "successMessage": "Correct. 'portal_side' already has the input value, so the program can use it directly.",
-        "failureMessage": "'portal_side' already stores the active side. Adding to it in the assignment can push the input choice out of range."
+        "successMessage": "Correct. 'choose_input(target)' uses the variable 'target', so line 1 needs to set 'target' to 'portal_side'.",
+        "failureMessage": "The next line uses the variable 'target'. That means line 1 should be 'target = portal_side'."
     },
     {
         "id": "variables-write",
@@ -94,18 +94,18 @@
         "topicId": "variables",
         "topicOrder": 1,
         "taskOrder": 3,
-        "title": "Write one opposite-side launch",
-        "question": "Write one short program that works for every visible case below: read 'portal_side' and launch exactly one ball through the opposite side.",
+        "title": "Write a portal-avoiding program",
+        "question": "Write a program that reads 'portal_side' and launches the ball from the other side.\nIf the portal is on the right, the ball must drop from the left. If the portal is on the left, the ball must drop from the right.",
         "code": "",
-        "boardHint": "You can use 'portal_side' directly as '4 - portal_side', or first store it with 'target = portal_side' and then use '4 - target'. Both switch left <-> right.",
-        "unlockConnection": "Board data can drive strategy: 'portal_side' gives one side, and '4 - portal_side' or '4 - target' gives the opposite side.",
+        "boardHint": "This task needs an expression. What would the variable 'wrongSide = 4 - portal_side' represent?",
+        "unlockConnection": "Board data can drive strategy: 'portal_side' gives the portal side, and '4 - portal_side' gives the other side.",
         "writeValidation": {
             "target": "main",
             "starterSource": "drop_ball()",
             "cases": [
                 {
                     "title": "Portal left",
-                    "requirement": "Use 'portal_side' directly or store it first, then launch exactly one ball through the right side.",
+                    "requirement": "Launch the ball from the right side.",
                     "scenario": {
                         "portalSide": 1,
                         "previewQueue": [
@@ -128,7 +128,7 @@
                 },
                 {
                     "title": "Portal right",
-                    "requirement": "Use 'portal_side' directly or store it first, then launch exactly one ball through the left side.",
+                    "requirement": "Launch the ball from the left side.",
                     "scenario": {
                         "portalSide": 3,
                         "previewQueue": [
@@ -151,7 +151,7 @@
                 }
             ]
         },
-        "successMessage": "Correct. That code stores the visible value and uses it to flip to the opposite side.",
+        "successMessage": "Correct. That code reads the visible value and uses it to flip to the opposite side.",
         "failureMessage": "Your answer should use 'portal_side' to choose the opposite input and launch exactly one ball."
     },
     {
@@ -161,10 +161,10 @@
         "topicId": "conditions",
         "topicOrder": 2,
         "taskOrder": 1,
-        "title": "Repair the preview rule",
-        "question": "Which version skips only 'negative_ball' and still launches the others?",
+        "title": "Fix the ball-checking code",
+        "question": "What should the code below look like if you want to skip only 'negative_ball' and drop the remaining balls?",
         "code": "if next_ball == portal_ball:\n    skip_ball()\nelse:\n    drop_ball()",
-        "boardHint": "The fix should compare 'next_ball' to 'negative_ball', then keep a real launch for the safe balls.",
+        "boardHint": "The current code skips the wrong ball type. In the fixed version, the skip branch should run only for the bad ball, and the other balls should still drop.",
         "unlockConnection": "Conditionals matter because the machine can react to the preview before the ball enters the board.",
         "options": [
             "if next_ball == center_ball:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
@@ -183,10 +183,10 @@
         "topicId": "conditions",
         "topicOrder": 2,
         "taskOrder": 2,
-        "title": "Repair the full preview strategy",
-        "question": "Which program correctly handles the preview: skip 'negative_ball', send 'portal_ball' to the portal, and send 'center_ball' to input 2?",
+        "title": "Fix the ball-routing code",
+        "question": "What should the code below look like if you want to skip 'negative_ball', drop 'portal_ball' toward the portal, and drop 'center_ball' from input 2?",
         "code": "if next_ball == negative_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(portal_side)\n    drop_ball()\nelse:\n    choose_input(2)\n    drop_ball()",
-        "boardHint": "The repaired program should keep 3 outcomes distinct: negative -> skip, portal -> portal_side, center -> input 2.",
+        "boardHint": "The current code detects the negative ball, but the two remaining ball actions are swapped. Check which branch should use 'portal_side' and which one should use input 2.",
         "unlockConnection": "A full preview strategy keeps each ball type in its own branch.",
         "options": [
             "if next_ball == portal_ball:\n    skip_ball()\nelif next_ball == center_ball:\n    choose_input(2)\n    drop_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
@@ -206,16 +206,16 @@
         "topicOrder": 2,
         "taskOrder": 3,
         "reviewOriginTopicId": "variables",
-        "title": "Review: read the portal",
-        "question": "If 'portal_side' is '1', where does this program launch the ball?",
+        "title": "Review: 'portal_side' value",
+        "question": "Which input does the program choose if 'portal_side = 1'?",
         "code": "choose_input(portal_side)\ndrop_ball()",
-        "boardHint": "Earlier topics still matter. Preview logic only helps if you still read the portal correctly.",
+        "boardHint": "Look at the pachinko board to see how the inputs are ordered.",
         "unlockConnection": "This is a spaced review of the variables topic.",
         "options": [
-            "Input 2, because 'choose_input(...)' defaults to the center when the value is unfamiliar.",
-            "Input 2, because the center input is the default launch lane.",
-            "Input 3, because 'portal_side' should be mirrored to the opposite side.",
-            "Input 1, because 'portal_side' is passed straight into 'choose_input(...)'."
+            "Center, because 'choose_input(...)' defaults to the center when the value is unfamiliar.",
+            "Center, because it is the default input.",
+            "Right side, because 'portal_side' should be mirrored to the opposite side.",
+            "Left side, because 'portal_side' is passed straight into 'choose_input(...)'."
         ],
         "correctOption": 3,
         "successMessage": "Correct. 'portal_side = 1' means the left input.",
@@ -228,20 +228,20 @@
         "topicId": "functions",
         "topicOrder": 3,
         "taskOrder": 1,
-        "title": "Trace the helper call",
-        "question": "What happens when the main program calls 'follow_portal()'?",
+        "title": "Trace the function call",
+        "question": "What happens when the code reaches 'follow_portal()'?",
         "code": "def follow_portal():\n    choose_input(portal_side)\n    drop_ball()\n\nfollow_portal()",
-        "boardHint": "The helper editor stores one tactic, and the main editor can call it by name.",
+        "boardHint": "The code under 'def follow_portal():' does not run until the function name is called with parentheses.",
         "unlockConnection": "Functions matter because one named tactic can control repeated board behavior.",
         "options": [
-            "The helper changes 'portal_side' before it launches.",
-            "Only the helper definition is stored, so no ball launches.",
-            "The helper body runs once, but 'portal_side' is copied into the helper's own scope first.",
-            "The helper body runs once at the call site."
+            "The value of 'portal_side' is changed before the ball drops.",
+            "The code only stores the definition and does not run the function.",
+            "Only the line 'follow_portal()' runs, but the function body is skipped.",
+            "The function body runs: it chooses 'portal_side' and drops one ball."
         ],
         "correctOption": 3,
-        "successMessage": "Correct. Calling 'follow_portal()' runs that helper body once.",
-        "failureMessage": "A helper call executes the helper body once at the call site."
+        "successMessage": "Correct. 'follow_portal()' runs the function body once at that point.",
+        "failureMessage": "A function call runs the function body once at that point."
     },
     {
         "id": "functions-write",
@@ -251,9 +251,9 @@
         "topicOrder": 3,
         "taskOrder": 2,
         "title": "Write 'follow_portal()'",
-        "question": "Write 'follow_portal()' so it chooses the input above the portal and launches one ball.",
+        "question": "The main program already calls 'follow_portal()'.\nWrite only the helper function so it chooses the input above the portal and launches one ball.",
         "code": "Main program:\nfollow_portal()",
-        "boardHint": "This helper should read 'portal_side', use it inside 'choose_input(...)', and then call 'drop_ball()'.",
+        "boardHint": "Edit the helper editor. You do not need to change the main program because it already contains 'follow_portal()'.",
         "unlockConnection": "This checkpoint asks you to build the portal-following helper yourself.",
         "writeValidation": {
             "target": "helper",
@@ -332,9 +332,9 @@
         "taskOrder": 3,
         "reviewOriginTopicId": "conditions",
         "title": "Review: repair the negative-ball check",
-        "question": "Which condition skips only 'negative_ball'?",
+        "question": "Which condition skips only 'negative_ball' but drops the remaining balls?",
         "code": "if ???:\n    skip_ball()\nelse:\n    choose_input(portal_side)\n    drop_ball()",
-        "boardHint": "Earlier branch logic still matters when you move tactics into helpers later.",
+        "boardHint": "The condition should read the variable 'next_ball'. Use '==' for comparison.",
         "unlockConnection": "This is a spaced review of the conditions topic.",
         "options": [
             "next_ball == negative",
@@ -353,10 +353,10 @@
         "topicId": "loops",
         "topicOrder": 4,
         "taskOrder": 1,
-        "title": "Repair the loop body",
-        "question": "Which version skips a 'negative_ball' and continues safely with the loop?",
+        "title": "Fix the negative-ball branch",
+        "question": "Which version skips 'negative_ball' so the same repetition does not reach 'follow_portal()'?",
         "code": "for shot in range(3):\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()",
-        "boardHint": "After 'skip_ball()', the current loop step should stop before it reaches 'follow_portal()'.",
+        "boardHint": "After 'skip_ball()', the current repetition should end immediately. Use the command that moves to the next repetition.",
         "unlockConnection": "This is the key loop pattern that turns one tactic into safe automation.",
         "options": [
             "for shot in range(3):\n    if next_ball == negative_ball:\n        follow_portal()\n    skip_ball()",
@@ -365,8 +365,8 @@
             "for shot in range(3):\n    continue\n    if next_ball == negative_ball:\n        skip_ball()\n    follow_portal()"
         ],
         "correctOption": 1,
-        "successMessage": "Correct. 'continue' stops that loop step after the negative ball is skipped.",
-        "failureMessage": "The safe version skips the negative ball and uses 'continue' so the loop does not launch it afterward."
+        "successMessage": "Correct. 'continue' ends the current repetition after the negative ball is skipped.",
+        "failureMessage": "The fixed version should end the current repetition after 'skip_ball()' so the code does not move on to 'follow_portal()'."
     },
     {
         "id": "loops-write",
@@ -376,17 +376,18 @@
         "topicOrder": 4,
         "taskOrder": 2,
         "title": "Write the repeated preview loop",
-        "question": "Write one loop that handles the 4 preview balls: send 'portal_ball' to the portal directly, skip 'negative_ball', and send every 'center_ball' to input 2.",
+        "question": "Write one loop that handles the next 4 balls.\n\nOn each repetition, check 'next_ball':\n* 'portal_ball' - send the ball to the portal\n* 'negative_ball' - skip the ball\n* 'center_ball' - drop the ball from input 2",
         "code": "",
-        "boardHint": "This checkpoint removes the helper. One loop should still work for both visible queues. 'elif' is a good fit here, and 'continue' is optional, but the negative-ball branch must not fall through into a launch. Extra repetitions are okay as long as the visible preview is handled correctly.",
+        "boardHint": "There is no helper in this checkpoint. Write the whole strategy inside the loop. 'if / elif / else' works well because each ball type needs its own action.",
         "unlockConnection": "Now the whole portal, negative-ball, and center-ball strategy has to live inside your own loop.",
         "writeValidation": {
             "target": "main",
             "starterSource": "for shot in range(4):\n    drop_ball()",
+            "lineLimit": 10,
             "cases": [
                 {
                     "title": "Portal, negative, center, portal",
-                    "requirement": "Send each 'portal_ball' to the portal directly, skip 'negative_ball', send 'center_ball' to input 2, and still handle the final 'portal_ball' correctly.",
+                    "requirement": "Portal balls to the portal, negative skipped, center ball to input 2.",
                     "scenario": {
                         "portalSide": 3,
                         "previewQueue": [
@@ -432,7 +433,7 @@
                 },
                 {
                     "title": "Negative, center, center, portal",
-                    "requirement": "Skip 'negative_ball', send both 'center_ball's to input 2, and send the final 'portal_ball' to the portal directly.",
+                    "requirement": "Negative skipped, center balls to input 2, portal ball to the portal.",
                     "scenario": {
                         "portalSide": 1,
                         "previewQueue": [
@@ -489,10 +490,10 @@
         "topicOrder": 4,
         "taskOrder": 3,
         "reviewOriginTopicId": "functions",
-        "title": "Review: how many balls does this program drop?",
-        "question": "How many balls does this whole program drop?",
+        "title": "Review: function calls",
+        "question": "How many balls does this program drop?",
         "code": "def drop_multiple_balls():\n    drop_ball()\n    drop_ball()\n    drop_ball()\n\ndrop_multiple_balls()\ndrop_multiple_balls()",
-        "boardHint": "First trace what one helper call does. Then count what happens when the main program calls that helper twice.",
+        "boardHint": "One function call runs the whole function body. First count the balls from one call, then multiply by the number of calls.",
         "unlockConnection": "This is a spaced review of the functions topic.",
         "options": [
             "2",

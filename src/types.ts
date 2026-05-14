@@ -487,7 +487,6 @@ export type UiText = {
   runBlockedInvalidProgram: string
   runButton: string
   runButtonRunning: string
-  runPanelTitle: string
   runPanelReadyMessage: string
   runPanelRunningMessage: string
   runPanelLockedMessage: string
@@ -544,8 +543,11 @@ export type UiText = {
   referenceNoExamples: string
   referenceBonusLaneDescription: string
   referencePortalSideDescription: string
+  referencePortalSideExample: string
   referenceNextBallDescription: string
+  referenceNextBallExample: string
   referenceBonusMapDescription: string
+  referenceBonusMapExample: string
   referenceNormalBallDescription: string
   referenceLuckyBallDescription: string
   referenceEvilBallDescription: string
@@ -697,7 +699,6 @@ export type UiText = {
   correctTitle: string
   incorrectTitle: string
   taskBoardHintLabel: string
-  taskUnlockConnectionLabel: string
   taskShowHintButton: string
   taskHideHintButton: string
   taskAnswerCodeLabel: string
@@ -751,12 +752,12 @@ export type UiText = {
   introEyebrow: string
   introTitle: string
   introBody: string
-  introFeedbackReminderLabel: string
-  introFeedbackReminder: string
   introChecklistLabel: string
   introChecklistOne: string
   introChecklistTwo: string
   introChecklistThree: string
+  introChecklistFour: string
+  introChecklistFive: string
   introStartButton: string
   nextStepHintLabel: string
   nextStepSnippetLabel: string

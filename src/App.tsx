@@ -24,10 +24,7 @@ import {
   LANGUAGE_STORAGE_KEY,
 } from './content'
 import { buildEditorCompletions } from './game/editorCompletions'
-import {
-  formatBonusMapValue,
-  getBallTypeConstant,
-} from './game/formatting'
+import { getBallTypeConstant } from './game/formatting'
 import {
   advanceProgramRun,
   applyTaskResult,
@@ -621,17 +618,8 @@ function buildHelpCatalog(
 function buildReferenceValues(
   gameState: GameState,
   ui: UiText,
-  topics: TopicDefinition[],
 ): ReferenceValueItem[] {
   const portalActive = isBluePortalActive(gameState)
-  const variablesTopic = topics.find((topic) => topic.id === 'variables')
-  const portalGoal = variablesTopic?.practiceGoals.find(
-    (goal) => goal.id === 'variables-store-target',
-  )
-  const portalDescription =
-    portalGoal?.instruction.split('\n\n')[0] ??
-    ui.boardGateExplanationAdvanced ??
-    ui.boardGateExplanation
 
   return [
     {
@@ -644,13 +632,13 @@ function buildReferenceValues(
           {
             id: 'blue_portal',
             label: ui.boardActivePortalLabel,
-            description: portalDescription,
+            description: ui.boardGateExplanationAdvanced,
           },
           {
             id: 'portal_side',
             label: 'portal_side',
             description: ui.referencePortalSideDescription,
-            example: `portal_side = ${String(gameState.moduleStates.board.portalSide)}`,
+            example: ui.referencePortalSideExample,
           },
         ]
       : []),
@@ -660,9 +648,7 @@ function buildReferenceValues(
             id: 'next_ball',
             label: 'next_ball',
             description: ui.referenceNextBallDescription,
-            example: `next_ball = ${getBallTypeConstant(
-              gameState.ballQueue[gameState.ballQueueCursor] ?? 'plain',
-            )}`,
+            example: ui.referenceNextBallExample,
           },
           ...buildBallReferenceValues(ui),
         ]
@@ -673,9 +659,7 @@ function buildReferenceValues(
             id: 'bonus_map',
             label: 'bonus_map',
             description: ui.referenceBonusMapDescription,
-            example: formatText(ui.boardBonusMapCodeValue, {
-              value: formatBonusMapValue(gameState.moduleStates.board.bonusMap),
-            }),
+            example: ui.referenceBonusMapExample,
           },
         ]
       : []),
@@ -1033,7 +1017,7 @@ function App() {
       ? ['best_multiplier = bonus_map[0]', 'for multiplier in bonus_map:']
       : []),
   ]
-  const referenceValues = buildReferenceValues(gameState, ui, topics)
+  const referenceValues = buildReferenceValues(gameState, ui)
   const referencePatterns = buildReferencePatterns(
     gameState,
     ui,
@@ -1888,7 +1872,6 @@ function App() {
               ) : null}
               <aside className="editor-toolbar">
                 <div className="editor-toolbar-main">
-                  <p className="panel-kicker">{ui.runPanelTitle}</p>
                   {gameState.autoRunUnlocked ? (
                     <button
                       className={`auto-run-toggle${

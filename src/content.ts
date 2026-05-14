@@ -14,7 +14,7 @@ import type {
   UiText,
 } from './types'
 
-const DEFAULT_LOCALE: Locale = 'en'
+const DEFAULT_LOCALE: Locale = 'et'
 export const LANGUAGE_STORAGE_KEY = 'incremental-programming-game.locale'
 
 const localeContent: Record<

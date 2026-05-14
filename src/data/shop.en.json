@@ -1,23 +1,23 @@
 [
     {
         "id": "extra_line",
-        "title": "Main program line",
-        "description": "Increase the main program limit by 1 line."
+        "title": "Extra main-program line",
+        "description": "Add 1 line to the main program."
     },
     {
         "id": "extra_portal_split",
         "title": "Stronger portal",
-        "description": "Portal splits create 1 extra ball."
+        "description": "Each portal split creates 1 extra ball."
     },
     {
         "id": "bucket_value_doubler",
         "title": "Bucket values x2",
-        "description": "Double bucket points. Can be bought up to 6 times."
+        "description": "Double bucket point values."
     },
     {
         "id": "queue_peek",
         "title": "Ball preview boost",
-        "description": "Show the next 3 balls at once."
+        "description": "Show 3 upcoming balls at once."
     },
     {
         "id": "center_bin_bonus",
@@ -27,7 +27,7 @@
     {
         "id": "helper_line_capacity",
         "title": "Helper editor lines",
-        "description": "Increase the helper editor limit by 2 lines."
+        "description": "Add 2 lines to the helper editor."
     },
     {
         "id": "portal_chain_once",
